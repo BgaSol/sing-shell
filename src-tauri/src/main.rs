@@ -399,6 +399,8 @@ fn main() {
         })
         .setup(move |tauri| {
             let native_login = sing_shell::login_startup::native_login_launch();
+            let mut launch = launch;
+            launch.login = !launch.restart && (launch.login || native_login);
             let directory = if launch.smoke {
                 launch.data.clone().ok_or("隔离目录缺失")?
             } else {

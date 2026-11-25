@@ -176,10 +176,10 @@ impl Desktop {
             || app.store.error.is_some();
         let status = if r.status == "stopping" {
             "正在停止"
-        } else if r.pid.is_some() {
-            "核心运行中"
         } else if r.status == "starting" {
             "正在启动"
+        } else if r.pid.is_some() {
+            "核心运行中"
         } else if matches!(c.restore, Restore::Waiting) {
             "等待核心自动恢复"
         } else if issue {
