@@ -27,7 +27,7 @@ async function roundtrip(port){
   }finally{socket.destroy();echo.close();}
 }
 try {
-  for(const name of ['smoke-result.json','smoke-hidden.json','smoke-continue','smoke-error.json',...(process.env.EXPECTED_VERSION?[`smoke-result-${process.env.EXPECTED_VERSION}.json`]:[]),...(installInput?[`smoke-result-${installInput.version}.json`]:[])])await fs.rm(path.join(directory,name),{force:true});
+  for(const name of ['smoke-result.json','smoke-hidden.json','smoke-continue','smoke-error.json','login-registration.json',...(process.env.EXPECTED_VERSION?[`smoke-result-${process.env.EXPECTED_VERSION}.json`]:[]),...(installInput?[`smoke-result-${installInput.version}.json`]:[])])await fs.rm(path.join(directory,name),{force:true});
   let port,hiddenPid;
   if(runningCore){
     const listener=net.createServer();await new Promise(resolve=>listener.listen(0,'127.0.0.1',resolve));port=listener.address().port;await new Promise(resolve=>listener.close(resolve));

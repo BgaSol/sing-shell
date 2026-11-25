@@ -72,24 +72,47 @@ pub(super) fn verify(directory: &Path) -> Result<(), String> {
 pub fn launched_at_login() -> bool {
     native::launched_at_login()
 }
-pub(super) fn verify_registration(_: &Path) -> Result<(), String> {
+pub(super) fn verify_registration(directory: &Path) -> Result<(), String> {
     let bundle = native::bundle(&command_path()?, true)?;
     let home = std::path::PathBuf::from(std::env::var_os("HOME").ok_or("无法确定 CI 用户")?);
-    if !bundle.path.starts_with(home.join("Applications"))
-        || native::status()? != native::State::NotRegistered
-    {
-        return Err("登录登记验收要求用户 Applications 内的完整安装和干净系统状态".into());
+    let applications =
+        std::fs::canonicalize(home.join("Applications")).map_err(|e| e.to_string())?;
+    let actual = std::fs::canonicalize(&bundle.path).map_err(|e| e.to_string())?;
+    if !actual.starts_with(&applications) {
+        return Err(format!(
+            "登录登记验收安装位置不符：{}，要求 {}",
+            actual.display(),
+            applications.display()
+        ));
     }
-    let result = (|| {
+    native::register_bundle(&bundle)?;
+    let before = native::status()?;
+    if !matches!(
+        before,
+        native::State::NotRegistered | native::State::NotFound
+    ) {
+        return Err(format!("CI 登录项初态不是未登记：{before:?}；保留系统状态"));
+    }
+    let registered = (|| -> Result<Status, String> {
         set(true)?;
-        if !read()?.enabled {
-            return Err("系统未允许本次主应用登录登记".into());
+        let status = read()?;
+        if !matches!(status.state.as_str(), "enabled" | "blocked") {
+            return Err(format!("登录登记未得到有效系统事实：{status:?}"));
         }
-        set(false)?;
-        if read()?.state != "disabled" {
-            return Err("取消主应用登录项未生效".into());
+        Ok(status)
+    })();
+    let cleanup = native::set(false).and_then(|_| {
+        let status = read()?;
+        if status.state != "disabled" {
+            return Err(format!("取消登录项未生效：{status:?}"));
         }
         Ok(())
-    })();
-    result.and(native::set(false))
+    });
+    let registered = match (registered, cleanup) {
+        (Ok(status), Ok(())) => status,
+        (Err(e), Ok(())) => return Err(e),
+        (Ok(_), Err(e)) => return Err(e),
+        (Err(e), Err(cleanup)) => return Err(format!("{e}；登录项清理失败：{cleanup}")),
+    };
+    std::fs::write(directory.join("login-registration.json"),serde_json::json!({"before":format!("{before:?}"),"registered":registered,"removed":true,"bundle":actual}).to_string()).map_err(|e|e.to_string())
 }

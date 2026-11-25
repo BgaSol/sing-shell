@@ -139,6 +139,10 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
     let smoke = native.state::<Smoke>();
     sing_shell::login_startup::verify_native(&smoke.directory)?;
     let desktop = app.desktop.snapshot(native, app);
+    let login_registration: Option<serde_json::Value> =
+        std::fs::read(smoke.directory.join("login-registration.json"))
+            .ok()
+            .and_then(|b| serde_json::from_slice(&b).ok());
     let install = std::env::args_os().any(|a| a == "--install-test")
         && app
             .updates
@@ -146,7 +150,7 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
             .items
             .get(&Component::App)
             .is_some_and(|i| i.phase == "ready");
-    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot()});
+    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"loginRegistration":login_registration,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot()});
     std::fs::write(
         smoke.directory.join("smoke-result.json"),
         report.to_string(),
