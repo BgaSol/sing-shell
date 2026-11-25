@@ -47,7 +47,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf xvfb
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf xvfb dbus-x11
       - name: Require native architecture
         env:
           EXPECTED_RUST_TARGET: ${{ matrix.target }}
@@ -60,7 +60,9 @@ jobs:
       - run: npm run build -- --no-bundle -- --locked
       - name: Smoke (Linux)
         if: runner.os == 'Linux'
-        run: xvfb-run -a node scripts/smoke.mjs
+        env:
+          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
+        run: dbus-run-session -- xvfb-run -a node scripts/smoke.mjs
       - name: Smoke (Windows and macOS)
         if: runner.os != 'Linux'
         run: node scripts/smoke.mjs

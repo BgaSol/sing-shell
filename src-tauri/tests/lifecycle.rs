@@ -5,11 +5,14 @@ use std::{
     fs,
     net::{TcpListener, TcpStream},
     path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 struct Directory(PathBuf);
+
+static NEXT_DIRECTORY: AtomicU64 = AtomicU64::new(0);
 
 impl Directory {
     fn new() -> Self {
@@ -17,9 +20,13 @@ impl Directory {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("sing-shell test-{}-{id}", std::process::id()));
-        fs::create_dir_all(&path).unwrap();
+        // Clock precision alone does not distinguish concurrent tests on macOS.
+        let sequence = NEXT_DIRECTORY.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "sing-shell test-{}-{id}-{sequence}",
+            std::process::id()
+        ));
+        fs::create_dir(&path).unwrap();
         Self(path)
     }
     fn config(&self, value: serde_json::Value) -> PathBuf {
@@ -33,6 +40,27 @@ impl Drop for Directory {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.0);
     }
+}
+
+#[test]
+fn concurrent_tests_use_distinct_directories() {
+    let barrier = std::sync::Arc::new(std::sync::Barrier::new(8));
+    let threads: Vec<_> = (0..8)
+        .map(|_| {
+            let barrier = barrier.clone();
+            thread::spawn(move || {
+                barrier.wait();
+                Directory::new()
+            })
+        })
+        .collect();
+    let directories: Vec<_> = threads
+        .into_iter()
+        .map(|thread| thread.join().unwrap())
+        .collect();
+    let paths: std::collections::HashSet<_> =
+        directories.iter().map(|directory| &directory.0).collect();
+    assert_eq!(paths.len(), directories.len());
 }
 
 fn fixture() -> &'static Path {
