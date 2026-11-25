@@ -51,6 +51,12 @@ function registrationSmoke(executable,isImage=false){
   const env={SING_SHELL_TEST_DATA:data,SING_SHELL_VERIFY_REGISTRATION:'1',XDG_CONFIG_HOME:path.join(data,'xdg')};
   (isImage?appimageSmoke:smoke)(executable,'native current-user login registration, read-back, system-disabled facts and cleanup',version,env);
 }
+function appimageRegistrationSmoke(image){
+  assert.equal(process.env.GITHUB_ACTIONS,'true');
+  const root=fs.mkdtempSync(path.join(os.homedir(),'.sing-shell-ci-')),stable=path.join(root,'Sing Shell.AppImage');
+  try{fs.copyFileSync(image,stable);fs.chmodSync(stable,0o755);registrationSmoke(stable,true);}
+  finally{assert.equal(path.dirname(root),os.homedir());assert.ok(path.basename(root).startsWith('.sing-shell-ci-'));fs.rmSync(root,{recursive:true,force:true});}
+}
 function productionUpgrade(executable,isImage=false){
   const update=updater(candidate),info=path.join(directory,'production-install.json');
   fs.writeFileSync(info,JSON.stringify({version:candidate.version,package:path.join(candidateInput,update.name),signature:fs.readFileSync(path.join(candidateInput,update.name+'.sig'),'utf8').trim()}));
@@ -81,7 +87,7 @@ try{
     const install=path.join(directory,'installed');run(file('nsis'),['/S',`/D=${install}`]);try{const executable=path.join(install,'sing-shell.exe');registrationSmoke(executable);windowsLogin('seed',executable);smoke(executable,'NSIS installed executable: native architecture, WebView, IPC and exit');smoke(executable,'running official core survives hide and second-instance activation, then exits and releases its port',version,{SING_SHELL_RUNNING_CORE:official});productionUpgrade(executable);windowsLogin('preserved',executable);}finally{run(path.join(install,'uninstall.exe'),['/S',`_?=${install}`]);}windowsLogin('removed',path.join(install,'sing-shell.exe'));report.verified.push('NSIS update preserves login registration and Windows disabled state; uninstall removes only owned registration');run(file('nsis'),['/S',`/D=${install}`]);const foreign=path.join(directory,'another installation/sing-shell.exe');windowsLogin('seed',foreign);run(path.join(install,'uninstall.exe'),['/S',`_?=${install}`]);windowsLogin('foreign',foreign);report.verified.push('NSIS uninstall preserves another installation login registration');
   }else if(process.platform==='linux'){
     const extracted=path.join(directory,'deb');run('dpkg-deb',['-x',file('deb'),extracted]);smoke(path.join(extracted,'usr/bin/sing-shell'),'DEB extracted executable: native architecture, WebView, IPC and exit');
-    const image=path.join(directory,'installed.AppImage');fs.copyFileSync(file('appimage'),image);fs.chmodSync(image,0o755);appimageSmoke(image,'AppImage extraction, WebView, IPC and exit');appimageSmoke(image,'running official core survives hide and second-instance activation, then releases its port',version,{SING_SHELL_RUNNING_CORE:official});productionUpgrade(image,true);
+    const image=path.join(directory,'installed.AppImage');fs.copyFileSync(file('appimage'),image);fs.chmodSync(image,0o755);appimageRegistrationSmoke(image);appimageSmoke(image,'AppImage extraction, WebView, IPC and exit');appimageSmoke(image,'running official core survives hide and second-instance activation, then releases its port',version,{SING_SHELL_RUNNING_CORE:official});productionUpgrade(image,true);
     const packageName=execFileSync('dpkg-deb',['-f',file('deb'),'Package'],{encoding:'utf8'}).trim();assert.equal(packageName,'sing-shell');run('sudo',['dpkg','-i',file('deb')]);try{registrationSmoke('/usr/bin/sing-shell');smoke('/usr/bin/sing-shell','DEB system installation');run('sudo',['dpkg','-i',file('deb',candidate,candidateInput)]);smoke('/usr/bin/sing-shell','DEB system upgrade',candidate.version);}finally{run('sudo',['dpkg','--remove',packageName]);}
   }else{
     const mount=path.join(directory,'mounted');run('hdiutil',['attach',file('dmg'),'-nobrowse','-readonly','-mountpoint',mount]);const installed=path.join(directory,'installed/Sing Shell.app');try{smoke(path.join(mount,'Sing Shell.app/Contents/MacOS/sing-shell'),'DMG mounted executable: native architecture, WebView, IPC and exit');run('ditto',[path.join(mount,'Sing Shell.app'),installed]);}finally{run('hdiutil',['detach',mount]);}
