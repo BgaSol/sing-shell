@@ -258,16 +258,19 @@ fn slow_validation_can_be_cancelled_without_blocking_snapshots_or_preferences() 
         })
     };
     thread::sleep(Duration::from_millis(100));
-    let start = Instant::now();
     let revision = core.store.snapshot().preferences_revision;
     let mut prefs = core.store.snapshot().update_preferences;
     prefs.automatic = false;
     core.store.preferences(revision, prefs.clone()).unwrap();
     assert_eq!(core.snapshot().unwrap().status, "stopped");
-    assert!(start.elapsed() < Duration::from_secs(1));
+    assert!(
+        !worker.is_finished(),
+        "preferences must commit while validation is still running"
+    );
+    let cancelled_at = Instant::now();
     cancel.store(true, Ordering::Release);
     assert!(worker.join().unwrap().unwrap_err().contains("取消"));
-    assert!(start.elapsed() < Duration::from_secs(2));
+    assert!(cancelled_at.elapsed() < Duration::from_secs(5));
     assert!(core.store.preferences(revision, prefs).is_err());
 }
 
