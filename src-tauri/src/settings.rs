@@ -266,6 +266,9 @@ impl SettingsStore {
                     s
                 }
                 2 => {
+                    if raw.get("startup").is_some() || raw.get("desktop").is_some() {
+                        return Err("旧设置包含不属于此版本的字段，已保留原文件".into());
+                    }
                     let mut raw = raw;
                     raw["schemaVersion"] = serde_json::json!(3);
                     raw["startup"] = serde_json::to_value(Startup::default()).unwrap();

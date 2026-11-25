@@ -174,6 +174,26 @@ fn failed_intent_save_still_stops_real_process() {
     assert!(c.runtime.snapshot().pid.is_none());
 }
 #[test]
+fn migration_does_not_replace_unrecognized_legacy_fields() {
+    for field in ["startup", "desktop"] {
+        let d = Directory::new();
+        let mut value = serde_json::to_value(sing_shell::settings::Settings::default()).unwrap();
+        value["schemaVersion"] = serde_json::json!(2);
+        value.as_object_mut().unwrap().remove("startup");
+        value.as_object_mut().unwrap().remove("desktop");
+        value[field] = serde_json::json!({"unrecognized":"keep this data"});
+        let bytes = value.to_string();
+        fs::write(d.0.join("settings.json"), &bytes).unwrap();
+        let store = SettingsStore::open(d.0.clone()).unwrap();
+        assert!(store.error.is_some());
+        assert!(store.resume(false).is_err());
+        assert_eq!(
+            fs::read_to_string(d.0.join("settings.json")).unwrap(),
+            bytes
+        );
+    }
+}
+#[test]
 fn disabling_restore_does_not_cancel_a_manual_start() {
     let d = Directory::new();
     let c = d.configured(serde_json::json!({"checkDelayMs":500}));
