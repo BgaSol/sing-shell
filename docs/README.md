@@ -7,4 +7,4 @@
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
 - [v0.1.0 发行记录](releases/v0.1.0.md)：包来源、原生验收、摘要及限制
 
-临时规划统一放在 `plans/`，不代表已实现功能。
+[临时整改计划](plans/)统一放在 `plans/`，不代表已实现功能。
