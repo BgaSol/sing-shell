@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Sing Shell</title>
+    <script type="module" src="/main.ts"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div>
+        <span id="status" role="status">正在读取状态</span>
+      </header>
+      <section aria-labelledby="connection-title">
+        <div class="section-heading"><h2 id="connection-title">运行配置</h2><span id="pid"></span></div>
+        <div class="setting-row">
+          <div class="setting-label"><h3>sing-box 核心</h3><p id="core-path">选择与你的系统及架构匹配的 sing-box 程序</p></div>
+          <button id="choose-core" type="button" disabled>选择核心</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
+          <button id="choose-config" type="button" disabled>导入配置</button>
+        </div>
+        <p class="hint">配置会保留在原位置。启动前自动校验；关闭窗口会停止核心。</p>
+        <div class="actions">
+          <button id="start" class="primary" type="button" disabled>启动 sing-box</button>
+          <button id="stop" type="button" disabled>停止</button>
+          <button id="check" type="button" disabled>校验配置</button>
+          <span id="activity" role="status"></span>
+        </div>
+        <p id="error" role="alert" hidden></p>
+      </section>
+      <section class="log-section" aria-labelledby="logs-title">
+        <div class="section-heading"><h2 id="logs-title">运行日志</h2><label><input id="follow" type="checkbox" checked /> 跟随最新</label></div>
+        <p class="hint">显示本次打开应用后的最近 1,000 条记录。</p>
+        <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">选择核心和配置文件后，点击「启动 sing-box」。</pre>
+      </section>
+      <footer><span id="version">Sing Shell</span><span>由 sing-box 处理网络连接</span></footer>
+    </main>
+  </body>
+</html>

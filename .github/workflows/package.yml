@@ -1,0 +1,75 @@
+name: Package Sing Shell
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            bundles: nsis
+          - runner: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,appimage
+          - runner: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            bundles: deb,appimage
+          - runner: macos-15
+            target: aarch64-apple-darwin
+            bundles: dmg,app
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          workspaces: src-tauri -> target
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2 xvfb
+      - name: Require native architecture
+        env:
+          EXPECTED_RUST_TARGET: ${{ matrix.target }}
+        run: node -e "const {execFileSync}=require('node:child_process'); const actual=execFileSync('rustc',['-vV'],{encoding:'utf8'}).match(/^host\x3a (.+)$/m)?.[1]; if(actual!==process.env.EXPECTED_RUST_TARGET) throw Error('native host mismatch '+actual)"
+      - run: npm ci
+      - run: npm run check
+      - run: npm run scripts:test
+      - run: npm run web:build
+      - run: npm run test
+      - name: Prepare Release draft
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        with:
+          tagName: v__VERSION__
+          releaseName: Sing Shell v__VERSION__
+          releaseDraft: true
+          releaseBody: See docs/distribution.md. Native installed-package acceptance must be recorded before publishing.
+          uploadUpdaterJson: false
+          args: --bundles ${{ matrix.bundles }} -- --locked
+      - name: Smoke (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/smoke.mjs
+      - name: Smoke (Windows and macOS)
+        if: runner.os != 'Linux'
+        run: node scripts/smoke.mjs
