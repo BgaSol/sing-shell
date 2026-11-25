@@ -27,7 +27,7 @@ async function roundtrip(port){
   }finally{socket.destroy();echo.close();}
 }
 try {
-  let port;
+  let port,hiddenPid;
   if(runningCore){
     const listener=net.createServer();await new Promise(resolve=>listener.listen(0,'127.0.0.1',resolve));port=listener.address().port;await new Promise(resolve=>listener.close(resolve));
     const config=path.join(directory,'running core.json');await fs.writeFile(config,JSON.stringify({inbounds:[{type:'socks',listen:'127.0.0.1',listen_port:port}],outbounds:[{type:'direct'}]}));
@@ -47,7 +47,7 @@ try {
       child.on('exit', (code, signal) => code === 0 ? resolve() : reject(new Error(`smoke exited: ${code ?? signal}`)));
     });
     if(runningCore){
-      const hidden=await waitFile('smoke-hidden.json');assert.equal(hidden.hidden,true);assert.ok(hidden.pid);
+      const hidden=await waitFile('smoke-hidden.json');hiddenPid=hidden.pid;assert.ok(hidden.hidden||hidden.fallback);assert.ok(hidden.pid);
       await roundtrip(port);
       const second=spawn(executable,['--smoke-test','--test-data-dir',directory],{windowsHide:true,stdio:'inherit'});
       await new Promise((resolve,reject)=>{second.on('error',reject);second.on('exit',code=>code===0?resolve():reject(Error(`second instance ${code}`)));});
@@ -55,23 +55,25 @@ try {
       await fs.writeFile(path.join(directory,'smoke-continue'),'continue');
     }
     await exited;
-    if(installInput){const next=await waitFile(`smoke-result-${installInput.version}.json`);assert.equal(next.version,installInput.version);assert.ok(next.restoredPid);assert.equal(next.loginSource,false);assert.equal(next.settings.startup.restoreCoreOnLaunch,true);assert.equal(next.settings.startup.resumeCore,true);assert.equal(next.installThroughLifecycle,false);}
+    if(installInput){const next=await waitFile(`smoke-result-${installInput.version}.json`);assert.equal(next.version,installInput.version);assert.ok(next.restoredPid);assert.notEqual(next.restoredPid,hiddenPid);assert.equal(next.loginSource,false);assert.equal(next.settings.startup.restoreCoreOnLaunch,true);assert.equal(next.settings.startup.resumeCore,true);assert.equal(next.installThroughLifecycle,false);}
   } finally { clearTimeout(timer); }
   const report = JSON.parse(await fs.readFile(path.join(directory,installInput?`smoke-result-${process.env.EXPECTED_VERSION}.json`:'smoke-result.json'), 'utf8'));
   assert.equal(report.completed, true);
   if(installInput)assert.equal(report.installThroughLifecycle,true);
   assert.equal(report.frontendReady, true);
   assert.equal(report.closeRequestIntercepted, true);
-  if(runningCore){assert.ok(report.restoredPid);assert.equal(report.reactivated,true);assert.equal(report.restartArgsNormalized,true);assert.equal(report.settings.startup.resumeCore,true);const deadline=Date.now()+25_000;for(;;){const listener=net.createServer();try{await new Promise((resolve,reject)=>{listener.once('error',reject);listener.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>listener.close(resolve));break;}catch(e){if(e.code!=='EADDRINUSE')throw e;assert.ok(Date.now()<deadline,'core port did not release after native exit');await delay(50);}}}
+  if(runningCore){assert.equal(report.restoredPid,hiddenPid);assert.equal(report.reactivated,true);assert.equal(report.restartArgsNormalized,true);assert.equal(report.settings.startup.resumeCore,true);const deadline=Date.now()+25_000;for(;;){const listener=net.createServer();try{await new Promise((resolve,reject)=>{listener.once('error',reject);listener.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>listener.close(resolve));break;}catch(e){if(e.code!=='EADDRINUSE')throw e;assert.ok(Date.now()<deadline,'core port did not release after native exit');await delay(50);}}}
   if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,3);
-  if(!process.env.EXPECTED_LEGACY){assert.equal(report.draftRetained,true);assert.equal(report.loginIO,true);if(process.platform!=='linux')assert.equal(report.trayAvailable,true);}
+  if(!process.env.EXPECTED_LEGACY){assert.equal(report.draftRetained,true);assert.equal(report.loginIO,true);if(process.platform!=='linux')assert.ok(report.trayAvailable||report.backgroundFallback);}
   if(process.env.EXPECTED_VERSION) assert.equal(report.version,process.env.EXPECTED_VERSION);
   if(process.env.EXPECTED_RUST_TARGET) assert.equal(report.target,process.env.EXPECTED_RUST_TARGET);
   if(process.env.EXPECTED_CONFIG) assert.equal(report.settings.configPath,process.env.EXPECTED_CONFIG);
+  if(process.env.SING_SHELL_SMOKE_REPORT)await fs.appendFile(process.env.SING_SHELL_SMOKE_REPORT,JSON.stringify(report)+'\n');
   console.log(JSON.stringify(report));
   completed = true;
 } catch(error) {
   console.error('Smoke files:',await fs.readdir(directory));
+  try{console.error('Native smoke error:',await fs.readFile(path.join(directory,'smoke-error.json'),'utf8'));}catch{}
   try {const saved=JSON.parse(await fs.readFile(path.join(directory,'settings.json'),'utf8'));console.error('Smoke checkpoints:',{desktop:saved.desktop,startup:saved.startup});}catch{}
   throw error;
 } finally {

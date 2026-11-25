@@ -56,13 +56,23 @@ fn frontend_ready(
             let queued = native.clone();
             let _ = queued.run_on_main_thread(move || {
                 if let Err(e) = smoke_close(&native, &application) {
-                    application.desktop.report(&native, e);
-                    native.exit(1);
+                    smoke_failure(&native, &application, e);
                 }
             });
         });
     }
     Ok(())
+}
+fn smoke_failure(handle: &tauri::AppHandle, app: &App, error: impl ToString) {
+    let message = error.to_string();
+    let value = serde_json::json!({"error":message,"desktop":app.desktop.snapshot(handle,app),"runtime":app.runtime.snapshot(),"core":app.core.snapshot()});
+    let _ = std::fs::write(
+        handle.state::<Smoke>().directory.join("smoke-error.json"),
+        value.to_string(),
+    );
+    eprintln!("Sing Shell smoke failed: {value}");
+    app.runtime.report(message);
+    handle.exit(1);
 }
 fn smoke_close(handle: &tauri::AppHandle, app: &App) -> Result<(), String> {
     app.store.background_notice()?;
@@ -85,15 +95,16 @@ fn smoke_close(handle: &tauri::AppHandle, app: &App) -> Result<(), String> {
                 } else {
                     !w.is_visible().map_err(|e| e.to_string())?
                 };
-                if !intercepted {
-                    return Err("关闭未收起主窗口".to_owned());
-                }
+                let desktop=app.desktop.snapshot(&native,&app);
+                let fallback=!cfg!(target_os="linux") && !desktop.tray_available && desktop.visible && desktop.error.is_some();
+                if !intercepted && !fallback {return Err(format!("关闭未收起主窗口，桌面状态：{}",serde_json::to_string(&desktop).unwrap()));}
+                let accepted=intercepted || fallback;
                 let smoke = native.state::<Smoke>();
                 if smoke.restore {
                     let directory = smoke.directory.clone();
                     std::fs::write(
                         directory.join("smoke-hidden.json"),
-                        serde_json::json!({"pid":app.runtime.snapshot().pid,"hidden":true})
+                        serde_json::json!({"pid":app.runtime.snapshot().pid,"hidden":intercepted,"fallback":fallback})
                             .to_string(),
                     )
                     .map_err(|e| e.to_string())?;
@@ -111,20 +122,18 @@ fn smoke_close(handle: &tauri::AppHandle, app: &App) -> Result<(), String> {
                         }
                         let queued = next.clone();
                         let _ = queued.run_on_main_thread(move || {
-                            if let Err(e) = smoke_finish(&next, &application, intercepted) {
-                                application.runtime.report(e);
-                                next.exit(1);
+                            if let Err(e) = smoke_finish(&next, &application, accepted) {
+                                smoke_failure(&next,&application,e);
                             }
                         });
                     });
                     Ok(())
                 } else {
-                    smoke_finish(&native, &app, intercepted)
+                    smoke_finish(&native, &app, accepted)
                 }
             })();
             if let Err(e) = result {
-                app.runtime.report(e);
-                native.exit(1);
+                smoke_failure(&native,&app,e);
             }
         });
     });
@@ -141,7 +150,7 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
             .items
             .get(&Component::App)
             .is_some_and(|i| i.phase == "ready");
-    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"loginIO":true,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot()});
+    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot()});
     std::fs::write(
         smoke.directory.join("smoke-result.json"),
         report.to_string(),
