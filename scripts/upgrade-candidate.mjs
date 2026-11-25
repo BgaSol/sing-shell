@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';
+import fs from 'node:fs';
+import {collect} from './package-artifacts.mjs';
+const target=process.argv[2],bundles=process.argv[3];
+const current=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')).version;
+const [major,minor,patch]=current.split('.').map(Number);const next=`${major}.${minor}.${patch+1}`;
+fs.mkdirSync('artifacts',{recursive:true});fs.writeFileSync('artifacts/upgrade-config.json',JSON.stringify({version:next}));
+const result=spawnSync(process.execPath,['node_modules/@tauri-apps/cli/tauri.js','build','--config','src-tauri/tauri.release.conf.json','--config','artifacts/upgrade-config.json','--bundles',bundles,'--','--locked'],{stdio:'inherit',env:process.env});
+if(result.error)throw result.error;if(result.status)process.exit(result.status);
+collect(next,target,`artifacts/candidates/${target}`);

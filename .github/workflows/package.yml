@@ -1,36 +1,41 @@
 name: Package Sing Shell
-
 on:
   workflow_dispatch:
-
+    inputs:
+      package_run_id:
+        description: Original package run to reuse; leave empty for a new build
+        type: string
+        default: ""
 permissions:
   contents: write
-
+  actions: read
 concurrency:
   group: package-sing-shell
   cancel-in-progress: false
-
 jobs:
+  select:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - id: matrix
+        run: node scripts/ci-matrix.mjs
+      - name: Validate original run when reusing packages
+        if: inputs.package_run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_RUN_ID: ${{ inputs.package_run_id }}
+        run: node scripts/reuse-package.mjs
   package:
+    needs: select
+    if: inputs.package_run_id == ''
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - runner: windows-2025
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
-          - runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            bundles: nsis
-          - runner: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-            bundles: deb,appimage
-          - runner: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu
-            bundles: deb,appimage
-          - runner: macos-15
-            target: aarch64-apple-darwin
-            bundles: dmg,app
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     steps:
@@ -44,51 +49,117 @@ jobs:
           toolchain: 1.99.1
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
         with:
+          shared-key: signed-release-v1
           workspaces: src-tauri -> target
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2 xvfb dbus-x11
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2
       - name: Require native architecture
         env:
           EXPECTED_RUST_TARGET: ${{ matrix.target }}
         run: node -e "const {execFileSync}=require('node:child_process'); const actual=execFileSync('rustc',['-vV'],{encoding:'utf8'}).match(/^host\x3a (.+)$/m)?.[1]; if(actual!==process.env.EXPECTED_RUST_TARGET) throw Error('native host mismatch '+actual)"
       - run: npm ci
-      - run: npm run check
-      - run: npm run scripts:test
-      - run: npm run web:build
-      - run: npm run test
-      - name: Prepare Release draft
-        uses: tauri-apps/tauri-action@v1
+      - name: Build signed release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
           APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: npm run build -- --config src-tauri/tauri.release.conf.json --bundles ${{ matrix.bundles }} -- --locked
+      - run: node scripts/package-artifacts.mjs ${{ matrix.target }}
+      - name: Build isolated higher-version upgrade candidate
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: node scripts/upgrade-candidate.mjs ${{ matrix.target }} ${{ matrix.bundles }}
+      - uses: actions/upload-artifact@v7
         with:
-          tagName: v__VERSION__
-          releaseName: Sing Shell v__VERSION__
-          releaseDraft: true
-          releaseBody: See docs/distribution.md. Native installed-package acceptance must be recorded before publishing.
-          uploadUpdaterJson: false
-          args: --bundles ${{ matrix.bundles }} -- --locked
-      - name: Verify actual packages and official core (Linux)
+          name: package-${{ matrix.target }}
+          path: |
+            artifacts/packages/
+            artifacts/candidates/
+          if-no-files-found: error
+          retention-days: 30
+  verify:
+    needs: [select, package]
+    if: ${{ !cancelled() && needs.select.result == 'success' && (needs.package.result == 'success' || needs.package.result == 'skipped') }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          shared-key: signed-release-v1
+          workspaces: src-tauri -> target
+      - name: Install Linux verification dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2 xvfb dbus-x11 xdg-utils desktop-file-utils
+      - run: npm ci
+      - run: npm run web:build
+      - run: cargo build --manifest-path src-tauri/Cargo.toml --features test-fixtures --bin upgrade-fixture --locked
+      - uses: actions/download-artifact@v5
+        with:
+          name: package-${{ matrix.target }}
+          path: artifacts/
+          run-id: ${{ inputs.package_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify actual packages and native upgrade (Linux)
         if: runner.os == 'Linux'
         env:
-          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
           EXPECTED_RUST_TARGET: ${{ matrix.target }}
+          PACKAGE_RUN_ID: ${{ inputs.package_run_id || github.run_id }}
           GH_TOKEN: ${{ github.token }}
+          WEBKIT_DISABLE_DMABUF_RENDERER: "1"
         run: dbus-run-session -- xvfb-run -a node scripts/verify-package.mjs
-      - name: Verify actual packages and official core (Windows and macOS)
+      - name: Verify actual packages and native upgrade (Windows and macOS)
         if: runner.os != 'Linux'
         env:
           EXPECTED_RUST_TARGET: ${{ matrix.target }}
+          PACKAGE_RUN_ID: ${{ inputs.package_run_id || github.run_id }}
           GH_TOKEN: ${{ github.token }}
         run: node scripts/verify-package.mjs
-      - name: Upload native verification evidence
+      - uses: actions/upload-artifact@v7
         if: always()
-        uses: actions/upload-artifact@v7
         with:
           name: verification-${{ matrix.target }}
           path: artifacts/verification/
           if-no-files-found: warn
           retention-days: 30
+  metadata:
+    needs: [select, verify]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: package-*
+          path: artifacts/
+          merge-multiple: true
+          run-id: ${{ inputs.package_run_id || github.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: verification-*
+          path: artifacts/verification/
+          merge-multiple: true
+      - name: Prepare the verified Release draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release.mjs

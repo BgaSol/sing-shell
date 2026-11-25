@@ -1,25 +1,37 @@
 # 构建与分发
 
-GitHub Actions 执行干净环境构建，GitHub Releases 分发安装包。壳与 sing-box 上游是独立组件：当前只打包壳，不包含、下载或更新 sing-box 程序；用户自行获取对应上游核心并遵守其许可证。项目没有与 sing-box 上游的官方关联。
+源码、正式包及清单使用公开的 `BgaSol/sing-shell` 同一仓库，GitHub Actions 构建，GitHub Releases 分发。安装包仅包含壳；用户明确安装受管核心时才下载上游 sing-box，二者独立版本。
 
-## 平台和打包
+## 平台与签名
 
-| 平台 | 原生 runner | 包 |
-| --- | --- | --- |
-| Windows x86_64 | windows-2025 | NSIS |
-| Windows ARM64 | windows-11-arm | NSIS |
-| Linux x86_64 | ubuntu-22.04 | deb / AppImage |
-| Linux ARM64 | ubuntu-22.04-arm | deb / AppImage |
-| macOS ARM64 | macos-15 | dmg / app |
+五个原生目标统一定义在 `scripts/targets.mjs`：Windows x86_64 / ARM64（NSIS），Linux x86_64 / ARM64（DEB、AppImage），macOS ARM64（DMG、app 归档）。Check 与 Package 共用矩阵，ARM64 包验收检查真实 PE/ELF/Mach-O 架构。
 
-手动运行 `Package Sing Shell`，使用普通版本标签 `v<tauri.conf.json 中版本>` 准备同一版本的 Release 草稿。Tauri 官方 action 创建草稿并上传五个平台的附件，默认不正式发布。选择需要发行的固定提交执行，避免开发中的 main 变动。
+应用版本只修改 `src-tauri/tauri.conf.json`；标签为普通 `v<major.minor.patch>`。验收可用临时配置构建更高测试候选，不修改源码版本，不把候选上传正式 Release。
 
-`Check` 验证源码与 release 程序启动。打包工作流通过 `scripts/verify-package.mjs` 验收本次实际包：Windows 静默安装 NSIS 到独立临时目录、启动安装后的程序并卸载；Linux 解包 DEB 并启动包内程序，再运行 AppImage；macOS 挂载 DMG、启动包内程序，存在 app 归档时另行解包启动。每个包检查前端加载、IPC 及退出，PE / ELF / Mach-O 检查可执行文件的原生架构。
+Sing Shell 使用独立 Tauri updater 密钥。公钥入应用配置，发行配置 `tauri.release.conf.json` 启用签名；私钥备份位于维护者 `~/.sing-shell-signing/updater.key`，仅由 Actions Secret `TAURI_SIGNING_PRIVATE_KEY` 提供，不提交或发行、不复用 SoDeck 身份。普通开发无需密钥，正式包缺签名即失败。更换公钥需兼容迁移，不能令既有客户端无法更新。
 
-随后下载固定的官方 sing-box 1.14.4 对应平台核心，核对已登记的上游归档 SHA-256，运行真实 SOCKS5 回环转发、配置检查、启停及端口释放测试。该核心仅用于 CI 验证，不进入壳的安装包。报告包括来源提交、Actions run、包大小与摘要、实际验证和跳过范围；发布时迁入 `docs/releases/`，不能只依赖会过期的 Artifact。
+updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows 未做发行商代码签名、macOS 仅 ad-hoc 签名，未公证；互联网下载后的 SmartScreen/Gatekeeper 交互另行记录。
 
-## 发布
+## 一次构建、独立验收
 
-完成五平台原生包验收后，在同一个草稿检查附件、来源提交与测试结果，再正式发布。保存 `docs/releases/<版本>.md`，包含来源提交、原始 Actions run、Release 链接和实际通过 / 跳过范围；不覆盖已经正式发布的同版本附件。
+手动运行 `Package Sing Shell`：
 
-当前 Windows 安装器未进行发行商代码签名，macOS 配置使用 ad-hoc 签名、未完成公证，下载后可能出现系统的未知发行商或 Gatekeeper 提示；本次验收不包含这些分发提示的交互。应用尚无在线 updater，因此不配置或复制 SoDeck 的 updater 密钥。
+1. 五平台原生 package 构建签名包，收集版本、源码、目标、文件名、大小和 SHA-256；同源码另构建更高签名候选，供隔离原生升级测试。
+2. 上传明确平台 Artifact，独立 verify 下载同一份原包，验签、实际安装/解包、启动、IPC 和退出，并验证官方核心及从签名基线到更高候选的原生安装器更替、实际版本与设置保留。
+3. metadata 核对五份成功报告与原包摘要，生成 `core-update.json`，将验证过的字节上传为同一固定标签的 Release 草稿。
+4. 确认包来源提交的相关 Check 结果，正式发布同一草稿并设 Latest；不再推相同版本标签重复构建，不覆盖正式同版本附件。
+
+失败优先重跑失败的平台/verify/metadata。有效 Artifact 可通过明确原始 `package_run_id` 复验和汇总，构建跳过；不能填只有汇总的复用运行或猜最近一次运行。过期/缺失时重建固定源码，不能换来源覆盖同版本。
+
+机器清单 ID 为 `sing-shell.app`，包含唯一版本、说明及按 Rust target 区分的原始 URL、Tauri 签名、大小和 SHA-256，由验收产物生成。Windows 使用 NSIS，macOS 使用 app.tar.gz，Linux 使用 AppImage；DEB 通过系统安装方式升级。
+
+## 实际验收
+
+- Windows 安装 NSIS 到隔离目录，启动安装后程序，再由官方 updater 安装更高签名候选，确认实际版本与配置，最后卸载。
+- Linux 验 DEB 包内程序和 AppImage；验证 AppImage 官方更新，并用系统包管理安装/升级 DEB。
+- macOS 挂载 DMG及解包 app 归档；复制到可写位置后经官方 updater 更新，确认版本与配置。
+- 五个平台下载固定官方 sing-box 1.14.4，核对上游摘要，验证 SOCKS5 回环、启停和端口释放，以及受管准备、架构/版本/配置检查和篡改拒绝。核心仅测试使用，不进入壳包。
+
+夹具由 test-fixtures 限定，不发行，生产不提供测试源、公钥或任意安装路径入口。smoke 禁止生产调度，核对实际应用版本、目标、前端及 IPC；新包能启动不等于升级已通过。
+
+发行记录保留组件版本、原包源码、原始 run、Release 链接、实际通过/跳过范围，并将原始摘要报告迁入 `docs/releases/`，不能只依赖 30 天 Artifact。v0.1.0 无 updater，首个签名基线需手动安装，不以旧版手工覆盖作为在线更新验收。

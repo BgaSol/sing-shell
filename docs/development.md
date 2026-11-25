@@ -11,7 +11,7 @@
 | `npm run web:build` | 前端生产构建 |
 | `npm run test` | Rust 核心生命周期集成测试 |
 | `npm run build` | Tauri 生产编译与平台安装包 |
-| `node scripts/smoke.mjs` | 构建后启动 release 程序，等待前端就绪、IPC 完成并验证退出 |
+| `node scripts/smoke.mjs` | 构建后启动 release 程序，等待前端、IPC 并验证版本/目标和退出 |
 
 主版本只修改 `src-tauri/tauri.conf.json`；Cargo 使用内部版本 `0.0.0`。提交 `package-lock.json` 和 `src-tauri/Cargo.lock`。
 
@@ -32,12 +32,14 @@
 cargo test --manifest-path src-tauri/Cargo.toml --locked --test real_core -- --ignored
 ```
 
-此测试以混合入口的 SOCKS5 协议转发一条本机 TCP 往返，验证配置导入、真实核心启动、转发、停止和端口释放；不修改系统代理，不访问第三方站点。默认测试明确跳过此项，不能把默认通过当作真实核心已验证。
+测试以混合入口的 SOCKS5 协议转发本机 TCP 往返。受管核心专项还需将原始归档的绝对路径写入 `SING_SHELL_TEST_ARCHIVE`，验证准备不覆盖外部程序、配置兼容和准备后篡改拒绝。不修改系统代理或访问第三方站点；默认测试明确跳过真实核心项，不能当作已验证。
 
 ## 持续集成与平台
 
-`.github/workflows/check.yml` 在五个原生 runner 上执行类型、格式、脚本、Rust 测试、生产构建和启动 smoke。ARM64 通过 Rust host 检查拒绝意外使用 x86_64；Linux WebView smoke 在独立 D-Bus / Xvfb 会话中运行，并设置 `WEBKIT_DISABLE_DMABUF_RENDERER=1`，避免无 GPU 桌面的渲染等待。打包工作流使用相同环境。
+`.github/workflows/check.yml` 从 `scripts/targets.mjs` 读取五原生目标，执行类型、格式、脚本、Rust 测试、生产构建和 smoke。ARM64 通过 Rust host 检查；Linux smoke 使用独立 D-Bus / Xvfb，设置 `WEBKIT_DISABLE_DMABUF_RENDERER=1`。
 
 并行测试目录使用进程 ID、时间戳及进程内原子序号，并以 `create_dir` 拒绝复用已有目录，避免时钟精度不足造成不同测试争用同一实例锁。
 
-初始本机验证环境为 Windows x86_64。其余平台仅在对应 CI / 实机执行成功后报告通过；矩阵存在不等于已验收。构建程序 smoke 不替代实际安装包提取或安装后的验收；打包工作流在每个平台运行 `scripts/verify-package.mjs`，实际范围见[分发](distribution.md)。
+原有生命周期回归外，测试覆盖旧设置迁移、修订冲突、慢校验取消/快照读取、关闭接纳、正式版本选择、坏签名与版本篡改、原站/镜像 404、网络限额和线路重试。smoke 在隔离数据目录中模拟未保存草稿并请求关闭，确认窗口仍保留到统一退出入口，防止窗口先销毁、进程却停留后台；不需要桌面输入。真实升级由不发行的 `upgrade-fixture` 驱动官方 updater；更高版本仅用临时配置生成，正式版本来源仍只有 Tauri 配置。
+
+矩阵存在不等于验收通过。打包工作流通过独立 `verify` 下载原始 Artifact，运行 `scripts/verify-package.mjs`，检查原生实际包、签名、设置保留、原生升级及真实核心。具体范围见[分发](distribution.md)。
