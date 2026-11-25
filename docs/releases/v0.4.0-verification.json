@@ -1,0 +1,115 @@
+{
+  "version": "0.4.0",
+  "source": "98fd825afda533a30897e1856744d7de9361c55c",
+  "checkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45721643573",
+  "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45720316806",
+  "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45720316806",
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.4.0",
+  "passed": true,
+  "targets": [
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "aarch64-apple-darwin"
+  ],
+  "verified": [
+    "native source checks on all five targets",
+    "signed packages for all five targets",
+    "install, startup, IPC and exit",
+    "v0.2.0 and v0.3.0 schema migration with external core preservation",
+    "official sing-box 1.14.4 loopback, stop and port release",
+    "one-shot restore after hide and second-instance activation",
+    "application update lifecycle with core cleanup and restored intent",
+    "Windows ARM64 foreground fallback when tray icon operations fail",
+    "macOS login registration read-back and cleanup"
+  ],
+  "skipped": [
+    "publisher code signing",
+    "macOS notarization",
+    "real logout/login session and physical tray observation",
+    "TUN and system proxy"
+  ],
+  "assets": [
+    {
+      "digest": "sha256:e0e70301ab2d173b6c86e174e758b04d2bdec41bf7b9459c8573955daad8c71c",
+      "name": "core-update.json",
+      "size": 4412
+    },
+    {
+      "digest": "sha256:b6f524e21e28370ab9a3038bf2960b639a49b3b13f264e786b5db64bfe77263f",
+      "name": "Sing.Shell_0.4.0_aarch64.app.tar.gz",
+      "size": 5170598
+    },
+    {
+      "digest": "sha256:e5936c1b0dbf1473ada8b643178ae80ba12f63687cf72dfac05536d0c1f6e0b2",
+      "name": "Sing.Shell_0.4.0_aarch64.app.tar.gz.sig",
+      "size": 428
+    },
+    {
+      "digest": "sha256:8e89bed3716690b8a611508e1bc47a9c55d7ecc2256d6c9089d1a13972e7873b",
+      "name": "Sing.Shell_0.4.0_aarch64.AppImage",
+      "size": 82229768
+    },
+    {
+      "digest": "sha256:e8c19026c0af6e92f5c3dc3bbe0fd9138073ff34b830f822eb8584f7fb27b067",
+      "name": "Sing.Shell_0.4.0_aarch64.AppImage.sig",
+      "size": 444
+    },
+    {
+      "digest": "sha256:2e071881759e9bef80438efbbd24f2b62f0d6b08f77c708ec4c4ebb3a21776b6",
+      "name": "Sing.Shell_0.4.0_aarch64.dmg",
+      "size": 5069341
+    },
+    {
+      "digest": "sha256:077bd3d3d96478318128b4b5899322cfe8d321d0b7ee6b1433b5b059ad594de1",
+      "name": "Sing.Shell_0.4.0_amd64.AppImage",
+      "size": 84507128
+    },
+    {
+      "digest": "sha256:6c4b010092e92be4ab8d5a30c9af3ab08e6c220c8ff3bb46bde0010e7ac841c1",
+      "name": "Sing.Shell_0.4.0_amd64.AppImage.sig",
+      "size": 440
+    },
+    {
+      "digest": "sha256:291c9d701b97bd1acfd2f5872485f3a569266457c1d7d08f1218a3cb3692ca1c",
+      "name": "Sing.Shell_0.4.0_amd64.deb",
+      "size": 6299462
+    },
+    {
+      "digest": "sha256:38bb79cc9119020f3acb6669d4a2351116ab3f21630c112388485e0466ca4c50",
+      "name": "Sing.Shell_0.4.0_amd64.deb.sig",
+      "size": 436
+    },
+    {
+      "digest": "sha256:bd73dd72a850eb8332bd27106ac0702f7bbeb4fc4c60d2f2d235b1c0fc4501df",
+      "name": "Sing.Shell_0.4.0_arm64-setup.exe",
+      "size": 3413661
+    },
+    {
+      "digest": "sha256:00a23c1b49d4811f1918250e01ab4ad69e7bc65c19a4a52c89615133a84c18e1",
+      "name": "Sing.Shell_0.4.0_arm64-setup.exe.sig",
+      "size": 444
+    },
+    {
+      "digest": "sha256:942c6dad01473aedf8ccf5d625c67e62d03d77183688f6e35aedcb724ad649a5",
+      "name": "Sing.Shell_0.4.0_arm64.deb",
+      "size": 5920328
+    },
+    {
+      "digest": "sha256:a1b32ff7b7a046fe28b2be9b10307ba7d4ffff5d5ece75a2c16c1a28ea8b3152",
+      "name": "Sing.Shell_0.4.0_arm64.deb.sig",
+      "size": 436
+    },
+    {
+      "digest": "sha256:2d5e5b9b01e15b5290ad755d0742fe823b8faba1b50be1c59b9b97c16ab9630a",
+      "name": "Sing.Shell_0.4.0_x64-setup.exe",
+      "size": 3834159
+    },
+    {
+      "digest": "sha256:2a1707f15ee2235e1f83794df82d209ed7d1da78f8307f2ed04f24346865e81a",
+      "name": "Sing.Shell_0.4.0_x64-setup.exe.sig",
+      "size": 440
+    }
+  ]
+}
