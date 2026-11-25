@@ -64,7 +64,7 @@ impl Application {
             background_started: AtomicBool::new(false),
         }
     }
-    pub fn start(self: &Arc<Self>, handle: tauri::AppHandle, automatic: bool) {
+    pub fn start(self: &Arc<Self>, handle: tauri::AppHandle, automatic: bool, restore: bool) {
         if self.background_started.swap(true, Ordering::AcqRel) {
             return;
         }
@@ -76,7 +76,7 @@ impl Application {
             if let Err(e) = app.core.initialize() {
                 app.runtime.report(e);
             }
-            if automatic && !app.gate.closing() {
+            if (automatic || restore) && !app.gate.closing() {
                 app.core.restore_tick();
             }
             app.updates.initialize(&handle);

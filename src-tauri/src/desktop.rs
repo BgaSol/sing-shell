@@ -220,6 +220,7 @@ impl Desktop {
         }
         let w = handle.get_webview_window("main").ok_or("主窗口不可用")?;
         if cfg!(target_os = "linux") {
+            w.show().map_err(|e| e.to_string())?;
             return w.minimize().map_err(|e| e.to_string());
         }
         if self.state.lock().unwrap().tray.is_none() {

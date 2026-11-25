@@ -18,6 +18,7 @@ struct Smoke {
     enabled: bool,
     directory: PathBuf,
     restore: bool,
+    ready: std::sync::atomic::AtomicBool,
 }
 
 #[tauri::command]
@@ -28,40 +29,35 @@ fn frontend_ready(
     application: State<App>,
 ) -> Result<(), String> {
     application.exit.ready(document);
-    if smoke.enabled {
-        let native = app.clone();
-        let application = application.inner().clone();
-        let restore = smoke.restore;
-        tauri::async_runtime::spawn(async move {
-            if restore {
-                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
-                loop {
-                    if application.core.snapshot().initialized {
-                        application.core.restore_tick();
-                    }
-                    if application.runtime.snapshot().status == "running" {
-                        break;
-                    }
-                    if std::time::Instant::now() >= deadline {
-                        native.exit(1);
-                        return;
-                    }
-                    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-                }
-            }
-            while !application.updates.snapshot().initialized {
-                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(800)).await;
-            let queued = native.clone();
-            let _ = queued.run_on_main_thread(move || {
-                if let Err(e) = smoke_close(&native, &application) {
-                    smoke_failure(&native, &application, e);
-                }
-            });
-        });
+    smoke.ready.store(true, Ordering::Release);
+    if smoke.enabled && !smoke.restore {
+        run_smoke(app, application.inner().clone(), false);
     }
     Ok(())
+}
+fn run_smoke(native: tauri::AppHandle, application: App, restore: bool) {
+    tauri::async_runtime::spawn(async move {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        while !application.updates.snapshot().initialized
+            || (restore && application.runtime.snapshot().status != "running")
+        {
+            if std::time::Instant::now() >= deadline {
+                let queued = native.clone();
+                let _ = queued.run_on_main_thread(move || {
+                    smoke_failure(&native, &application, "隔离恢复/初始化超时")
+                });
+                return;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+        let queued = native.clone();
+        let _ = queued.run_on_main_thread(move || {
+            if let Err(e) = smoke_close(&native, &application) {
+                smoke_failure(&native, &application, e);
+            }
+        });
+    });
 }
 fn smoke_failure(handle: &tauri::AppHandle, app: &App, error: impl ToString) {
     let message = error.to_string();
@@ -113,7 +109,7 @@ fn smoke_close(handle: &tauri::AppHandle, app: &App) -> Result<(), String> {
                     tauri::async_runtime::spawn(async move {
                         let deadline =
                             std::time::Instant::now() + std::time::Duration::from_secs(20);
-                        while !directory.join("smoke-continue").exists() {
+                        while !directory.join("smoke-continue").exists() || !next.state::<Smoke>().ready.load(Ordering::Acquire) {
                             if std::time::Instant::now() >= deadline {
                                 next.exit(1);
                                 return;
@@ -434,6 +430,7 @@ fn main() {
                 enabled: launch.smoke,
                 directory: directory.clone(),
                 restore: std::env::args_os().any(|a| a == "--restore-test"),
+                ready: std::sync::atomic::AtomicBool::new(false),
             });
             let native = tauri.handle().clone();
             let weak = Arc::downgrade(&application);
@@ -466,7 +463,11 @@ fn main() {
             } else {
                 application.desktop.present(tauri.handle(), false)?;
             }
-            application.start(tauri.handle().clone(), !launch.smoke);
+            let restore_test = launch.smoke && tauri.state::<Smoke>().restore;
+            application.start(tauri.handle().clone(), !launch.smoke, restore_test);
+            if restore_test {
+                run_smoke(tauri.handle().clone(), application.clone(), true);
+            }
             let native = tauri.handle().clone();
             let weak = Arc::downgrade(&application);
             tauri::async_runtime::spawn(async move {
