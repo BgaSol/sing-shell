@@ -18,11 +18,21 @@ pub struct Application {
     pub handed_off: AtomicBool,
     pub dirty: AtomicBool,
     pub dialog_open: AtomicBool,
+    pub desktop: crate::desktop::Desktop,
+    pub login: crate::login_startup::Service,
+    pub exit: crate::lifecycle::Coordinator,
     background_started: AtomicBool,
 }
 impl Application {
     pub fn open(root: std::path::PathBuf, version: String) -> Result<Self, String> {
         let store = Arc::new(crate::settings::SettingsStore::open(root)?);
+        Ok(Self::from_store(store, version, true))
+    }
+    pub fn from_store(
+        store: Arc<crate::settings::SettingsStore>,
+        version: String,
+        isolated: bool,
+    ) -> Self {
         let runtime = Arc::new(crate::runtime::RuntimeService::default());
         let gate = Arc::new(Admission::default());
         let wake = Arc::new(tokio::sync::Notify::new());
@@ -38,7 +48,7 @@ impl Application {
             gate.clone(),
             version,
         );
-        Ok(Self {
+        Self {
             core,
             wake,
             store,
@@ -48,19 +58,29 @@ impl Application {
             handed_off: AtomicBool::new(false),
             dirty: AtomicBool::new(false),
             dialog_open: AtomicBool::new(false),
+            desktop: Default::default(),
+            login: crate::login_startup::Service::new(isolated),
+            exit: Default::default(),
             background_started: AtomicBool::new(false),
-        })
+        }
     }
     pub fn start(self: &Arc<Self>, handle: tauri::AppHandle, automatic: bool) {
         if self.background_started.swap(true, Ordering::AcqRel) {
             return;
         }
+        let Ok(bootstrap) = self.gate.begin(Kind::Bootstrap) else {
+            return;
+        };
         let app = self.clone();
         tauri::async_runtime::spawn_blocking(move || {
             if let Err(e) = app.core.initialize() {
                 app.runtime.report(e);
             }
+            if automatic && !app.gate.closing() {
+                app.core.restore_tick();
+            }
             app.updates.initialize(&handle);
+            drop(bootstrap);
             if !automatic {
                 return;
             }
@@ -75,6 +95,7 @@ impl Application {
                     };
                     if !app.gate.closing() {
                         app.core.tick();
+                        app.core.restore_tick();
                     }
                     if !app.gate.closing() && tokio::time::Instant::now() >= app_check_after {
                         app.updates.tick();
@@ -89,6 +110,9 @@ impl Application {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
+    Bootstrap,
+    Stop,
+    Login,
     Runtime,
     Selection,
     CoreFetch,
@@ -156,7 +180,7 @@ impl Admission {
             .unwrap()
             .active
             .values()
-            .any(|a| matches!(a.kind, Kind::Runtime | Kind::Selection))
+            .any(|a| matches!(a.kind, Kind::Runtime | Kind::Selection | Kind::Stop))
     }
     pub fn begin(self: &Arc<Self>, kind: Kind) -> Result<Operation, String> {
         let mut state = self.0.lock().unwrap();
@@ -165,6 +189,8 @@ impl Admission {
         }
         let conflict = state.active.values().any(|v| match (kind, v.kind) {
             (Kind::Runtime | Kind::Selection, Kind::Runtime | Kind::Selection) => true,
+            (Kind::Runtime | Kind::Selection | Kind::Stop, Kind::Stop) => true,
+            (Kind::Login, Kind::Login) => true,
             (Kind::Check, Kind::Check | Kind::Download(_)) | (Kind::Download(_), Kind::Check) => {
                 true
             }
@@ -192,6 +218,11 @@ impl Admission {
             cancel,
             gate: self.clone(),
         })
+    }
+    pub fn cancel_operation(&self, id: u64) {
+        if let Some(active) = self.0.lock().unwrap().active.get(&id) {
+            active.cancel.store(true, Ordering::Release);
+        }
     }
     pub fn cancel_core(&self) {
         self.cancel_kind(|k| k == Kind::CoreFetch);
@@ -221,12 +252,11 @@ impl Admission {
             }
         }
     }
-    pub fn close(&self, install: bool) -> Result<(), String> {
+    pub fn close(&self) -> Result<(), String> {
         let mut state = self.0.lock().unwrap();
         if state.closing {
             return Err("已经在退出或重启".into());
         }
-        let _ = install;
         state.closing = true;
         for active in state.active.values() {
             active.cancel.store(true, Ordering::Release);

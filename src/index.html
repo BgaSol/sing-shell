@@ -11,6 +11,7 @@
   <body>
     <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
       <defs>
+        <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h8m4 0h4M4 17h3m4 0h9"/><circle cx="14" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
         <symbol id="icon-runtime" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7zM4 5v14"/></symbol>
         <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol>
         <symbol id="icon-core" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3M20 9h3m-3 6h3"/></symbol>
@@ -27,7 +28,8 @@
         <div class="brand"><img class="brand-mark" src="../assets/icon.svg" width="50" height="50" alt="" /><div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div></div>
         <span id="status" role="status">正在读取状态</span>
       </header>
-      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span id="update-notice">软件更新</span></button></nav>
+      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span id="update-notice">设置</span></button></nav>
+      <p id="desktop-error" role="alert" hidden></p>
       <div id="runtime-panel">
       <section aria-labelledby="connection-title">
         <div class="section-heading"><h2 id="connection-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>运行配置</h2><span id="pid"></span></div>
@@ -38,7 +40,7 @@
           <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
           <button id="choose-config" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-import"/></svg>导入配置</button>
         </div>
-        <p class="hint">配置会保留在原位置。启动前自动校验；关闭窗口会停止核心。</p>
+        <p class="hint">配置会保留在原位置。启动前自动校验；关闭窗口后核心继续运行，退出应用才会停止。</p>
         <div class="actions">
           <button id="start" class="primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg>启动 sing-box</button>
           <button id="stop" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-stop"/></svg>停止</button>
@@ -54,6 +56,16 @@
       </section>
       </div>
       <div id="updates-panel" hidden>
+        <section aria-labelledby="startup-title">
+          <h2 id="startup-title"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg>启动与窗口</h2>
+          <label><input id="login-startup" type="checkbox" disabled aria-describedby="login-status" /> 登录后自动启动应用</label>
+          <p id="login-status" role="status">正在读取系统登录项…</p>
+          <label><input id="restore-core" type="checkbox" disabled aria-describedby="restore-hint" /> 应用启动时恢复核心运行状态</label>
+          <p id="restore-hint">上次成功运行且未主动停止时恢复。两个开关独立、立即保存，不改变当前运行状态。</p>
+          <p id="startup-error" role="alert" hidden></p>
+          <p class="hint">关闭窗口会收起并保留设置草稿。通过托盘或系统窗口入口返回，退出时才处理草稿并停止核心。</p>
+          <div class="actions"><button id="refresh-login" type="button">重新读取登录项</button><button id="quit-app" type="button">退出应用</button></div>
+        </section>
         <section aria-labelledby="updates-title">
           <div class="section-heading"><h2 id="updates-title"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg>软件更新</h2><button id="check-updates" type="button">检查应用更新</button></div>
           <p id="checked-at">尚未完成全量检查</p>
@@ -76,7 +88,7 @@
           <label class="diagnostic-label" for="diagnostic-prefix">诊断地址（留空测试原始地址）</label><div class="actions"><input id="diagnostic-prefix" type="url" placeholder="https://" /><button id="diagnose-mirror" type="button">诊断地址</button></div><pre id="diagnostics" aria-live="polite"></pre>
         </section>
       </div>
-      <dialog id="dirty-dialog" aria-labelledby="dirty-title"><h2 id="dirty-title">下载网络设置尚未保存</h2><p>请选择保存、放弃本次修改或取消退出。</p><div class="actions"><button id="dirty-save" type="button">保存并继续</button><button id="dirty-discard" type="button">放弃并继续</button><button id="dirty-cancel" type="button">取消</button></div></dialog>
+      <dialog id="dirty-dialog" aria-labelledby="dirty-title"><h2 id="dirty-title">下载网络设置尚未保存</h2><p>请选择保存、放弃本次修改或取消退出。</p><p id="dirty-error" role="alert" hidden></p><div class="actions"><button id="dirty-save" type="button">保存并继续</button><button id="dirty-discard" type="button">放弃并继续</button><button id="dirty-cancel" type="button">取消</button></div></dialog>
       <footer><span id="version">Sing Shell</span><span>由 sing-box 处理网络连接</span></footer>
     </main>
   </body>

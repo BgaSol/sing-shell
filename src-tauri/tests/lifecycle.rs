@@ -196,7 +196,7 @@ fn corrupted_settings_are_not_overwritten_even_after_stop() {
     fs::write(directory.0.join("settings.json"), "broken settings").unwrap();
     let core = Core::open(directory.0.clone()).unwrap();
     assert_eq!(core.snapshot().unwrap().status, "failed");
-    core.stop().unwrap();
+    assert!(core.stop().unwrap_err().contains("恢复状态保存失败"));
     assert!(core.select_core(fixture()).is_err());
     assert_eq!(
         fs::read_to_string(directory.0.join("settings.json")).unwrap(),
@@ -283,8 +283,8 @@ fn close_seals_admission_and_cancels_real_inflight_owners() {
     let download = gate.begin(Kind::Download(Component::App)).unwrap();
     assert!(gate.begin(Kind::Runtime).is_err());
     assert!(gate.begin(Kind::Check).is_err());
-    gate.close(true).unwrap();
-    assert!(gate.close(false).is_err());
+    gate.close().unwrap();
+    assert!(gate.close().is_err());
     assert!(runtime.cancel.load(Ordering::Acquire));
     assert!(download.cancel.load(Ordering::Acquire));
     assert!(gate.begin(Kind::Selection).is_err());

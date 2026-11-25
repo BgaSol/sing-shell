@@ -4,7 +4,7 @@ sing-box 的轻量桌面壳，采用与 [SoDeck](https://github.com/BgaSol/soDec
 
 - 自动获取官方 sing-box 核心，导入并校验 JSON / JSONC 配置。
 - 启动、停止核心，查看运行状态和最近日志。
-- 保存核心和配置文件位置；关闭应用时停止受管进程。
+- 托盘驻留、收起窗口，按需开启登录自启和核心运行状态恢复；退出时停止核心。
 - 自动维护受管核心，运行中准备新版，下次启动生效；应用独立更新，外部核心手动管理。
 
 支持 Windows x86_64 / ARM64、Linux x86_64 / ARM64 和 macOS Apple Silicon，各平台验证范围见[开发文档](docs/development.md)。

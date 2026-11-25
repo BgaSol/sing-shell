@@ -133,6 +133,62 @@ fn baseline(core: &TestCore, d: &Directory) {
     core.stop().unwrap();
 }
 #[test]
+fn restore_waits_for_required_core_and_successful_rollback_records_intent() {
+    let d = Directory::new();
+    {
+        let c = TestCore::open(d.0.join("data")).unwrap();
+        c.core.set_restore(true).unwrap();
+        c.store.resume(true).unwrap();
+        let config = d.config(serde_json::json!({}));
+        c.import_config(&config).unwrap();
+    }
+    let c = TestCore::open(d.0.join("data")).unwrap();
+    c.core.restore_tick();
+    assert_eq!(
+        c.core.snapshot().restore,
+        sing_shell::core::Restore::Waiting
+    );
+    install(&c, &d, "1.14.3");
+    c.core.restore_tick();
+    wait(|| c.core.snapshot().restore == sing_shell::core::Restore::Finished);
+    assert!(c.runtime.snapshot().pid.is_some());
+    assert!(c.store.snapshot().startup.resume_core);
+    c.stop().unwrap();
+    let config = d.config(serde_json::json!({"failVersion":"1.14.4"}));
+    c.import_config(&config).unwrap();
+    install(&c, &d, "1.14.4");
+    c.start().unwrap();
+    assert!(c.store.snapshot().startup.resume_core);
+    assert_eq!(c.store.snapshot().managed.active.unwrap().version, "1.14.3");
+    c.stop().unwrap();
+}
+#[test]
+fn unconfirmed_trial_blocks_restore_even_after_previous_version_is_recovered() {
+    let d = Directory::new();
+    {
+        let c = TestCore::open(d.0.join("data")).unwrap();
+        baseline(&c, &d);
+        install(&c, &d, "1.14.4");
+        let s = c.store.snapshot();
+        c.store
+            .core(s.core_revision, |s| {
+                s.managed.trial = Some(Trial::Starting);
+                Ok(())
+            })
+            .unwrap();
+        c.core.set_restore(true).unwrap();
+        c.store.resume(true).unwrap();
+    }
+    let c = TestCore::open(d.0.join("data")).unwrap();
+    c.core.restore_tick();
+    assert_eq!(
+        c.core.snapshot().restore,
+        sing_shell::core::Restore::Finished
+    );
+    assert!(c.runtime.snapshot().pid.is_none());
+    assert_eq!(c.store.snapshot().managed.active.unwrap().version, "1.14.3");
+}
+#[test]
 fn first_install_promotes_pending_configuration_without_starting() {
     let d = Directory::new();
     let core = TestCore::open(d.0.join("data")).unwrap();
@@ -381,7 +437,7 @@ fn migrated_v1_managed_has_legacy_evidence_and_respects_disabled_preference() {
     fs::write(d.0.join("settings.json"), old.to_string()).unwrap();
     let core = TestCore::open(d.0.clone()).unwrap();
     let s = core.store.snapshot();
-    assert_eq!(s.schema_version, 2);
+    assert_eq!(s.schema_version, 3);
     assert!(!s.update_preferences.automatic_core);
     let r = s.managed.active.unwrap();
     assert!(r.hash.is_some());

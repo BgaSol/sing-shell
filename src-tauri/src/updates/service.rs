@@ -478,6 +478,9 @@ impl UpdateService {
     pub fn reset_network(&self) {
         self.network.clear();
     }
+    pub fn resume(&self) {
+        self.stop.store(false, Ordering::Release);
+    }
     pub fn stop(&self) {
         self.stop.store(true, Ordering::Release);
     }

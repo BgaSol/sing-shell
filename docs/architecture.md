@@ -16,15 +16,15 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 - `updates/service.rs` 只负责应用检查、下载和准备；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
 - `lifecycle.rs` 封闭接纳、取消维护、等待所有者、停止核心，再处理退出或应用安装；不采用核心版本。
 
-前端只呈现快照、编辑偏好和发起意图，不维护自动更新计时器。仍只有运行与软件更新两页，不引入框架、数据库、插件协议或升级守护进程。
+前端只呈现快照、编辑偏好和发起意图，不维护自动更新计时器。仍只有运行与设置两页，不引入框架、数据库、插件协议或升级守护进程。
 
 ## 设置、缓存与恢复
 
-settings schema 2 的 `coreSource` 区分 managed 和 external；managed 保存 active/previous、首次启动 trial 与至多一个 blocked 候选。受管引用绑定版本、target、程序摘要和可用的上游证据，路径从本机应用目录推导。configPath 是已检查路径，pendingConfigPath 是缺核心时先选择的路径，不上传配置正文。
+settings schema 3 的 `coreSource` 区分 managed 和 external；managed 保存 active/previous、首次启动 trial 与至多一个 blocked 候选。受管引用绑定版本、target、程序摘要和可用的上游证据，路径从本机应用目录推导。configPath 是已检查路径，pendingConfigPath 是缺核心时先选择的路径，不上传配置正文。
 
 coreRevision 与 preferencesRevision 分开。每次局部提交从最新设置合并对应字段，不用后台旧快照覆写整个文件。采用时在同一串行提交内检查核心上下文、关闭/取消及自动采用偏好。磁盘写入临时文件同步后替换；设置损坏或未知 schema 保留原件，阻止覆盖。
 
-v0/v1 先备份再迁移；外部选择不变，v1 受管继承旧自动检查开关且不猜测上一版本。legacy 证据与官方新下载证据明确区分。迁移不联网，不在设置读取时运行外部程序。
+v0/v1/v2 先备份再迁移；外部选择不变，v1 受管继承旧自动检查开关且不猜测上一版本。legacy 证据与官方新下载证据明确区分。迁移不联网，不在设置读取时运行外部程序。
 
 核心准备记录最后提交，绑定来源请求和选择代次；恢复不相信上次进度文案，重新核对本地字节。active、previous 和 trial 一次保存，确认启动才清 trial，未确认中断按恢复规则处理。进程 PID/版本来自真实进程快照，不从预期选择伪造。
 
@@ -38,4 +38,14 @@ v0/v1 先备份再迁移；外部选择不变，v1 受管继承旧自动检查�
 
 ## 依赖
 
-沿用已固定的 Tauri updater/opener、reqwest/rustls、Tokio、semver、sha2、zip/tar/flate2，不新增生产依赖或另一套运行时。应用验签与安装交给官方 updater，配置、网络协议、DNS 和转发语义交给 sing-box。工程命令和平台验证见[开发](development.md)。
+沿用已固定的 Tauri updater/opener、reqwest/rustls、Tokio、semver、sha2、zip/tar/flate2，新增 macOS 限定的 objc2 / objc2-foundation 直接绑定，版本与 Tauri 已用版本一致；不增加另一套运行时。应用验签与安装交给官方 updater，配置、网络协议、DNS 和转发语义交给 sing-box。工程命令和平台验证见[开发](development.md)。
+
+## 桌面与启动边界
+
+SettingsStore 持有 instance::Lease；读取和迁移设置前完成独占与本地激活。Windows 管道限定当前用户并核对服务端身份，Unix socket 使用私有目录和同 UID 检查；协议只允许固定的显示窗口请求。更新重启有界等待旧锁，登录参数不传播到下一次重启。
+
+desktop.rs 管理单窗口、托盘、模态保护与待导航，不管理 Child。startup.rs 归一化启动来源和重启环境。login_startup 读取/修改系统当前用户登记，不在设置复制 enabled。开发/隔离验收禁止修改真实登录项。
+
+CoreService 在同一启动用例完成启动观察、可选一次回退和成功提交。startup.restoreCoreOnLaunch 为用户开关，resumeCore 为成功运行意图；主动停止撤销，内部停止和异常退出不改写。一次恢复请求可等待必需核心，失败/取消后消费，不形成守护循环。Stop 有独立票据并等待原启动所有者回收资源，意图代次拒绝迟到成功提交。
+
+lifecycle.rs 使用 Quit / InstallAndRestart，先向当前前端文档发出带 ID 的预检，再封闭 Admission，等待 bootstrap、核心、网络和登录项操作，验包、内部停止核心，最后交给安装器。安装器直接终止进程前已经完成必要清理。

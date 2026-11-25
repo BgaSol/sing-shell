@@ -107,7 +107,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2 xvfb dbus-x11 xdg-utils desktop-file-utils
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf libfuse2 xvfb dbus-x11 openbox xdg-utils desktop-file-utils
       - run: npm ci
       - run: npm run web:build
       - run: cargo build --manifest-path src-tauri/Cargo.toml --features test-fixtures --bin upgrade-fixture --locked
@@ -124,7 +124,7 @@ jobs:
           PACKAGE_RUN_ID: ${{ inputs.package_run_id || github.run_id }}
           GH_TOKEN: ${{ github.token }}
           WEBKIT_DISABLE_DMABUF_RENDERER: "1"
-        run: dbus-run-session -- xvfb-run -a node scripts/verify-package.mjs
+        run: dbus-run-session -- xvfb-run -a sh -c 'openbox >/dev/null 2>&1 & node scripts/verify-package.mjs'
       - name: Verify actual packages and native upgrade (Windows and macOS)
         if: runner.os != 'Linux'
         env:

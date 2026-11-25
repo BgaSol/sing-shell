@@ -5,7 +5,6 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     sync::Mutex,
-    time::{Duration, Instant},
 };
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -102,11 +101,24 @@ pub struct Settings {
     pub config_path: Option<PathBuf>,
     pub pending_config_path: Option<PathBuf>,
     pub update_preferences: UpdatePreferences,
+    pub startup: Startup,
+    pub desktop: Desktop,
+}
+#[derive(Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Startup {
+    pub restore_core_on_launch: bool,
+    pub resume_core: bool,
+}
+#[derive(Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Desktop {
+    pub background_notice_shown: bool,
 }
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            schema_version: 2,
+            schema_version: 3,
             core_revision: 0,
             preferences_revision: 0,
             core_source: Default::default(),
@@ -114,6 +126,8 @@ impl Default for Settings {
             config_path: None,
             pending_config_path: None,
             update_preferences: Default::default(),
+            startup: Default::default(),
+            desktop: Default::default(),
         }
     }
 }
@@ -161,25 +175,14 @@ pub struct SettingsStore {
     state: Mutex<Settings>,
     writer: Mutex<()>,
     pub error: Option<String>,
-    _lock: File,
+    _lease: crate::instance::Lease,
 }
 impl SettingsStore {
     pub fn open(root: PathBuf) -> Result<Self, String> {
-        fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-        let lock = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(false)
-            .open(root.join("instance.lock"))
-            .map_err(|e| e.to_string())?;
-        let deadline = Instant::now() + Duration::from_secs(2);
-        while let Err(e) = lock.try_lock() {
-            if Instant::now() >= deadline {
-                return Err(format!("数据目录正在使用，或无法锁定：{e}"));
-            }
-            std::thread::sleep(Duration::from_millis(25));
-        }
+        let lease = crate::instance::Lease::acquire(&root)?;
+        Self::with_lease(root, lease)
+    }
+    pub fn with_lease(root: PathBuf, lease: crate::instance::Lease) -> Result<Self, String> {
         let path = root.join("settings.json");
         let read = (|| -> Result<Settings, String> {
             let bytes = match fs::read(&path) {
@@ -262,11 +265,18 @@ impl SettingsStore {
                     }
                     s
                 }
-                2 => serde_json::from_value(raw).map_err(|e| e.to_string())?,
+                2 => {
+                    let mut raw = raw;
+                    raw["schemaVersion"] = serde_json::json!(3);
+                    raw["startup"] = serde_json::to_value(Startup::default()).unwrap();
+                    raw["desktop"] = serde_json::to_value(Desktop::default()).unwrap();
+                    serde_json::from_value(raw).map_err(|e| e.to_string())?
+                }
+                3 => serde_json::from_value(raw).map_err(|e| e.to_string())?,
                 _ => return Err("不支持此设置版本".into()),
             };
             Self::validate(&settings)?;
-            if schema < 2 {
+            if schema < 3 {
                 let backup = root.join(format!("settings.v{schema}.backup.json"));
                 if !backup.exists() {
                     let mut f = OpenOptions::new()
@@ -294,11 +304,11 @@ impl SettingsStore {
             state: Mutex::new(settings),
             writer: Mutex::new(()),
             error,
-            _lock: lock,
+            _lease: lease,
         })
     }
     fn validate(s: &Settings) -> Result<(), String> {
-        if s.schema_version != 2 {
+        if s.schema_version != 3 {
             return Err("不支持此设置版本".into());
         }
         s.update_preferences.network.clone().validated()?;
@@ -345,6 +355,37 @@ impl SettingsStore {
             s.update_preferences = preferences;
             s.update_preferences.network = s.update_preferences.network.clone().validated()?;
             s.preferences_revision += 1;
+            Ok(())
+        })
+    }
+    pub fn restore_preference(&self, enabled: bool) -> Result<Settings, String> {
+        self.write(|s| {
+            s.startup.restore_core_on_launch = enabled;
+            Ok(())
+        })
+    }
+    pub fn resume(&self, enabled: bool) -> Result<Settings, String> {
+        self.write(|s| {
+            s.startup.resume_core = enabled;
+            Ok(())
+        })
+    }
+    pub fn confirm_start(&self, expected: u64) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.core_revision != expected {
+                return Err("核心选择已改变".into());
+            }
+            if s.managed.trial.is_some() {
+                s.managed.trial = None;
+                s.core_revision += 1;
+            }
+            s.startup.resume_core = true;
+            Ok(())
+        })
+    }
+    pub fn background_notice(&self) -> Result<Settings, String> {
+        self.write(|s| {
+            s.desktop.background_notice_shown = true;
             Ok(())
         })
     }
