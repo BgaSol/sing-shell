@@ -17,7 +17,7 @@
 
 ## 回归范围
 
-`src-tauri/tests/lifecycle.rs` 使用本仓库编译的真实夹具进程，验证：
+`src-tauri/tests/lifecycle.rs` 经 CoreService 驱动本仓库编译的真实夹具进程，验证：
 
 - 配置引用、保存恢复、空格及非 ASCII 路径、相对文件路径。
 - 已运行时拒绝重复启动及更换配置。
@@ -33,6 +33,8 @@ cargo test --manifest-path src-tauri/Cargo.toml --locked --test real_core -- --i
 ```
 
 测试以混合入口的 SOCKS5 协议转发本机 TCP 往返。受管核心专项还需将原始归档的绝对路径写入 `SING_SHELL_TEST_ARCHIVE`，验证准备不覆盖外部程序、配置兼容和准备后篡改拒绝。不修改系统代理或访问第三方站点；默认测试明确跳过真实核心项，不能当作已验证。
+
+`src-tauri/tests/managed_core.rs` 使用两个不同版本的真实夹具进程、本地固定发行源与归档，覆盖无前端首次自动下载、pending 配置、运行中准备不切换、偏好修订、取消、兼容失败、启动观察、一次回退、启动中断恢复及缓存修复。测试端点只在 test-fixtures 构建中可用，不进入生产客户端；不操作桌面或用户真实代理。
 
 ## 持续集成与平台
 

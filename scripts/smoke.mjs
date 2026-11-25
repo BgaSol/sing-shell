@@ -21,6 +21,7 @@ try {
   assert.equal(report.completed, true);
   assert.equal(report.frontendReady, true);
   assert.equal(report.closeRequestIntercepted, true);
+  if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,2);
   if(process.env.EXPECTED_VERSION) assert.equal(report.version,process.env.EXPECTED_VERSION);
   if(process.env.EXPECTED_RUST_TARGET) assert.equal(report.target,process.env.EXPECTED_RUST_TARGET);
   if(process.env.EXPECTED_CONFIG) assert.equal(report.settings.configPath,process.env.EXPECTED_CONFIG);
