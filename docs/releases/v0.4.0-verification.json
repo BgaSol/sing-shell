@@ -111,5 +111,8 @@
       "name": "Sing.Shell_0.4.0_x64-setup.exe.sig",
       "size": 440
     }
-  ]
+  ],
+  "publicDownloadVerified": true,
+  "publicAssetCount": 16,
+  "publicDownloadMethod": "HTTPS GET without credentials; each byte matched GitHub SHA-256 digest"
 }
