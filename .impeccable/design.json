@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T21:37:03Z",
+  "title": "Design System: Sing Shell",
+  "extensions": {
+    "breakpoints": [
+      { "name": "compact", "value": "680px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "主操作按钮",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "用于启动、保存等明确操作。",
+      "html": "<button class=\"ds-primary\" type=\"button\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m8 5 11 7-11 7z\"/></svg>启动 sing-box</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:7px;font:600 13px 'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:36px;padding:7px 13px;border:2px solid var(--border,#20211f);border-radius:8px;background:var(--primary,#ffde75);color:#20211f;cursor:pointer}.ds-primary svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}.ds-primary:hover:enabled{background:var(--primary-hover,#ffe795)}.ds-primary:active:enabled{background:var(--pressed,#f5dea3)}.ds-primary:focus-visible{outline:3px solid var(--accent,#5346a6);outline-offset:3px}.ds-primary:disabled{color:var(--muted,#585c52);background:var(--disabled-bg,#ece8d9);border-color:#92907b;cursor:default}"
+    },
+    {
+      "name": "地址输入框",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "软件更新中的 HTTPS 地址输入。",
+      "html": "<input class=\"ds-input\" type=\"url\" placeholder=\"https://\" aria-label=\"诊断地址\" />",
+      "css": ".ds-input{font:13px 'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:36px;padding:8px 10px;border:2px solid var(--border,#20211f);border-radius:8px;background:var(--subtle,#fffef5);color:#20211f;min-width:0;caret-color:var(--accent,#5346a6)}.ds-input::placeholder{color:var(--muted,#585c52);opacity:1}.ds-input:focus-visible{outline:3px solid var(--accent,#5346a6);outline-offset:3px}"
+    },
+    {
+      "name": "主导航",
+      "kind": "nav",
+      "refersTo": "navigation-current",
+      "description": "运行与软件更新两页，当前页使用粉底。",
+      "html": "<nav class=\"ds-nav\" aria-label=\"主导航\"><button type=\"button\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m9 5 11 7-11 7zM4 5v14\"/></svg>运行</button><button type=\"button\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5\"/></svg>软件更新</button></nav>",
+      "css": ".ds-nav{display:flex;gap:8px;flex-wrap:wrap}.ds-nav button{display:inline-flex;align-items:center;justify-content:center;gap:7px;font:600 13px 'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:36px;padding:7px 13px;border:2px solid transparent;border-radius:8px;background:transparent;color:#20211f;cursor:pointer}.ds-nav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}.ds-nav button[aria-current=page]{background:var(--navigation,#ffb7cf);border-color:var(--border,#20211f)}.ds-nav button:hover{background:var(--hover,#fff0bc)}.ds-nav button[aria-current=page]:hover{background:#ffc9db}.ds-nav button:active{background:var(--pressed,#f5dea3)}.ds-nav button:focus-visible{outline:3px solid var(--accent,#5346a6);outline-offset:3px}"
+    },
+    {
+      "name": "运行状态",
+      "kind": "chip",
+      "refersTo": "status-running",
+      "description": "圆点和文字共同表达真实运行状态。",
+      "html": "<span class=\"ds-status\" role=\"status\">正在运行</span>",
+      "css": ".ds-status{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:2px solid var(--border,#20211f);border-radius:8px;background:var(--success-bg,#d5f1e5);color:var(--success,#176b4f);font:600 12px 'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;white-space:nowrap}.ds-status::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}@media(forced-colors:active){.ds-status::before{background:CanvasText}}"
+    },
+    {
+      "name": "运行面板",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "淡黄区域以墨黑边框组织内容。",
+      "html": "<section class=\"ds-panel\" aria-labelledby=\"ds-panel-title\"><h2 id=\"ds-panel-title\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\"/><path d=\"M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3M20 9h3m-3 6h3\"/></svg>运行配置</h2><p>启动前自动校验；关闭窗口会停止核心。</p></section>",
+      "css": ".ds-panel{min-width:0;padding:18px 22px;border:2px solid var(--border,#20211f);border-radius:12px;background:var(--surface,#fffbe6);color:#20211f;font-family:'Segoe UI Variable','Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}.ds-panel h2{display:flex;align-items:center;gap:9px;margin:0;font-size:16px;font-weight:700}.ds-panel svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round}.ds-panel p{margin:5px 0 0;font-size:13px;line-height:1.6;color:var(--muted,#585c52)}@media(max-width:680px){.ds-panel{padding:16px}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "多巴胺贝壳",
+    "overview": "沿用 SoDeck 多巴胺语言的轻量 sing-box 桌面壳。日常应用采用 Operate 模式：状态清楚、操作直接、配置与日志易读。固定浅色，以暖奶油底色承托淡黄面板。",
+    "keyCharacteristics": [
+      "粉底黄贝壳、绿底座的品牌标识。",
+      "墨黑结构线、平面色块、紧凑的操作密度。",
+      "黄色主操作、粉色当前导航、紫色焦点、绿色运行、桃粉错误。"
+    ],
+    "rules": [
+      {
+        "name": "The State Color Rule",
+        "body": "运行使用绿色，失败使用桃粉底和深红文字；处理中使用黄色底和紫色文字。状态同时保留文字，不只依赖颜色。",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Rule",
+        "body": "面板与控件保持平面，不使用阴影、渐变或装饰动效；依靠底色、边框和留白表达层级。对话框使用半透明墨黑遮罩。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 保留品牌／状态、导航、配置、日志的操作顺序。",
+      "Do 使用既有语义色，并保留文字状态与清晰键盘焦点。"
+    ],
+    "donts": [
+      "Don't 添加深色模式、阴影、渐变或装饰动效。",
+      "Don't 把日志等宽字体扩展为普通界面字体。"
+    ]
+  }
+}

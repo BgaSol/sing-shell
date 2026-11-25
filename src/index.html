@@ -3,54 +3,68 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" type="image/svg+xml" href="../assets/icon.svg" />
     <title>Sing Shell</title>
     <script type="module" src="/main.ts"></script>
   </head>
   <body>
+    <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <symbol id="icon-runtime" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7zM4 5v14"/></symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol>
+        <symbol id="icon-core" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3M20 9h3m-3 6h3"/></symbol>
+        <symbol id="icon-log" viewBox="0 0 24 24"><path d="M7 3h10l3 3v15H4V3zM8 10h8M8 14h8M8 18h5"/></symbol>
+        <symbol id="icon-network" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18"/></symbol>
+        <symbol id="icon-import" viewBox="0 0 24 24"><path d="M14 3h5v18H5v-4M3 10h11m-4-4 4 4-4 4"/></symbol>
+        <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
+        <symbol id="icon-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+      </defs>
+    </svg>
     <main>
       <header>
-        <div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div>
+        <div class="brand"><img class="brand-mark" src="../assets/icon.svg" width="50" height="50" alt="" /><div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div></div>
         <span id="status" role="status">正在读取状态</span>
       </header>
-      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page">运行</button><button id="nav-updates" type="button"><span id="update-notice">软件更新</span></button></nav>
+      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg><span id="update-notice">软件更新</span></button></nav>
       <div id="runtime-panel">
       <section aria-labelledby="connection-title">
-        <div class="section-heading"><h2 id="connection-title">运行配置</h2><span id="pid"></span></div>
+        <div class="section-heading"><h2 id="connection-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>运行配置</h2><span id="pid"></span></div>
         <div class="setting-row"><div class="setting-label"><h3>sing-box 核心</h3><p id="home-core-version">正在准备核心</p><p id="home-core-state" role="status"></p><p id="home-core-error" role="alert" hidden></p><progress id="home-core-progress" aria-label="核心下载进度" hidden></progress></div></div>
-        <div class="actions"><button id="home-core-retry" type="button" hidden>重试准备核心</button><button id="home-core-cancel" type="button" hidden>取消下载</button></div>
+        <div class="actions core-actions"><button id="home-core-retry" type="button" hidden>重试准备核心</button><button id="home-core-cancel" type="button" hidden>取消下载</button></div>
         <details><summary>高级：核心来源</summary><p class="hint">默认由应用管理官方核心。本机核心由你手动维护。</p><div class="actions"><button id="choose-core" type="button" disabled>使用本机核心</button><button id="home-core-managed" type="button">使用应用管理核心</button></div></details>
         <div class="setting-row">
           <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
-          <button id="choose-config" type="button" disabled>导入配置</button>
+          <button id="choose-config" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-import"/></svg>导入配置</button>
         </div>
         <p class="hint">配置会保留在原位置。启动前自动校验；关闭窗口会停止核心。</p>
         <div class="actions">
-          <button id="start" class="primary" type="button" disabled>启动 sing-box</button>
-          <button id="stop" type="button" disabled>停止</button>
-          <button id="check" type="button" disabled>校验配置</button>
+          <button id="start" class="primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg>启动 sing-box</button>
+          <button id="stop" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-stop"/></svg>停止</button>
+          <button id="check" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>校验配置</button>
           <span id="activity" role="status"></span>
         </div>
         <p id="error" role="alert" hidden></p>
       </section>
       <section class="log-section" aria-labelledby="logs-title">
-        <div class="section-heading"><h2 id="logs-title">运行日志</h2><label><input id="follow" type="checkbox" checked /> 跟随最新</label></div>
+        <div class="section-heading"><h2 id="logs-title"><svg class="icon" aria-hidden="true"><use href="#icon-log"/></svg>运行日志</h2><label><input id="follow" type="checkbox" checked /> 跟随最新</label></div>
         <p class="hint">显示本次打开应用后的最近 1,000 条记录。</p>
         <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">导入配置后，等待核心就绪并点击「启动 sing-box」。</pre>
       </section>
       </div>
       <div id="updates-panel" hidden>
         <section aria-labelledby="updates-title">
-          <div class="section-heading"><h2 id="updates-title">软件更新</h2><button id="check-updates" type="button">检查应用更新</button></div>
+          <div class="section-heading"><h2 id="updates-title"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg>软件更新</h2><button id="check-updates" type="button">检查应用更新</button></div>
           <p id="checked-at">尚未完成全量检查</p>
           <p id="update-error" role="alert" hidden></p>
           <div id="update-items"></div>
           <div class="actions"><button id="download-selected" type="button">下载应用更新</button><button id="apply-updates" class="primary" type="button">重启并更新应用</button></div>
           <p id="pending-updates" class="hint"></p>
         </section>
-        <section aria-labelledby="core-updates-title"><h2 id="core-updates-title">sing-box 核心</h2><p id="update-core-version"></p><p id="update-core-state" role="status"></p><p id="update-core-error" role="alert" hidden></p><progress id="update-core-progress" aria-label="核心下载进度" hidden></progress><div class="actions"><button id="core-check" type="button">检查核心</button><button id="update-core-retry" type="button">更新核心</button><button id="update-core-cancel" type="button" hidden>取消下载</button><button id="update-core-managed" type="button" hidden>使用应用管理核心</button></div><p class="hint">运行中保持当前核心，新版下次启动生效，无需重启应用。</p></section>
+        <section aria-labelledby="core-updates-title"><h2 id="core-updates-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>sing-box 核心</h2><p id="update-core-version"></p><p id="update-core-state" role="status"></p><p id="update-core-error" role="alert" hidden></p><progress id="update-core-progress" aria-label="核心下载进度" hidden></progress><div class="actions"><button id="core-check" type="button">检查核心</button><button id="update-core-retry" type="button">更新核心</button><button id="update-core-cancel" type="button" hidden>取消下载</button><button id="update-core-managed" type="button" hidden>使用应用管理核心</button></div><p class="hint">运行中保持当前核心，新版下次启动生效，无需重启应用。</p></section>
         <section aria-labelledby="network-title">
-          <h2 id="network-title">检查与下载网络</h2>
+          <h2 id="network-title"><svg class="icon" aria-hidden="true"><use href="#icon-network"/></svg>检查与下载网络</h2>
           <p class="hint">设置保存后用于新任务，在途下载继续使用原设置。</p>
           <label><input id="automatic" type="checkbox" /> 每天检查应用更新</label>
           <label><input id="automatic-core" type="checkbox" /> 自动更新核心</label>
