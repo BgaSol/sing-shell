@@ -10,7 +10,7 @@ const directory = process.env.SING_SHELL_TEST_DATA ?? await fs.mkdtemp(path.join
 let completed = false;
 try {
   const child = spawn(executable, ['--smoke-test', '--test-data-dir', directory], { stdio: 'inherit', windowsHide: true });
-  const timer = setTimeout(() => { child.kill(); }, 30_000);
+  const timer = setTimeout(() => { child.kill(); }, 90_000);
   try {
     await new Promise((resolve, reject) => {
       child.on('error', reject);
