@@ -1,0 +1,773 @@
+{
+  "version": "0.3.0",
+  "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+  "checkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45693761977",
+  "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45693871344",
+  "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45693871344",
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.3.0",
+  "reports": [
+    {
+      "version": "0.3.0",
+      "target": "x86_64-pc-windows-msvc",
+      "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "toolSource": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "run": "45693871344",
+      "verificationRun": "45693871344",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "x64",
+        "release": "10.0.26100"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.3.0_x64-setup.exe",
+          "role": "nsis",
+          "size": 3656862,
+          "sha256": "cf477cc4e06aca7e4c0dceb06d7a8235c5b22a96e69dadc524f462b61dcdde42"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_x64-setup.exe.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "106d428e167f212ed77ac408aff2d5e3ace14156239d7c10d4526513a4d0505b"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema 1 migration and external selection preserved",
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-amd64.zip",
+        "sha256": "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+      },
+      "previousUpgrade": {
+        "from": "0.2.0",
+        "to": "0.3.0",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.0_x64-setup.exe",
+            "role": "nsis",
+            "size": 3656862,
+            "sha256": "cf477cc4e06aca7e4c0dceb06d7a8235c5b22a96e69dadc524f462b61dcdde42"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_x64-setup.exe.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "106d428e167f212ed77ac408aff2d5e3ace14156239d7c10d4526513a4d0505b"
+          }
+        ]
+      },
+      "upgrade": {
+        "from": "0.3.0",
+        "to": "0.3.1",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.1_x64-setup.exe",
+            "role": "nsis",
+            "size": 3646425,
+            "sha256": "afc77c05602a0926c8abfcded35f8849fe9edbe3b75f203bef176e2f4c6fc026"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_x64-setup.exe.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "03129a959c250b0f08664775f348a9907c051b90b2d593f6bbfd4fba2935dce4"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.3.0",
+      "target": "aarch64-pc-windows-msvc",
+      "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "toolSource": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "run": "45693871344",
+      "verificationRun": "45693871344",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "arm64",
+        "release": "10.0.26200"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.3.0_arm64-setup.exe",
+          "role": "nsis",
+          "size": 3238224,
+          "sha256": "01784c612a1a9d77bb4771f51dc5e62911d8ba14b63a3ea57a753eb3e75d4a09"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_arm64-setup.exe.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "7ceb3a4d1c787f779b783941b6717d7dd91e36aec468e8cd50d7d6f0453bb711"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema 1 migration and external selection preserved",
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-arm64.zip",
+        "sha256": "8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+      },
+      "previousUpgrade": {
+        "from": "0.2.0",
+        "to": "0.3.0",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.0_arm64-setup.exe",
+            "role": "nsis",
+            "size": 3238224,
+            "sha256": "01784c612a1a9d77bb4771f51dc5e62911d8ba14b63a3ea57a753eb3e75d4a09"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_arm64-setup.exe.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "7ceb3a4d1c787f779b783941b6717d7dd91e36aec468e8cd50d7d6f0453bb711"
+          }
+        ]
+      },
+      "upgrade": {
+        "from": "0.3.0",
+        "to": "0.3.1",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.1_arm64-setup.exe",
+            "role": "nsis",
+            "size": 3238974,
+            "sha256": "102bdcadbbe890e82bdd833e43e00419a842e2d8b6ef87e15a54e1b252c0d171"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_arm64-setup.exe.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "552d562ca11db5b64888e07790f121f10e6011a5fc9ce0902d607ca97d166071"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.3.0",
+      "target": "x86_64-unknown-linux-gnu",
+      "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "toolSource": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "run": "45693871344",
+      "verificationRun": "45693871344",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-1073-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.3.0_amd64.deb",
+          "role": "deb",
+          "size": 5983588,
+          "sha256": "6597172ffdc2496701a5341014ae6838f6e2164b89f6a12fa7ddc48f13aba356"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_amd64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "62a75890f51968e40d0ef100661f3488c85539f08accc2b5eb3294e68556946c"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_amd64.AppImage",
+          "role": "appimage",
+          "size": 84064760,
+          "sha256": "f3444714301fb045f53befa81a3f20b3eef17dc1f944904d39d59bf73200a400"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_amd64.AppImage.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "d3afb049610c7e6c2461e55818cc745041caf8b0dd0138f87463de422b5ad963"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema 1 migration and external selection preserved",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "AppImage extraction, WebView, IPC and exit",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-amd64.tar.gz",
+        "sha256": "699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+      },
+      "previousUpgrade": {
+        "from": "0.2.0",
+        "to": "0.3.0",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.0_amd64.deb",
+            "role": "deb",
+            "size": 5983588,
+            "sha256": "6597172ffdc2496701a5341014ae6838f6e2164b89f6a12fa7ddc48f13aba356"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_amd64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "62a75890f51968e40d0ef100661f3488c85539f08accc2b5eb3294e68556946c"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_amd64.AppImage",
+            "role": "appimage",
+            "size": 84064760,
+            "sha256": "f3444714301fb045f53befa81a3f20b3eef17dc1f944904d39d59bf73200a400"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_amd64.AppImage.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "d3afb049610c7e6c2461e55818cc745041caf8b0dd0138f87463de422b5ad963"
+          }
+        ]
+      },
+      "upgrade": {
+        "from": "0.3.0",
+        "to": "0.3.1",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.1_amd64.deb",
+            "role": "deb",
+            "size": 5983588,
+            "sha256": "e4fa793a4adb834d7805639753df621d9f0edd01509498b7f2272191a05f5861"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_amd64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "c822860d8631919a4e674388687860386b7bdb664fa4c219d7ae5c9b6902c985"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_amd64.AppImage",
+            "role": "appimage",
+            "size": 84064760,
+            "sha256": "571a44dd06ccbb01af532adbfb89b2891689c4047fba6f9c23db53e1e92c36f6"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_amd64.AppImage.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "5db7df39c81359c141354126574379d801e48ab0cc666c52d9e2cf4279e98f42"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.3.0",
+      "target": "aarch64-unknown-linux-gnu",
+      "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "toolSource": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "run": "45693871344",
+      "verificationRun": "45693871344",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "arm64",
+        "release": "6.8.0-1073-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.3.0_arm64.deb",
+          "role": "deb",
+          "size": 5617610,
+          "sha256": "7cf8217c6f013b158f4caf34b64f6b4d4eb80d56caf372f9281a3f8c30790945"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_arm64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "19315ac44dfe9a4acd81e88a7b52d0c5df4cd14194395075bb86d8728a0fade7"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_aarch64.AppImage",
+          "role": "appimage",
+          "size": 81799688,
+          "sha256": "eaf9bcbb5735b6859b8ee568da3412eea98783acbac0700c3886fd74c435bcc0"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_aarch64.AppImage.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "eb40f2e35bd52a5bfebe9092aad9fc3d318aefa7fd0a94ca9dc608aa6370b2e8"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema 1 migration and external selection preserved",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "AppImage extraction, WebView, IPC and exit",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-arm64.tar.gz",
+        "sha256": "436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+      },
+      "previousUpgrade": {
+        "from": "0.2.0",
+        "to": "0.3.0",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.0_arm64.deb",
+            "role": "deb",
+            "size": 5617610,
+            "sha256": "7cf8217c6f013b158f4caf34b64f6b4d4eb80d56caf372f9281a3f8c30790945"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_arm64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "19315ac44dfe9a4acd81e88a7b52d0c5df4cd14194395075bb86d8728a0fade7"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_aarch64.AppImage",
+            "role": "appimage",
+            "size": 81799688,
+            "sha256": "eaf9bcbb5735b6859b8ee568da3412eea98783acbac0700c3886fd74c435bcc0"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_aarch64.AppImage.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "eb40f2e35bd52a5bfebe9092aad9fc3d318aefa7fd0a94ca9dc608aa6370b2e8"
+          }
+        ]
+      },
+      "upgrade": {
+        "from": "0.3.0",
+        "to": "0.3.1",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.1_arm64.deb",
+            "role": "deb",
+            "size": 5617618,
+            "sha256": "ef43713e4c71622562cae3061234b1a13643a3431de260ac24ab291534a93356"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_arm64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "9169753bc877cdcd2c108a02afa0956914d43e31d1cd0ce85d41dfe109db9c75"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_aarch64.AppImage",
+            "role": "appimage",
+            "size": 81799688,
+            "sha256": "98d3e78bf4da45ebcbab33fe1891119cd3f46e0ea2fe9ce96a8bfe94abf654cf"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_aarch64.AppImage.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "cee53841abf2ca37d4e98d333377e74cd71e556fdee6d3c20a20464e93066ff0"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.3.0",
+      "target": "aarch64-apple-darwin",
+      "source": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "toolSource": "059f7df63ee43f0a03ae73eabd864586ae438b6a",
+      "run": "45693871344",
+      "verificationRun": "45693871344",
+      "nativeHost": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "25.6.0"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.3.0_aarch64.dmg",
+          "role": "dmg",
+          "size": 4676990,
+          "sha256": "35bc154c64a008714b22e449c78cdfdf4dc784affe763fc49b15dbed22546635"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz",
+          "role": "app",
+          "size": 4826442,
+          "sha256": "a8d70cc9fb2896531835f79f38d32055361342b04842dcb3190e713a8afd5173"
+        },
+        {
+          "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz.sig",
+          "role": "signature",
+          "size": 428,
+          "sha256": "10bca6780c96897159c2dfa670e66b39af915ad00ce730aa5a87623dad112981"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema 1 migration and external selection preserved",
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive executable: native architecture, WebView, IPC and exit",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      },
+      "previousUpgrade": {
+        "from": "0.2.0",
+        "to": "0.3.0",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.0_aarch64.dmg",
+            "role": "dmg",
+            "size": 4676990,
+            "sha256": "35bc154c64a008714b22e449c78cdfdf4dc784affe763fc49b15dbed22546635"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz",
+            "role": "app",
+            "size": 4826442,
+            "sha256": "a8d70cc9fb2896531835f79f38d32055361342b04842dcb3190e713a8afd5173"
+          },
+          {
+            "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz.sig",
+            "role": "signature",
+            "size": 428,
+            "sha256": "10bca6780c96897159c2dfa670e66b39af915ad00ce730aa5a87623dad112981"
+          }
+        ]
+      },
+      "upgrade": {
+        "from": "0.3.0",
+        "to": "0.3.1",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.3.1_aarch64.dmg",
+            "role": "dmg",
+            "size": 4676981,
+            "sha256": "b4aceddf9d776c3eabdaf878cc845c12956fbf92004d1f4fee5def11b5ebacd4"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_aarch64.app.tar.gz",
+            "role": "app",
+            "size": 4826447,
+            "sha256": "89a92596ad80ab7fb6c7d3efac1f7a497a3384e8ffb4365b5a770e45f4b3650d"
+          },
+          {
+            "name": "Sing.Shell_0.3.1_aarch64.app.tar.gz.sig",
+            "role": "signature",
+            "size": 428,
+            "sha256": "4ea066a904cef433a7568715121991aa2cd39da5cea3655fe923145a765de551"
+          }
+        ]
+      }
+    }
+  ],
+  "publicVerification": {
+    "checkedAt": "2026-11-25T20:34:09.597Z",
+    "anonymous": true,
+    "latestAPI": "https://api.github.com/repos/BgaSol/sing-shell/releases/latest",
+    "releaseId": 458617091,
+    "tag": "v0.3.0",
+    "draft": false,
+    "prerelease": false,
+    "allAssetHashesMatched": true,
+    "updaterTargetsMatched": true,
+    "assets": [
+      {
+        "name": "core-update.json",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/core-update.json",
+        "size": 4166,
+        "sha256": "8ada196e4a7ac5e5bf0cc65674acc7e9b01196b04eea1032568557f319e7e970"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_aarch64.app.tar.gz",
+        "size": 4826442,
+        "sha256": "a8d70cc9fb2896531835f79f38d32055361342b04842dcb3190e713a8afd5173"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_aarch64.app.tar.gz.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "sha256": "10bca6780c96897159c2dfa670e66b39af915ad00ce730aa5a87623dad112981"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_aarch64.AppImage",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_aarch64.AppImage",
+        "size": 81799688,
+        "sha256": "eaf9bcbb5735b6859b8ee568da3412eea98783acbac0700c3886fd74c435bcc0"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_aarch64.AppImage.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_aarch64.AppImage.sig",
+        "size": 444,
+        "sha256": "eb40f2e35bd52a5bfebe9092aad9fc3d318aefa7fd0a94ca9dc608aa6370b2e8"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_aarch64.dmg",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_aarch64.dmg",
+        "size": 4676990,
+        "sha256": "35bc154c64a008714b22e449c78cdfdf4dc784affe763fc49b15dbed22546635"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_amd64.AppImage",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_amd64.AppImage",
+        "size": 84064760,
+        "sha256": "f3444714301fb045f53befa81a3f20b3eef17dc1f944904d39d59bf73200a400"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_amd64.AppImage.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_amd64.AppImage.sig",
+        "size": 440,
+        "sha256": "d3afb049610c7e6c2461e55818cc745041caf8b0dd0138f87463de422b5ad963"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_amd64.deb",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_amd64.deb",
+        "size": 5983588,
+        "sha256": "6597172ffdc2496701a5341014ae6838f6e2164b89f6a12fa7ddc48f13aba356"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_amd64.deb.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_amd64.deb.sig",
+        "size": 436,
+        "sha256": "62a75890f51968e40d0ef100661f3488c85539f08accc2b5eb3294e68556946c"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_arm64-setup.exe",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_arm64-setup.exe",
+        "size": 3238224,
+        "sha256": "01784c612a1a9d77bb4771f51dc5e62911d8ba14b63a3ea57a753eb3e75d4a09"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_arm64-setup.exe.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_arm64-setup.exe.sig",
+        "size": 444,
+        "sha256": "7ceb3a4d1c787f779b783941b6717d7dd91e36aec468e8cd50d7d6f0453bb711"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_arm64.deb",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_arm64.deb",
+        "size": 5617610,
+        "sha256": "7cf8217c6f013b158f4caf34b64f6b4d4eb80d56caf372f9281a3f8c30790945"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_arm64.deb.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_arm64.deb.sig",
+        "size": 436,
+        "sha256": "19315ac44dfe9a4acd81e88a7b52d0c5df4cd14194395075bb86d8728a0fade7"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_x64-setup.exe",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_x64-setup.exe",
+        "size": 3656862,
+        "sha256": "cf477cc4e06aca7e4c0dceb06d7a8235c5b22a96e69dadc524f462b61dcdde42"
+      },
+      {
+        "name": "Sing.Shell_0.3.0_x64-setup.exe.sig",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.3.0/Sing.Shell_0.3.0_x64-setup.exe.sig",
+        "size": 440,
+        "sha256": "106d428e167f212ed77ac408aff2d5e3ace14156239d7c10d4526513a4d0505b"
+      }
+    ],
+    "previousReleaseUnchanged": {
+      "tag": "v0.2.0",
+      "releaseId": 458518313,
+      "assets": [
+        {
+          "name": "core-update.json",
+          "size": 4495,
+          "digest": "sha256:a4e5e1f3f06485dbb960872cc02080dcc2945db295b7dfd4b556249876ea13bd",
+          "id": 792735842
+        },
+        {
+          "name": "Sing.Shell_0.2.0_aarch64.app.tar.gz",
+          "size": 4753707,
+          "digest": "sha256:d75f2cd0f36a2a7c88de31cb02fd4a1de20c0cb00b8a8279f3b0ad0339ee8cea",
+          "id": 792735426
+        },
+        {
+          "name": "Sing.Shell_0.2.0_aarch64.app.tar.gz.sig",
+          "size": 428,
+          "digest": "sha256:1a302756a3dafd828172263265f292fb813ecc95c0fd736df4087bc770efa9e0",
+          "id": 792735691
+        },
+        {
+          "name": "Sing.Shell_0.2.0_aarch64.AppImage",
+          "size": 81672712,
+          "digest": "sha256:2e4e7b0fc4d66f8a0efaf881eea4c2756efc9a5bb874a4c253afc9c435612661",
+          "id": 792733832
+        },
+        {
+          "name": "Sing.Shell_0.2.0_aarch64.AppImage.sig",
+          "size": 444,
+          "digest": "sha256:852ff8a16e95af81b6d41bc0dd4a4336a068199a777fb3f69a41eae6adf4d901",
+          "id": 792734985
+        },
+        {
+          "name": "Sing.Shell_0.2.0_aarch64.dmg",
+          "size": 4604659,
+          "digest": "sha256:a6259422a1f92f121ced529b25e2e0300deba1b1d9c2189205edb0b44a89fe05",
+          "id": 792735150
+        },
+        {
+          "name": "Sing.Shell_0.2.0_amd64.AppImage",
+          "size": 83941880,
+          "digest": "sha256:59c42195392518f64c957ccb4f3c5d3c27e6744030c30afd9b85f35c57cf07ae",
+          "id": 792732313
+        },
+        {
+          "name": "Sing.Shell_0.2.0_amd64.AppImage.sig",
+          "size": 440,
+          "digest": "sha256:61ccfe8a85a682ddd5075ad38645e08c85938c8076fd48763b5c2877f610f8dd",
+          "id": 792733299
+        },
+        {
+          "name": "Sing.Shell_0.2.0_amd64.deb",
+          "size": 5849112,
+          "digest": "sha256:564f942bcdb4e2e951b78bf32943f101bab2387454530ffd742939f4ddbf7b42",
+          "id": 792731960
+        },
+        {
+          "name": "Sing.Shell_0.2.0_amd64.deb.sig",
+          "size": 436,
+          "digest": "sha256:904b95cec28a93381aac6386ae2ac9b853483c3b487153afa6d1d6f3ed9e724a",
+          "id": 792732197
+        },
+        {
+          "name": "Sing.Shell_0.2.0_arm64-setup.exe",
+          "size": 3151567,
+          "digest": "sha256:89decbaa274875849a28f61458ec407cec6fde0a1d7fcf1610651390c858dd29",
+          "id": 792731535
+        },
+        {
+          "name": "Sing.Shell_0.2.0_arm64-setup.exe.sig",
+          "size": 444,
+          "digest": "sha256:d97d391f9530a622c5101ffb43e55d78f0aba78f2698904b8797abdba83bdd35",
+          "id": 792731824
+        },
+        {
+          "name": "Sing.Shell_0.2.0_arm64.deb",
+          "size": 5480206,
+          "digest": "sha256:ff9412e3a1350f4d20b99a28138b72ab4cf41da0f560ce4c084b153e90ec6dc1",
+          "id": 792733432
+        },
+        {
+          "name": "Sing.Shell_0.2.0_arm64.deb.sig",
+          "size": 436,
+          "digest": "sha256:ec3f741dc3b5e095312c56d73ac1c619c1320d5ca91a35039718b00b070f7c3c",
+          "id": 792733700
+        },
+        {
+          "name": "Sing.Shell_0.2.0_x64-setup.exe",
+          "size": 3534489,
+          "digest": "sha256:ae68540222dc0261d8df7b64a954d9ced08fcc761ec82464e9f1cf631b2013c7",
+          "id": 792731153
+        },
+        {
+          "name": "Sing.Shell_0.2.0_x64-setup.exe.sig",
+          "size": 440,
+          "digest": "sha256:60168157e905c76689b952360bf2a5e0e831d322f48acc92a806de4f96c4d970",
+          "id": 792731364
+        }
+      ]
+    }
+  }
+}
