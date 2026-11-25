@@ -4,7 +4,7 @@
 
 ## 平台与签名
 
-五个原生目标统一定义在 `scripts/targets.mjs`：Windows x86_64 / ARM64（NSIS），Linux x86_64 / ARM64（DEB、AppImage），macOS ARM64（DMG、app 归档）。Check 与 Package 共用矩阵，ARM64 包验收检查真实 PE/ELF/Mach-O 架构。macOS 在原生 macOS 15 构建、macOS 26 验收，避免旧运行器池容量不足阻断原包复验；实际验收系统记录在报告中。
+五个原生目标统一定义在 `scripts/targets.mjs`：Windows x86_64 / ARM64（NSIS），Linux x86_64 / ARM64（DEB、AppImage），macOS ARM64（DMG、app 归档）。Check 与 Package 共用矩阵，ARM64 包验收检查真实 PE/ELF/Mach-O 架构。macOS 在原生 macOS 26 构建和验收，避免旧运行器池容量不足；实际构建/验收系统记录在发行证据中。
 
 应用版本只修改 `src-tauri/tauri.conf.json`；标签为普通 `v<major.minor.patch>`。验收可用临时配置构建更高测试候选，不修改源码版本，不把候选上传正式 Release。
 
