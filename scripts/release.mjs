@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {targets} from './targets.mjs';
 import {validate,updater} from './package-artifacts.mjs';
 const version=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')).version;
-const notes=fs.readFileSync(`docs/releases/v${version}.md`,'utf8');
+const notes=fs.readFileSync(`docs/releases/v${version}.md`,'utf8').split('\n## ')[0].trim();
 const repository='BgaSol/sing-shell',tag=`v${version}`;
 const platforms={},files=[];let source;
 for(const target of targets){const root=path.resolve('artifacts/packages',target);const manifest=validate(root);const report=JSON.parse(fs.readFileSync(`artifacts/verification/${target}.json`));assert.equal(manifest.version,version);assert.equal(manifest.target,target);assert.equal(report.passed,true);assert.equal(report.version,version);assert.equal(report.target,target);assert.equal(report.source,manifest.source);assert.deepEqual(report.packages,manifest.files);assert.equal(report.upgrade?.actualVersionConfirmed,true);source??=manifest.source;assert.equal(source,manifest.source);const item=updater(manifest);const signature=fs.readFileSync(path.join(root,item.name+'.sig'),'utf8').trim();assert.ok(signature);platforms[target]={url:`https://github.com/${repository}/releases/download/${tag}/${encodeURIComponent(item.name)}`,signature,sha256:item.sha256,size:item.size};files.push(...manifest.files.map(f=>path.join(root,f.name)));}
