@@ -33,6 +33,24 @@ pub struct Item {
     pub total_bytes: Option<u64>,
     pub network: Option<network::Attempt>,
 }
+impl Item {
+    fn restore_candidate(&mut self, component: Component, current: &str) {
+        let Some(candidate) = &self.candidate else {
+            return;
+        };
+        if candidate.component != component
+            || candidate.target != crate::TARGET
+            || stable(&candidate.version).is_err()
+        {
+            *self = Self::default();
+        } else if stable(&candidate.version).unwrap() <= stable(current).unwrap() {
+            *self = Self {
+                phase: "current".into(),
+                ..Default::default()
+            };
+        }
+    }
+}
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
@@ -192,6 +210,9 @@ impl UpdateService {
             match serde_json::from_slice::<Snapshot>(&bytes) {
                 Ok(mut state) => {
                     state.restore_transient(now());
+                    for (component, item) in &mut state.items {
+                        item.restore_candidate(*component, &self.current(*component));
+                    }
                     *self.state.lock().unwrap() = state;
                 }
                 Err(e) => self
@@ -577,6 +598,26 @@ impl UpdateService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn restored_candidate_cannot_offer_an_installed_version_or_another_component() {
+        let candidate: Candidate = serde_json::from_value(serde_json::json!({
+            "component":"app","version":"0.2.0","target":crate::TARGET,
+            "url":"https://example.invalid/package","signature":"signature",
+            "sha256":"a".repeat(64),"size":1,"notes":"notes","releaseUrl":"https://example.invalid/release",
+            "assetName":"package","assetId":1,"tag":"v0.2.0"
+        })).unwrap();
+        let mut item = Item {
+            phase: "available".into(),
+            candidate: Some(candidate.clone()),
+            ..Default::default()
+        };
+        item.restore_candidate(Component::App, "0.2.0");
+        assert_eq!(item.phase, "current");
+        assert!(item.candidate.is_none());
+        item.candidate = Some(candidate);
+        item.restore_candidate(Component::Engine, "0.0.0");
+        assert!(item.candidate.is_none());
+    }
     #[test]
     fn schedule_uses_success_day_and_failure_retry_without_losing_last_success() {
         let mut state = Snapshot::default();
