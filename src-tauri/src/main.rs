@@ -482,7 +482,7 @@ fn main() {
                     let handle = native.clone();
                     let _ = native.run_on_main_thread(move || {
                         if let Err(e) = app.desktop.refresh(&app) {
-                            app.desktop.report(&handle, e);
+                            app.desktop.tray_failed(&handle, e);
                         }
                     });
                 }

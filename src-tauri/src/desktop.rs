@@ -68,6 +68,11 @@ impl Desktop {
         self.state.lock().unwrap().error = Some(error.to_string());
         let _ = self.present(handle, true);
     }
+    pub fn tray_failed(&self, handle: &tauri::AppHandle, error: impl ToString) {
+        let tray = self.state.lock().unwrap().tray.take();
+        drop(tray);
+        self.report(handle, error);
+    }
     pub fn present(&self, handle: &tauri::AppHandle, focus: bool) -> Result<(), String> {
         #[cfg(target_os = "macos")]
         handle
