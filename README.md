@@ -6,7 +6,11 @@ sing-box 的轻量桌面壳，采用与 [SoDeck](https://github.com/BgaSol/soDec
 - 启动、停止核心，查看运行状态和最近日志。
 - 保存核心和配置文件位置；关闭应用时停止受管进程。
 
-开发目标为 Windows x86_64 / ARM64、Linux x86_64 / ARM64 和 macOS Apple Silicon。项目处于初始开发阶段，各平台验证范围见[开发文档](docs/development.md)。
+支持 Windows x86_64 / ARM64、Linux x86_64 / ARM64 和 macOS Apple Silicon，各平台验证范围见[开发文档](docs/development.md)。
+
+## 安装
+
+在 [GitHub Latest Release](https://github.com/BgaSol/sing-shell/releases/latest) 下载对应平台的 Windows 安装器、Linux DEB / AppImage 或 macOS DMG。安装包仅包含桌面壳，sing-box 核心单独获取。首次使用及系统安装提示见[使用指南](docs/usage.md)和[分发说明](docs/distribution.md)。
 
 ## 开发运行
 

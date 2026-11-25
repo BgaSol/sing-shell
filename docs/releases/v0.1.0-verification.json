@@ -1,0 +1,217 @@
+{
+  "version": "0.1.0",
+  "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+  "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45652644837",
+  "checkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45652634492",
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.1.0",
+  "releaseAssets": [
+    {
+      "name": "Sing.Shell_0.1.0_aarch64.dmg",
+      "target": "aarch64-apple-darwin",
+      "size": 2657196,
+      "sha256": "ecbe7ab54766d6a319618d3fa6b854acf8bb55541d5d30e80763b4d3746681d5"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_aarch64.app.tar.gz",
+      "target": "aarch64-apple-darwin",
+      "size": 2617377,
+      "sha256": "6b332dd60298013a30fef6243e86b0d15927513a0b12c63663cdeef615176abe"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_arm64-setup.exe",
+      "target": "aarch64-pc-windows-msvc",
+      "size": 1798366,
+      "sha256": "b0dec879dc4b2e9886a755d5f40feaffa09663a2e8771e152e4bf66dc786276a"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_arm64.deb",
+      "target": "aarch64-unknown-linux-gnu",
+      "size": 2552632,
+      "sha256": "fba0f0ee623331de447c96aae7cb81bc8e744aa4f196019bb3fd0a69752d8c24"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_aarch64.AppImage",
+      "target": "aarch64-unknown-linux-gnu",
+      "size": 79116808,
+      "sha256": "f02d5ce93214b9cb83b7e9922dfcfcdcd97c3f4f96f137c6e77e9c6ab1d42df6"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_x64-setup.exe",
+      "target": "x86_64-pc-windows-msvc",
+      "size": 2016636,
+      "sha256": "6e85074f8d934af520bfbc49542ebc504bd187e7d037b9486d0de89275bd8774"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_amd64.deb",
+      "target": "x86_64-unknown-linux-gnu",
+      "size": 2718920,
+      "sha256": "da7047f8fa823eaadcf5ddea299ee9b0bb6a1300213fabbef074177dce1a1c77"
+    },
+    {
+      "name": "Sing.Shell_0.1.0_amd64.AppImage",
+      "target": "x86_64-unknown-linux-gnu",
+      "size": 81156600,
+      "sha256": "df955410dbaa167151fa56bd2455fe92c3137bb0b46348f148ed8b1ecd57b7cd"
+    }
+  ],
+  "reports": [
+    {
+      "version": "0.1.0",
+      "target": "aarch64-apple-darwin",
+      "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+      "run": "45652644837",
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing Shell_0.1.0_aarch64.dmg",
+          "size": 2657196,
+          "sha256": "ecbe7ab54766d6a319618d3fa6b854acf8bb55541d5d30e80763b4d3746681d5"
+        },
+        {
+          "name": "Sing Shell.app.tar.gz",
+          "size": 2617377,
+          "sha256": "6b332dd60298013a30fef6243e86b0d15927513a0b12c63663cdeef615176abe"
+        }
+      ],
+      "verified": [
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive: native architecture, WebView, IPC and exit",
+        "official sing-box: config check, start, SOCKS5 TCP roundtrip, stop and port release"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      }
+    },
+    {
+      "version": "0.1.0",
+      "target": "aarch64-pc-windows-msvc",
+      "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+      "run": "45652644837",
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing Shell_0.1.0_arm64-setup.exe",
+          "size": 1798366,
+          "sha256": "b0dec879dc4b2e9886a755d5f40feaffa09663a2e8771e152e4bf66dc786276a"
+        }
+      ],
+      "verified": [
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "official sing-box: config check, start, SOCKS5 TCP roundtrip, stop and port release"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-arm64.zip",
+        "sha256": "8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+      }
+    },
+    {
+      "version": "0.1.0",
+      "target": "aarch64-unknown-linux-gnu",
+      "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+      "run": "45652644837",
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing Shell_0.1.0_arm64.deb",
+          "size": 2552632,
+          "sha256": "fba0f0ee623331de447c96aae7cb81bc8e744aa4f196019bb3fd0a69752d8c24"
+        },
+        {
+          "name": "Sing Shell_0.1.0_aarch64.AppImage",
+          "size": 79116808,
+          "sha256": "f02d5ce93214b9cb83b7e9922dfcfcdcd97c3f4f96f137c6e77e9c6ab1d42df6"
+        }
+      ],
+      "verified": [
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "AppImage self-extraction, WebView, IPC and exit",
+        "official sing-box: config check, start, SOCKS5 TCP roundtrip, stop and port release"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-arm64.tar.gz",
+        "sha256": "436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+      }
+    },
+    {
+      "version": "0.1.0",
+      "target": "x86_64-pc-windows-msvc",
+      "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+      "run": "45652644837",
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing Shell_0.1.0_x64-setup.exe",
+          "size": 2016636,
+          "sha256": "6e85074f8d934af520bfbc49542ebc504bd187e7d037b9486d0de89275bd8774"
+        }
+      ],
+      "verified": [
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "official sing-box: config check, start, SOCKS5 TCP roundtrip, stop and port release"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-amd64.zip",
+        "sha256": "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+      }
+    },
+    {
+      "version": "0.1.0",
+      "target": "x86_64-unknown-linux-gnu",
+      "source": "7bc1af7f728e6a658c6f6f3f538aacbdefcd2fe9",
+      "run": "45652644837",
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing Shell_0.1.0_amd64.deb",
+          "size": 2718920,
+          "sha256": "da7047f8fa823eaadcf5ddea299ee9b0bb6a1300213fabbef074177dce1a1c77"
+        },
+        {
+          "name": "Sing Shell_0.1.0_amd64.AppImage",
+          "size": 81156600,
+          "sha256": "df955410dbaa167151fa56bd2455fe92c3137bb0b46348f148ed8b1ecd57b7cd"
+        }
+      ],
+      "verified": [
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "AppImage self-extraction, WebView, IPC and exit",
+        "official sing-box: config check, start, SOCKS5 TCP roundtrip, stop and port release"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "TUN and system proxy"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-amd64.tar.gz",
+        "sha256": "699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+      }
+    }
+  ]
+}
