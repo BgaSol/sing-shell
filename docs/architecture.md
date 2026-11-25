@@ -1,43 +1,41 @@
 # 架构
 
-Sing Shell 复用 SoDeck 的技术分层，以最小桌面壳管理一个本地 sing-box 进程。仓库、标识、数据目录、版本和构建均独立于 SoDeck。
+Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。具体行为见[核心与配置](features/core.md)和[软件更新](features/updates.md)。
 
-```text
-TypeScript / 原生 DOM / Vite
-            │ Tauri IPC（操作与快照）
-            ▼
-Tauri 2 桌面适配（main.rs）
-            │
-            ▼
-Rust 核心（core.rs）── 设置 / 校验 / 状态 / 有界日志
-            │
-            ▼
-平台适配（platform.rs）── 原生路径 / 进程组
-            │ argv + stdout/stderr
-            ▼
-独立 sing-box 程序 ── 代理协议 / DNS / 路由 / 网络转发
-```
+## 职责与链路
 
-## 代码与契约
+`运行页/更新页 → Tauri IPC → Application 接纳 → SettingsStore / RuntimeService / UpdateService → Lifecycle 收尾 → 原生退出或重启`。
 
-- `src/main.ts`：页面状态、操作、防重复提交、日志与失败展示。快照是事实来源；刷新期间过期结果不能覆盖新操作。
-- `src/core.ts`：前端调用及类型。`core_snapshot` 读取真实状态；`core_action` 接受 `check` / `start` / `stop`；`choose_file` 通过原生文件框选择核心或配置。
-- `src-tauri/src/main.rs`：Tauri 装配、原生文件框、应用目录、IPC 和退出收尾。耗时操作放在阻塞工作线程，不阻塞 WebView 事件循环。
-- `src-tauri/src/core.rs`：核心选择、配置校验、设置保存、进程真实状态及有界日志。操作由同一实例互斥串行处理；日志 reader 只持日志锁，不反向获取操作锁。
-- `src-tauri/src/platform.rs`：Windows 无控制台挂起启动、Job Object 归属及恢复；Unix 独立进程组。停止后等待真实退出并回收输出线程。
+- `main.rs` 负责 Tauri 装配、原生文件框和命令转接，不在原生事件回调同步等待进程。
+- `app.rs` 组合服务，以短接纳锁维护 closing 和具体在途操作；票据结束释放占用，取消与真实结束分别处理。
+- `settings.rs` 拥有唯一设置、修订、串行写入与实例锁，磁盘操作不持应用全局状态锁。
+- `runtime.rs` 负责命令校验、启动、监督与停止，独立观察真实进程退出；快照只读。`logs.rs` 管理有界日志和输出 reader。
+- `platform.rs` 负责 Windows Job Object / Unix 进程组，不拼 shell 启动程序。
+- `lifecycle.rs` 是退出、重启及更新重启的唯一入口；先验证本地更新，再停止核心、切换受管选择及调用安装器。
+- `updates/service.rs` 拥有初始化、调度、两个组件的候选/进度/准备状态；`release.rs` 解释发行，`network.rs` 传输，`application.rs` 调用官方 updater，`engine.rs` 管理受管程序。
 
-前后端随同一应用版本发行，当前无需独立 RPC 主版本。sing-box 通过命令行调用，不套 SoDeck 的插件协议；以后若引入 Clash API，应由 Rust 适配并校验本机地址与凭据，前端不直接持有控制接口密钥。
+只维护应用和引擎两个具体更新对象，不建立插件协议、通用工作流引擎或动态服务注册。后台任务属于应用，事件仅通知重读，快照和已提交结果是事实来源。
 
-## 数据和生命周期
+## 存储
 
-设置使用临时文件写入后替换；读取失败保留原文件。应用数据目录持文件锁。配置正文属于用户文件，壳只记路径；核心和配置均以独立原生参数传递，不通过 shell 拼接。
+设置 schema 1 为 `schemaVersion/revision/engine/configPath/updatePreferences`；engine 是未配置、`external {path}` 或 `managed {version,target}`。受管路径由本机应用目录和校验后的版本/目标推导，不由 UI 提供。
 
-核心与检查进程均加入受管进程组。Windows Job 设置 `KILL_ON_JOB_CLOSE`，应用进程消失时操作系统会回收作业；Unix 正常退出由应用清理，应用被 SIGKILL 等强制终止时不能执行清理，因此不能保证这种情况下核心被回收。
+v0.1.0 设置迁移时保留 `settings.v0.backup.json`，旧 corePath 成为 external。未知 schema 或损坏文件保留原件并阻止覆盖。保存检查 expectedRevision，临时文件同步后替换。配置正文仍属于用户，使用原绝对路径及父目录工作路径，不复制上传。
 
-状态刷新通过 `try_wait` 观察实际子进程；日志不决定连接状态。具体用户行为、失败和限制统一见[核心与配置](features/core.md)。
+更新缓存独立于设置，准备记录绑定 schema、来源、目标、版本和摘要。恢复不相信上次进度文案，重新核对本地字节。稳定状态单独串行保存，避免双组件覆盖同一缓存文件。
+
+实例锁由应用持有直到收尾完成，新实例有界等待重启交接，真正第二实例被拒绝。
+
+## 并发和平台边界
+
+状态锁只维护短状态；网络、解包、校验进程、签名和安装交给有限 worker。supervisor 独占 Child，reader 只写日志。收尾超时保留实际状态、允许重试，不把取消信号当作资源已回收。
+
+Windows Job 使用 KILL_ON_JOB_CLOSE；Unix 正常退出清理进程组，宿主被 SIGKILL 时无法执行收尾。应用与核心各自提交，不提供跨组件原子事务或应用内任意降级。
+
+Tauri 官方 updater 负责应用验签及安装，sing-box 自己负责配置语义、协议、DNS 和路由。前后端同包发行，不增加独立 RPC 主版本。
 
 ## 依赖
 
-仅保留 SoDeck 已使用的 Tauri API / CLI、Tauri dialog、serde / serde_json、Unix libc 和 Windows windows-sys；开发端使用同一 TypeScript / Vite。Tauri 维护桌面适配和原生文件框，serde 处理设置，libc / windows-sys 处理系统进程原语。版本固定在清单及锁文件。
+清单和锁文件固定版本。更新依赖沿用 SoDeck 已使用的 Tauri updater/opener、reqwest/rustls、tokio、semver、sha2、zip/tar/flate2，分别用于官方安装、系统打开、HTTPS、调度、版本、摘要及 Windows/Unix 两种实际归档。由 Tauri 与对应 Rust 上游维护，升级前复核维护状态、安全修复及原生兼容。
 
-不引入前端框架、数据库、插件 SDK 或 Go 绑定。替代方案是手写平台文件框与 FFI，但会增加维护；嵌入 libbox 会把 Go 编译和 FFI 带入壳的构建，当前独立核心用例不需要。
+替代方案为自建安装器/加密实现，或依赖机器上的 curl、解包命令；本项目使用成熟库减少平台分支，不要求运行机器装开发工具。未增加前端框架、数据库、Go FFI 或升级守护进程。

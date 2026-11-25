@@ -1,4 +1,8 @@
 fn main() {
+    println!(
+        "cargo:rustc-env=SING_SHELL_TARGET={}",
+        std::env::var("TARGET").unwrap()
+    );
     tauri_build::build();
     // Rust test executables need the same dialog manifest as the desktop binary.
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")

@@ -8,7 +8,7 @@ use std::{
 fn main() {
     let args: Vec<_> = std::env::args_os().collect();
     if args.get(1).is_some_and(|arg| arg == "version") {
-        println!("sing-box version test-fixture");
+        println!("sing-box version 1.14.4");
         return;
     }
     let config = args
@@ -29,6 +29,9 @@ fn main() {
         std::process::exit(2);
     }
     if args.get(1).is_some_and(|arg| arg == "check") {
+        if let Some(delay) = value["checkDelayMs"].as_u64() {
+            std::thread::sleep(Duration::from_millis(delay));
+        }
         return;
     }
     if value["exit"].as_bool() == Some(true) {

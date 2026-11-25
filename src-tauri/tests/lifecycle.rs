@@ -1,6 +1,6 @@
 #![cfg(feature = "test-fixtures")]
 
-use sing_shell::core::Core;
+mod support;
 use std::{
     fs,
     net::{TcpListener, TcpStream},
@@ -9,6 +9,7 @@ use std::{
     thread,
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+use support::TestCore as Core;
 
 struct Directory(PathBuf);
 
@@ -78,7 +79,7 @@ fn wait(mut predicate: impl FnMut() -> bool) {
 #[test]
 fn imports_persists_runs_and_releases_the_listener() {
     let directory = Directory::new();
-    let mut core = Core::open(directory.0.join("data")).unwrap();
+    let core = Core::open(directory.0.join("data")).unwrap();
     core.select_core(fixture()).unwrap();
     fs::write(directory.0.join("relative.txt"), "relative data").unwrap();
     let port = TcpListener::bind(("127.0.0.1", 0))
@@ -112,7 +113,7 @@ fn imports_persists_runs_and_releases_the_listener() {
     let _listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
     assert_eq!(fs::read(&config).unwrap(), original);
     drop(core);
-    let mut restored = Core::open(directory.0.join("data")).unwrap();
+    let restored = Core::open(directory.0.join("data")).unwrap();
     assert_eq!(
         restored.snapshot().unwrap().settings.config_path.unwrap(),
         config.canonicalize().unwrap()
@@ -123,12 +124,20 @@ fn imports_persists_runs_and_releases_the_listener() {
 #[test]
 fn failed_import_preserves_previous_configuration_and_changed_configs_are_rechecked() {
     let directory = Directory::new();
-    let mut core = Core::open(directory.0.join("data")).unwrap();
+    let core = Core::open(directory.0.join("data")).unwrap();
     assert!(core.start().is_err());
+    assert_eq!(core.snapshot().unwrap().status, "failed");
     assert!(core.select_core(Path::new("relative-program")).is_err());
     core.select_core(fixture()).unwrap();
+    assert_eq!(core.snapshot().unwrap().status, "stopped");
+    assert!(core.snapshot().unwrap().error.is_none());
     let config = directory.config(serde_json::json!({}));
     core.import_config(&config).unwrap();
+    core.runtime.report("previous failed operation".into());
+    core.runtime
+        .check(&core.store, &std::sync::atomic::AtomicBool::new(false))
+        .unwrap();
+    assert!(core.snapshot().unwrap().error.is_none());
     let settings = fs::read(directory.0.join("data/settings.json")).unwrap();
     fs::write(&config, r#"{"invalid":true}"#).unwrap();
     assert!(core
@@ -152,7 +161,7 @@ fn failed_import_preserves_previous_configuration_and_changed_configs_are_rechec
 #[test]
 fn unexpected_exit_is_reported_and_core_can_be_restarted() {
     let directory = Directory::new();
-    let mut core = Core::open(directory.0.join("data")).unwrap();
+    let core = Core::open(directory.0.join("data")).unwrap();
     core.select_core(fixture()).unwrap();
     let config = directory.config(serde_json::json!({"exit":true}));
     core.import_config(&config).unwrap();
@@ -168,7 +177,7 @@ fn unexpected_exit_is_reported_and_core_can_be_restarted() {
 #[test]
 fn dropping_the_application_stops_the_core() {
     let directory = Directory::new();
-    let mut core = Core::open(directory.0.join("data")).unwrap();
+    let core = Core::open(directory.0.join("data")).unwrap();
     core.select_core(fixture()).unwrap();
     let port = TcpListener::bind(("127.0.0.1", 0))
         .unwrap()
@@ -187,7 +196,7 @@ fn dropping_the_application_stops_the_core() {
 fn corrupted_settings_are_not_overwritten_even_after_stop() {
     let directory = Directory::new();
     fs::write(directory.0.join("settings.json"), "broken settings").unwrap();
-    let mut core = Core::open(directory.0.clone()).unwrap();
+    let core = Core::open(directory.0.clone()).unwrap();
     assert_eq!(core.snapshot().unwrap().status, "failed");
     core.stop().unwrap();
     assert!(core.select_core(fixture()).is_err());
@@ -204,4 +213,94 @@ fn a_second_instance_cannot_manage_the_same_data_directory() {
     assert!(Core::open(directory.0.clone()).is_err());
     drop(core);
     assert!(Core::open(directory.0.clone()).is_ok());
+}
+
+#[test]
+fn legacy_settings_migrate_without_claiming_the_external_engine() {
+    let directory = Directory::new();
+    let config = directory.config(serde_json::json!({}));
+    let legacy = serde_json::json!({"corePath":fixture(),"configPath":config});
+    fs::write(directory.0.join("settings.json"), legacy.to_string()).unwrap();
+    let core = Core::open(directory.0.clone()).unwrap();
+    assert!(matches!(
+        core.store.snapshot().engine,
+        Some(sing_shell::settings::Engine::External { .. })
+    ));
+    let backup: serde_json::Value =
+        serde_json::from_slice(&fs::read(directory.0.join("settings.v0.backup.json")).unwrap())
+            .unwrap();
+    assert_eq!(backup, legacy);
+    assert!(core.store.snapshot().update_preferences.automatic);
+    assert_eq!(core.snapshot().unwrap().status, "stopped");
+}
+
+#[test]
+fn slow_validation_can_be_cancelled_without_blocking_snapshots_or_preferences() {
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
+    let directory = Directory::new();
+    let core = Core::open(directory.0.join("data")).unwrap();
+    core.select_core(fixture()).unwrap();
+    let config = directory.config(serde_json::json!({}));
+    core.import_config(&config).unwrap();
+    fs::write(config, r#"{"checkDelayMs":10000}"#).unwrap();
+    let core = Arc::new(core);
+    let cancel = Arc::new(AtomicBool::new(false));
+    let worker = {
+        let core = core.clone();
+        let cancel = cancel.clone();
+        thread::spawn(move || core.runtime.check(&core.store, &cancel))
+    };
+    thread::sleep(Duration::from_millis(100));
+    let start = Instant::now();
+    let revision = core.store.snapshot().revision;
+    core.store
+        .save(revision, |s| s.update_preferences.automatic = false)
+        .unwrap();
+    assert_eq!(core.snapshot().unwrap().status, "stopped");
+    assert!(start.elapsed() < Duration::from_secs(1));
+    cancel.store(true, Ordering::Release);
+    assert!(worker.join().unwrap().unwrap_err().contains("取消"));
+    assert!(start.elapsed() < Duration::from_secs(2));
+    assert!(core.store.save(revision, |_| {}).is_err());
+}
+
+#[test]
+fn close_seals_admission_and_cancels_real_inflight_owners() {
+    use sing_shell::{
+        app::{Admission, Kind},
+        updates::Component,
+    };
+    use std::sync::{atomic::Ordering, Arc};
+    let gate = Arc::new(Admission::default());
+    let runtime = gate.begin(Kind::Runtime).unwrap();
+    let download = gate.begin(Kind::Download(Component::App)).unwrap();
+    assert!(gate.begin(Kind::Runtime).is_err());
+    assert!(gate.begin(Kind::Check).is_err());
+    assert!(gate.close(true).is_err());
+    gate.close(false).unwrap();
+    assert!(runtime.cancel.load(Ordering::Acquire));
+    assert!(download.cancel.load(Ordering::Acquire));
+    assert!(gate.begin(Kind::Selection).is_err());
+    drop(runtime);
+    drop(download);
+    gate.wait().unwrap();
+    gate.reopen();
+    assert!(gate.begin(Kind::Selection).is_ok());
+}
+
+#[test]
+fn unknown_settings_schema_is_preserved() {
+    let directory = Directory::new();
+    let original = r#"{"schemaVersion":99,"important":"preserve"}"#;
+    fs::write(directory.0.join("settings.json"), original).unwrap();
+    let core = Core::open(directory.0.clone()).unwrap();
+    assert!(core.store.error.is_some());
+    assert!(core.store.save(0, |_| {}).is_err());
+    assert_eq!(
+        fs::read_to_string(directory.0.join("settings.json")).unwrap(),
+        original
+    );
 }

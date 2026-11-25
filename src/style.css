@@ -10,6 +10,26 @@
   --log: #edf2f8;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+#runtime-panel, #updates-panel { display: flex; flex-direction: column; gap: 22px; flex: 1; }
+nav { display: flex; gap: 8px; }
+nav button[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
+.update-row { border-bottom: 1px solid var(--border); padding: 20px 0; }
+.update-row pre { max-height: 240px; }
+.update-row [data-error], #update-error { color: #c13a46; white-space: pre-wrap; overflow-wrap: anywhere; }
+.download-progress { margin-top: 12px; }
+progress { width: min(100%, 400px); margin-right: 12px; accent-color: var(--accent); }
+details { margin: 14px 0; font-size: 13px; }
+summary { cursor: pointer; color: var(--muted); }
+#updates-panel label { margin: 12px 0; white-space: normal; }
+.network-heading { margin-top: 20px; }
+.mirror-row { display: flex; gap: 8px; margin: 8px 0; align-items: center; flex-wrap: wrap; }
+input:not([type="checkbox"]) { font: inherit; font-size: 13px; min-height: 36px; padding: 8px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: inherit; min-width: 0; }
+.mirror-row input[type="url"] { flex: 1; min-width: 200px; }
+.mirror-row input:not([type="checkbox"]):not([type="url"]) { width: 110px; }
+#diagnostic-prefix { flex: 1; }
+dialog { max-width: min(90vw, 520px); border: 1px solid var(--border); border-radius: 10px; padding: 24px; background: var(--surface); color: inherit; }
+dialog::backdrop { background: rgb(0 0 0 / .35); }
 body { margin: 0; }
 main { max-width: 1080px; min-height: 100vh; margin: 0 auto; padding: 30px 36px 18px; display: flex; flex-direction: column; gap: 22px; }
 header, .section-heading, .setting-row, footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; }

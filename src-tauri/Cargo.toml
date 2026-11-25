@@ -7,7 +7,7 @@ publish = false
 default-run = "sing-shell"
 
 [features]
-test-fixtures = []
+test-fixtures = ["tauri/test"]
 
 [[bin]]
 name = "core-fixture"
@@ -18,9 +18,25 @@ test = false
 [build-dependencies]
 tauri-build = { version = "=2.7.4", features = [] }
 
+[[bin]]
+name = "upgrade-fixture"
+path = "tests/fixtures/upgrade.rs"
+required-features = ["test-fixtures"]
+test = false
+
 [dependencies]
 tauri = { version = "=2.12.5", features = [] }
 tauri-plugin-dialog = "=2.8.4"
+tauri-plugin-updater = { version = "=2.14.1", default-features = false, features = ["rustls-tls", "system-proxy"] }
+tauri-plugin-opener = "=2.7.3"
+reqwest = { version = "=0.13.5", default-features = false, features = ["json", "rustls-no-provider", "system-proxy"] }
+rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+tokio = { version = "=1.54.1", features = ["time", "sync", "macros"] }
+semver = "=1.0.28"
+sha2 = "=0.11.1"
+zip = { version = "=9.5.1", default-features = false, features = ["deflate-flate2"] }
+tar = { version = "=0.4.46", default-features = false }
+flate2 = "=1.1.11"
 serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.154"
 
