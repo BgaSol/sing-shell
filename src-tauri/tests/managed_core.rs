@@ -421,6 +421,7 @@ fn background_tick_without_frontend_discovers_downloads_and_adopts_official_shap
                 thread::sleep(Duration::from_millis(2));
                 continue;
             };
+            socket.set_nonblocking(false).unwrap();
             socket
                 .set_read_timeout(Some(Duration::from_secs(2)))
                 .unwrap();
