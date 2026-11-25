@@ -30,6 +30,10 @@ function upgrade(executable,isImage=false){
   const env={SING_SHELL_TEST_DATA:data,EXPECTED_CONFIG:config};
   (isImage?appimageSmoke:smoke)(executable,'signed baseline starts with migrated legacy settings',version,env);
   run(driver,[driverInput(candidate,candidateInput,executable,data,false)],isImage?{APPIMAGE:executable,APPIMAGE_EXTRACT_AND_RUN:'1'}:{});
+  if(process.platform==='win32'){
+    // The official updater exits after ShellExecute; do not relaunch the old executable while NSIS replaces it.
+    run('powershell.exe',['-NoProfile','-Command','$deadline=[DateTime]::UtcNow.AddSeconds(120); do { try { $version=[System.Diagnostics.FileVersionInfo]::GetVersionInfo($env:SING_SHELL_UPGRADE_EXECUTABLE).ProductVersion; if($version -eq $env:SING_SHELL_UPGRADE_VERSION){exit 0} } catch {} Start-Sleep -Milliseconds 250 } while([DateTime]::UtcNow -lt $deadline); throw "NSIS did not replace the executable within 120 seconds"'],{SING_SHELL_UPGRADE_EXECUTABLE:executable,SING_SHELL_UPGRADE_VERSION:candidate.version});
+  }
   // NSIS may finish in a child installer after the updater driver exits.
   let result;const deadline=Date.now()+60_000;
   do{result=spawnSync(process.execPath,['scripts/smoke.mjs',executable],{encoding:'utf8',windowsHide:true,timeout:35_000,env:{...process.env,...env,EXPECTED_VERSION:candidate.version,APPIMAGE_EXTRACT_AND_RUN:'1',WEBKIT_DISABLE_DMABUF_RENDERER:'1'}});if(result.status===0)break;Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,500);}while(Date.now()<deadline);
