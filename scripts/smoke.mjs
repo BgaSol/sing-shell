@@ -70,6 +70,10 @@ try {
   if(process.env.EXPECTED_CONFIG) assert.equal(report.settings.configPath,process.env.EXPECTED_CONFIG);
   console.log(JSON.stringify(report));
   completed = true;
+} catch(error) {
+  console.error('Smoke files:',await fs.readdir(directory));
+  try {const saved=JSON.parse(await fs.readFile(path.join(directory,'settings.json'),'utf8'));console.error('Smoke checkpoints:',{desktop:saved.desktop,startup:saved.startup});}catch{}
+  throw error;
 } finally {
   if (completed && ownedDirectory) {
     assert.ok(directory.startsWith(path.join(os.tmpdir(), 'sing-shell-smoke-')));
