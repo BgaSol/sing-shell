@@ -114,7 +114,20 @@ mod native {
     pub struct ProcessGroup(i32);
 
     pub fn spawn(command: &mut Command) -> io::Result<(Child, ProcessGroup)> {
-        let child = command.process_group(0).spawn()?;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
+        let child = loop {
+            match command.process_group(0).spawn() {
+                Ok(child) => break child,
+                // Concurrent forks can briefly retain a prepared executable's write descriptor.
+                Err(e)
+                    if e.raw_os_error() == Some(libc::ETXTBSY)
+                        && std::time::Instant::now() < deadline =>
+                {
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                }
+                Err(e) => return Err(e),
+            }
+        };
         let group = ProcessGroup(child.id() as i32);
         Ok((child, group))
     }
@@ -132,6 +145,32 @@ mod native {
                 }
             }
         }
+    }
+    #[cfg(all(test, target_os = "linux"))]
+    #[test]
+    fn executable_busy_during_write_is_retried_after_writer_closes() {
+        let root = std::env::temp_dir().join(format!(
+            "sing-shell-textbusy-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("probe");
+        std::fs::copy(std::env::current_exe().unwrap(), &path).unwrap();
+        let writer = std::fs::OpenOptions::new().write(true).open(&path).unwrap();
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            drop(writer);
+        });
+        let (mut child, _group) = spawn(
+            Command::new(&path)
+                .arg("--list")
+                .stdout(std::process::Stdio::null()),
+        )
+        .unwrap();
+        assert!(child.wait().unwrap().success());
+        release.join().unwrap();
+        std::fs::remove_dir_all(root).unwrap();
     }
 }
 
