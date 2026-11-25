@@ -101,7 +101,7 @@ pub fn request(
     if app.gate.closing() {
         return Err("应用正在退出或重启".into());
     }
-    if app.dialog_open.load(Ordering::Acquire) {
+    if app.dialog_open.load(Ordering::Acquire) || app.desktop.modal_active() {
         app.desktop.present(&handle, true)?;
         return Err("请先关闭文件选择框".into());
     }

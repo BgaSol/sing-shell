@@ -173,3 +173,28 @@ fn failed_intent_save_still_stops_real_process() {
     assert!(c.stop().unwrap_err().contains("下次启动仍可能恢复"));
     assert!(c.runtime.snapshot().pid.is_none());
 }
+#[test]
+fn disabling_restore_does_not_cancel_a_manual_start() {
+    let d = Directory::new();
+    let c = d.configured(serde_json::json!({"checkDelayMs":500}));
+    c.core.action(Action::Start).unwrap();
+    c.core.set_restore(false).unwrap();
+    wait(|| !c.core.gate.runtime_busy());
+    assert!(c.runtime.snapshot().pid.is_some());
+    c.stop().unwrap();
+}
+#[test]
+fn cancelling_required_preparation_consumes_a_waiting_restore() {
+    let d = Directory::new();
+    {
+        let c = TestCore::open(d.0.join("data")).unwrap();
+        c.core.set_restore(true).unwrap();
+        c.store.resume(true).unwrap();
+    }
+    let c = TestCore::open(d.0.join("data")).unwrap();
+    assert_eq!(c.core.snapshot().restore, Restore::Waiting);
+    c.core.cancel();
+    c.core.restore_tick();
+    assert_eq!(c.core.snapshot().restore, Restore::Finished);
+    assert!(c.runtime.snapshot().pid.is_none());
+}

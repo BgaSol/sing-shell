@@ -49,6 +49,9 @@ pub struct Snapshot {
     pub exit_request: Option<lifecycle::Request>,
 }
 impl Desktop {
+    pub fn modal_active(&self) -> bool {
+        self.notice_open.load(Ordering::Acquire)
+    }
     pub fn snapshot(&self, handle: &tauri::AppHandle, app: &Application) -> Snapshot {
         let s = self.state.lock().unwrap();
         Snapshot {

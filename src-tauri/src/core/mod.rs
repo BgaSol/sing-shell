@@ -637,6 +637,12 @@ impl CoreService {
     pub fn cancel(&self) {
         self.managed.suppressed.store(true, Ordering::Release);
         self.gate.cancel_core();
+        let mut intent = self.intent.lock().unwrap();
+        if intent.restore == Restore::Waiting && !self.usable.load(Ordering::Acquire) {
+            intent.restore = Restore::Finished;
+            self.runtime
+                .report("自动恢复已取消：必需核心准备被取消".into());
+        }
     }
     pub fn preferences_changed(&self) {
         self.managed.network.clear();

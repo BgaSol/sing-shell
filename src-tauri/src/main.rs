@@ -251,6 +251,7 @@ fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Resul
         return Err("未知文件类型".into());
     }
     app.desktop.present(&handle, true)?;
+    let parent = handle.get_webview_window("main").ok_or("主窗口不可用")?;
     app.runtime.stopped()?;
     if app.gate.closing() {
         return Err("应用正在退出".into());
@@ -261,11 +262,16 @@ fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Resul
     let app = app.inner().clone();
     let generation = app.core.generation();
     let dialog = if kind == "core" {
-        handle.dialog().file().set_title("选择 sing-box 核心")
+        handle
+            .dialog()
+            .file()
+            .set_parent(&parent)
+            .set_title("选择 sing-box 核心")
     } else {
         handle
             .dialog()
             .file()
+            .set_parent(&parent)
             .set_title("导入 sing-box 配置")
             .add_filter("sing-box 配置", &["json", "jsonc"])
     };
