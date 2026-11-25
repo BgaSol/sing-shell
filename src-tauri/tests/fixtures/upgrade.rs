@@ -1,9 +1,6 @@
 //! Native updater driver, compiled only for isolated package verification.
 use serde::Deserialize;
-use sing_shell::{
-    settings::SettingsStore,
-    updates::{application, release::Candidate, Component},
-};
+use sing_shell::updates::{application, release::Candidate, Component};
 use std::{fs, path::PathBuf};
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,7 +33,7 @@ fn main() {
                         target: sing_shell::TARGET.into(),
                         url: "https://example.invalid/isolated-signed-candidate".into(),
                         signature: input.signature,
-                        sha256: sing_shell::updates::engine::hash(&input.package)?,
+                        sha256: sing_shell::core::package::hash(&input.package)?,
                         size: fs::metadata(&input.package)
                             .map_err(|e| e.to_string())?
                             .len(),
@@ -49,11 +46,15 @@ fn main() {
                     if input.verify_only {
                         return application::verify(&handle, &candidate, &input.package);
                     }
-                    let store = SettingsStore::open(input.root.clone())?;
-                    if store.snapshot().config_path.is_none() || store.snapshot().engine.is_none() {
+                    let saved: serde_json::Value = serde_json::from_slice(
+                        &fs::read(input.root.join("settings.json")).map_err(|e| e.to_string())?,
+                    )
+                    .map_err(|e| e.to_string())?;
+                    if saved["configPath"].as_str().is_none()
+                        || (saved.get("coreSource").is_none() && saved.get("engine").is_none())
+                    {
                         return Err("missing preserved fixture settings".into());
                     }
-                    drop(store);
                     application::install_at(&handle, &candidate, &input.package, &input.executable)
                 })();
                 match result {

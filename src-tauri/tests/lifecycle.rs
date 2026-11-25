@@ -134,9 +134,7 @@ fn failed_import_preserves_previous_configuration_and_changed_configs_are_rechec
     let config = directory.config(serde_json::json!({}));
     core.import_config(&config).unwrap();
     core.runtime.report("previous failed operation".into());
-    core.runtime
-        .check(&core.store, &std::sync::atomic::AtomicBool::new(false))
-        .unwrap();
+    core.core.check().unwrap();
     assert!(core.snapshot().unwrap().error.is_none());
     let settings = fs::read(directory.0.join("data/settings.json")).unwrap();
     fs::write(&config, r#"{"invalid":true}"#).unwrap();
@@ -165,7 +163,7 @@ fn unexpected_exit_is_reported_and_core_can_be_restarted() {
     core.select_core(fixture()).unwrap();
     let config = directory.config(serde_json::json!({"exit":true}));
     core.import_config(&config).unwrap();
-    core.start().unwrap();
+    assert!(core.start().is_err());
     wait(|| core.snapshot().unwrap().status == "failed");
     assert!(core.snapshot().unwrap().error.unwrap().contains("意外退出"));
     fs::write(config, "{}").unwrap();
@@ -223,8 +221,8 @@ fn legacy_settings_migrate_without_claiming_the_external_engine() {
     fs::write(directory.0.join("settings.json"), legacy.to_string()).unwrap();
     let core = Core::open(directory.0.clone()).unwrap();
     assert!(matches!(
-        core.store.snapshot().engine,
-        Some(sing_shell::settings::Engine::External { .. })
+        core.store.snapshot().core_source,
+        sing_shell::settings::CoreSource::External { .. }
     ));
     let backup: serde_json::Value =
         serde_json::from_slice(&fs::read(directory.0.join("settings.v0.backup.json")).unwrap())
@@ -251,20 +249,26 @@ fn slow_validation_can_be_cancelled_without_blocking_snapshots_or_preferences() 
     let worker = {
         let core = core.clone();
         let cancel = cancel.clone();
-        thread::spawn(move || core.runtime.check(&core.store, &cancel))
+        thread::spawn(move || {
+            core.runtime.validate(
+                fixture(),
+                core.store.snapshot().config_path.as_ref().unwrap(),
+                &cancel,
+            )
+        })
     };
     thread::sleep(Duration::from_millis(100));
     let start = Instant::now();
-    let revision = core.store.snapshot().revision;
-    core.store
-        .save(revision, |s| s.update_preferences.automatic = false)
-        .unwrap();
+    let revision = core.store.snapshot().preferences_revision;
+    let mut prefs = core.store.snapshot().update_preferences;
+    prefs.automatic = false;
+    core.store.preferences(revision, prefs.clone()).unwrap();
     assert_eq!(core.snapshot().unwrap().status, "stopped");
     assert!(start.elapsed() < Duration::from_secs(1));
     cancel.store(true, Ordering::Release);
     assert!(worker.join().unwrap().unwrap_err().contains("取消"));
     assert!(start.elapsed() < Duration::from_secs(2));
-    assert!(core.store.save(revision, |_| {}).is_err());
+    assert!(core.store.preferences(revision, prefs).is_err());
 }
 
 #[test]
@@ -279,8 +283,8 @@ fn close_seals_admission_and_cancels_real_inflight_owners() {
     let download = gate.begin(Kind::Download(Component::App)).unwrap();
     assert!(gate.begin(Kind::Runtime).is_err());
     assert!(gate.begin(Kind::Check).is_err());
-    assert!(gate.close(true).is_err());
-    gate.close(false).unwrap();
+    gate.close(true).unwrap();
+    assert!(gate.close(false).is_err());
     assert!(runtime.cancel.load(Ordering::Acquire));
     assert!(download.cancel.load(Ordering::Acquire));
     assert!(gate.begin(Kind::Selection).is_err());
@@ -298,7 +302,7 @@ fn unknown_settings_schema_is_preserved() {
     fs::write(directory.0.join("settings.json"), original).unwrap();
     let core = Core::open(directory.0.clone()).unwrap();
     assert!(core.store.error.is_some());
-    assert!(core.store.save(0, |_| {}).is_err());
+    assert!(core.store.core(0, |_| Ok(())).is_err());
     assert_eq!(
         fs::read_to_string(directory.0.join("settings.json")).unwrap(),
         original

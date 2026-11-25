@@ -258,6 +258,8 @@ pub struct Transport {
     test_routes: Option<Vec<(String, bool)>>,
     #[cfg(feature = "test-fixtures")]
     token: Option<String>,
+    #[cfg(feature = "test-fixtures")]
+    test_origin: Option<String>,
 }
 
 #[derive(Clone)]
@@ -392,6 +394,8 @@ impl Transport {
             test_routes: None,
             #[cfg(feature = "test-fixtures")]
             token: None,
+            #[cfg(feature = "test-fixtures")]
+            test_origin: None,
         })
     }
 
@@ -440,6 +444,7 @@ impl Transport {
             .build()
             .unwrap();
         transport.test_http = true;
+        transport.test_origin = Some(base.trim_end_matches('/').to_owned());
         transport.test_routes = Some(mirrors);
         transport
     }
@@ -612,6 +617,13 @@ impl Transport {
         sample: bool,
     ) -> Result<reqwest::Response, Error> {
         let mut url = route.url(original)?;
+        #[cfg(feature = "test-fixtures")]
+        if route.prefix.is_none() && github_url(original) {
+            if let Some(base) = &self.test_origin {
+                url = Url::parse(&format!("{base}/{original}"))
+                    .map_err(|e| Error::Rejected(e.to_string()))?;
+            }
+        }
         for _ in 0..=5 {
             self.check_cancelled()?;
             self.validate_url(url.as_str()).map_err(Error::Rejected)?;
@@ -822,9 +834,19 @@ impl Transport {
         &self,
         original: &str,
         path: &Path,
-        mut progress: impl FnMut(u64, Option<u64>),
+        progress: impl FnMut(u64, Option<u64>),
         verify: impl Fn(&Path, &str) -> Result<(), Error>,
     ) -> Result<(), String> {
+        self.download_result(original, path, progress, verify)
+            .map_err(|e| e.message())
+    }
+    pub fn download_result(
+        &self,
+        original: &str,
+        path: &Path,
+        mut progress: impl FnMut(u64, Option<u64>),
+        verify: impl Fn(&Path, &str) -> Result<(), Error>,
+    ) -> Result<(), Error> {
         tauri::async_runtime::block_on(async {
             let original = self.validate_url(original).map_err(Error::Rejected)?;
             let deadline = Instant::now() + DOWNLOAD_TIMEOUT;
@@ -923,13 +945,12 @@ impl Transport {
                     }
                 }
             }
-            Err(Error::Rejected(format!(
+            Err(Error::remote(format!(
                 "下载失败，已尝试 {} 个地址：{}",
                 failures.len(),
                 failures.join("；")
             )))
         })
-        .map_err(|e| e.message())
     }
 
     pub fn sample_package(&self, original: &str) -> Result<(), String> {

@@ -1,4 +1,5 @@
 pub mod app;
+pub mod core;
 pub mod lifecycle;
 pub mod logs;
 mod platform;

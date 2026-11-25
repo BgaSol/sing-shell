@@ -1,7 +1,7 @@
 use crate::{
     logs::Logs,
     platform::{self, ProcessGroup},
-    settings::{self, Engine, SettingsStore},
+    settings,
 };
 use serde::Serialize;
 use std::{
@@ -22,6 +22,7 @@ pub struct RuntimeSnapshot {
     pub pid: Option<u32>,
     pub version: Option<String>,
     pub error: Option<String>,
+    pub cleanup_pending: bool,
 }
 impl Default for RuntimeSnapshot {
     fn default() -> Self {
@@ -30,13 +31,20 @@ impl Default for RuntimeSnapshot {
             pid: None,
             version: None,
             error: None,
+            cleanup_pending: false,
         }
     }
+}
+pub struct StartSpec {
+    pub executable: PathBuf,
+    pub config: PathBuf,
+    pub version: Option<String>,
 }
 pub struct RuntimeService {
     state: Arc<Mutex<RuntimeSnapshot>>,
     stop: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
+    pending_checks: Mutex<Vec<Process>>,
     pub logs: Logs,
 }
 struct Process {
@@ -104,12 +112,13 @@ impl Default for RuntimeService {
             state: Arc::new(Mutex::new(Default::default())),
             stop: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
+            pending_checks: Mutex::new(Vec::new()),
             logs: Default::default(),
         }
     }
 }
 impl RuntimeService {
-    fn clear_error(&self) {
+    pub fn clear_error(&self) {
         let mut state = self.state.lock().unwrap();
         state.error = None;
         if state.pid.is_none() && state.status == "failed" {
@@ -118,14 +127,23 @@ impl RuntimeService {
     }
     pub fn report(&self, error: String) {
         self.logs.push("shell", error.clone());
-        self.state.lock().unwrap().error = Some(error);
+        let mut state = self.state.lock().unwrap();
+        state.error = Some(error);
+        if state.pid.is_none() {
+            state.status = "failed".into();
+        }
     }
     pub fn snapshot(&self) -> RuntimeSnapshot {
-        self.state.lock().unwrap().clone()
+        let mut state = self.state.lock().unwrap().clone();
+        state.cleanup_pending = !self.pending_checks.lock().unwrap().is_empty();
+        state
     }
     pub fn stopped(&self) -> Result<(), String> {
         let s = self.snapshot();
-        if s.pid.is_some() || ["checking", "starting", "stopping"].contains(&s.status.as_str()) {
+        if s.pid.is_some()
+            || s.cleanup_pending
+            || ["checking", "starting", "stopping"].contains(&s.status.as_str())
+        {
             Err("请先停止 sing-box，再更换核心或配置".into())
         } else {
             Ok(())
@@ -149,6 +167,9 @@ impl RuntimeService {
         action: &str,
         cancel: &AtomicBool,
     ) -> Result<String, String> {
+        if !self.pending_checks.lock().unwrap().is_empty() {
+            return Err("先前校验进程尚未收尾，请停止后重试".into());
+        }
         let mut command = Command::new(core);
         command.arg(action);
         if let Some(config) = config {
@@ -163,72 +184,76 @@ impl RuntimeService {
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             if cancel.load(Ordering::Acquire) {
-                process.terminate()?;
+                self.finish_check(process)?;
                 return Err("操作已取消".into());
             }
-            if let Some(status) = process.child.try_wait().map_err(|e| e.to_string())? {
-                process.terminate()?;
+            let exit = match process.child.try_wait() {
+                Ok(exit) => exit,
+                Err(e) => {
+                    self.finish_check(process)?;
+                    return Err(e.to_string());
+                }
+            };
+            if let Some(status) = exit {
+                self.finish_check(process)?;
                 if !status.success() {
                     return Err(format!("sing-box 校验失败（{status}），请查看日志"));
                 }
                 return Ok(String::from_utf8_lossy(&capture.lock().unwrap()).into_owned());
             }
             if Instant::now() >= deadline {
-                process.terminate()?;
+                self.finish_check(process)?;
                 return Err("sing-box 校验超过 15 秒".into());
             }
             thread::sleep(Duration::from_millis(20));
         }
+    }
+    fn finish_check(&self, mut process: Process) -> Result<(), String> {
+        if let Err(error) = process.terminate() {
+            self.pending_checks.lock().unwrap().push(process);
+            return Err(error);
+        }
+        Ok(())
     }
     pub fn validate(&self, core: &Path, config: &Path, cancel: &AtomicBool) -> Result<(), String> {
         file(core)?;
         self.command(core, Some(config), "check", cancel)
             .map(|_| ())
     }
-    pub fn check(&self, store: &SettingsStore, cancel: &AtomicBool) -> Result<(), String> {
-        self.clear_error();
-        let settings = store.snapshot();
-        let engine = settings.engine.as_ref().ok_or("请先选择 sing-box 核心")?;
-        self.validate(
-            &store.engine_path(engine)?,
-            settings.config_path.as_deref().ok_or("请先导入配置")?,
-            cancel,
-        )?;
-        self.logs.push("shell", "配置校验通过");
-        Ok(())
-    }
-    pub fn start(&self, store: &SettingsStore, cancel: &AtomicBool) -> Result<(), String> {
+    pub fn start(&self, spec: &StartSpec, cancel: Arc<AtomicBool>) -> Result<(), String> {
         if self.snapshot().pid.is_some() {
             return Err("sing-box 已在运行".into());
         }
         self.stopped()?;
         self.clear_error();
         self.state.lock().unwrap().status = "starting".into();
-        let result: Result<(Process, String), String> = (|| {
-            let settings = store.snapshot();
-            let path =
-                store.engine_path(settings.engine.as_ref().ok_or("请先选择 sing-box 核心")?)?;
-            let version = self.probe(&path, cancel)?;
-            let config = settings.config_path.as_deref().ok_or("请先导入配置")?;
-            self.validate(&path, config, cancel)?;
-            if cancel.load(Ordering::Acquire) {
-                return Err("操作已取消".into());
+        let prepared: Result<(Process, String), String> = (|| {
+            let version = self.probe(&spec.executable, &cancel)?;
+            if spec
+                .version
+                .as_ref()
+                .is_some_and(|expected| expected != &version)
+            {
+                return Err("核心实际版本与选择不符".into());
             }
-            let mut command = Command::new(path);
+            self.validate(&spec.executable, &spec.config, &cancel)?;
+            if cancel.load(Ordering::Acquire) {
+                return Err("启动已取消".into());
+            }
+            let mut command = Command::new(&spec.executable);
             command
                 .arg("run")
                 .arg("-c")
-                .arg(config)
-                .current_dir(config.parent().unwrap());
-            let process = Process::spawn(&mut command, &self.logs, None)?;
-            Ok((process, version))
+                .arg(&spec.config)
+                .current_dir(spec.config.parent().ok_or("配置目录不存在")?);
+            Ok((Process::spawn(&mut command, &self.logs, None)?, version))
         })();
-        let (mut process, version) = match result {
-            Ok(v) => v,
+        let (mut process, version) = match prepared {
+            Ok(p) => p,
             Err(e) => {
-                let mut state = self.state.lock().unwrap();
-                state.status = "failed".into();
-                state.error = Some(e.clone());
+                let mut s = self.state.lock().unwrap();
+                s.status = "failed".into();
+                s.error = Some(e.clone());
                 return Err(e);
             }
         };
@@ -237,49 +262,68 @@ impl RuntimeService {
         }
         self.stop.store(false, Ordering::Release);
         *self.state.lock().unwrap() = RuntimeSnapshot {
-            status: "running".into(),
+            status: "starting".into(),
             pid: Some(process.child.id()),
             version: Some(version),
             error: None,
+            cleanup_pending: false,
         };
-        let stop = self.stop.clone();
+        let (send, receive) = std::sync::mpsc::sync_channel(1);
         let state = self.state.clone();
+        let stop = self.stop.clone();
         let logs = self.logs.clone();
-        *self.worker.lock().unwrap() = Some(thread::spawn(move || loop {
-            let requested = stop.load(Ordering::Acquire);
-            let exit = process.child.try_wait();
-            if requested || !matches!(exit, Ok(None)) {
-                match process.terminate() {
-                    Ok(()) => {
-                        let error = if requested {
-                            None
-                        } else {
-                            Some(format!("sing-box 意外退出（{exit:?}）"))
-                        };
-                        if let Some(e) = &error {
-                            logs.push("shell", e.clone());
-                        } else {
-                            logs.push("shell", "sing-box 已停止");
+        *self.worker.lock().unwrap() = Some(thread::spawn(move || {
+            let mut initial = Some(send);
+            let observed = Instant::now() + Duration::from_secs(2);
+            loop {
+                let requested = stop.load(Ordering::Acquire)
+                    || (initial.is_some() && cancel.load(Ordering::Acquire));
+                let exit = process.child.try_wait();
+                if requested || !matches!(exit, Ok(None)) {
+                    match process.terminate() {
+                        Ok(()) => {
+                            let error = if requested {
+                                None
+                            } else {
+                                Some(format!("sing-box 意外退出（{exit:?}）"))
+                            };
+                            logs.push("shell", error.as_deref().unwrap_or("sing-box 已停止"));
+                            {
+                                let mut s = state.lock().unwrap();
+                                s.pid = None;
+                                s.status =
+                                    if error.is_some() { "failed" } else { "stopped" }.into();
+                                s.error = error.clone();
+                            }
+                            if let Some(send) = initial.take() {
+                                let _ = send.send(Err(error.unwrap_or("启动已取消".into())));
+                            }
+                            break;
                         }
-                        let mut state = state.lock().unwrap();
-                        state.pid = None;
-                        state.status = if error.is_some() { "failed" } else { "stopped" }.into();
-                        state.error = error;
-                        break;
+                        Err(e) => {
+                            state.lock().unwrap().error = Some(e);
+                        }
                     }
-                    Err(e) => {
-                        state.lock().unwrap().error = Some(e);
-                        thread::sleep(Duration::from_millis(100));
-                    }
+                } else if initial.is_some() && Instant::now() >= observed {
+                    state.lock().unwrap().status = "running".into();
+                    logs.push("shell", "已启动 sing-box；连接情况请查看核心日志");
+                    let _ = initial.take().unwrap().send(Ok(()));
                 }
+                thread::sleep(Duration::from_millis(20));
             }
-            thread::sleep(Duration::from_millis(20));
         }));
-        self.logs
-            .push("shell", "已启动 sing-box；连接情况请查看核心日志");
-        Ok(())
+        receive
+            .recv_timeout(Duration::from_secs(9))
+            .map_err(|_| "启动或资源收尾尚未完成，请停止后重试".to_string())?
     }
     pub fn stop(&self) -> Result<(), String> {
+        let pending = std::mem::take(&mut *self.pending_checks.lock().unwrap());
+        let mut cleanup_error = None;
+        for process in pending {
+            if let Err(e) = self.finish_check(process) {
+                cleanup_error = Some(e);
+            }
+        }
         if self.snapshot().pid.is_some() {
             self.state.lock().unwrap().status = "stopping".into();
             self.stop.store(true, Ordering::Release);
@@ -294,41 +338,10 @@ impl RuntimeService {
         if let Some(worker) = self.worker.lock().unwrap().take() {
             let _ = worker.join();
         }
+        if let Some(error) = cleanup_error {
+            return Err(error);
+        }
         self.clear_error();
-        Ok(())
-    }
-    pub fn select(
-        &self,
-        store: &SettingsStore,
-        path: &Path,
-        cancel: &AtomicBool,
-    ) -> Result<(), String> {
-        self.stopped()?;
-        self.clear_error();
-        let path = file(path)?;
-        self.probe(&path, cancel)?;
-        let settings = store.snapshot();
-        store.save(settings.revision, |s| {
-            s.engine = Some(Engine::External { path })
-        })?;
-        Ok(())
-    }
-    pub fn import(
-        &self,
-        store: &SettingsStore,
-        path: &Path,
-        cancel: &AtomicBool,
-    ) -> Result<(), String> {
-        self.stopped()?;
-        self.clear_error();
-        let path = file(path)?;
-        let settings = store.snapshot();
-        self.validate(
-            &store.engine_path(settings.engine.as_ref().ok_or("请先选择 sing-box 核心")?)?,
-            &path,
-            cancel,
-        )?;
-        store.save(settings.revision, |s| s.config_path = Some(path))?;
         Ok(())
     }
 }

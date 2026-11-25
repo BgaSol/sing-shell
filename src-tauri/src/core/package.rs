@@ -1,20 +1,31 @@
-use super::release::Candidate;
+use crate::updates::release::Candidate;
 use crate::{
     runtime::RuntimeService,
-    settings::{Engine, SettingsStore},
+    settings::{self, ManagedRef},
 };
 use sha2::{Digest, Sha256};
 use std::{
     fs::{self, File},
     io::{Read, Write},
     path::{Component, Path},
-    sync::atomic::AtomicBool,
+    sync::atomic::{AtomicBool, Ordering},
 };
+pub fn cancelled(cancel: &AtomicBool) -> Result<(), String> {
+    if cancel.load(Ordering::Acquire) {
+        Err("操作已取消".into())
+    } else {
+        Ok(())
+    }
+}
 pub fn hash(path: &Path) -> Result<String, String> {
+    hash_cancel(path, &AtomicBool::new(false))
+}
+pub fn hash_cancel(path: &Path, cancel: &AtomicBool) -> Result<String, String> {
     let mut f = File::open(path).map_err(|e| e.to_string())?;
     let mut hash = Sha256::new();
     let mut buf = [0; 65536];
     loop {
+        cancelled(cancel)?;
         let n = f.read(&mut buf).map_err(|e| e.to_string())?;
         if n == 0 {
             break;
@@ -64,12 +75,30 @@ fn safe(path: &Path) -> Result<(), String> {
     }
     Ok(())
 }
-fn save(output: &Path, input: &mut impl Read, size: u64) -> Result<(), String> {
+fn save(
+    output: &Path,
+    input: &mut impl Read,
+    size: u64,
+    cancel: &AtomicBool,
+) -> Result<(), String> {
     if size > 256 * 1024 * 1024 {
         return Err("核心展开文件过大".into());
     }
     let mut file = File::create(output).map_err(|e| e.to_string())?;
-    let count = std::io::copy(&mut input.take(size + 1), &mut file).map_err(|e| e.to_string())?;
+    let mut count = 0u64;
+    let mut buffer = [0; 65536];
+    loop {
+        cancelled(cancel)?;
+        let n = input.read(&mut buffer).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        count += n as u64;
+        if count > size {
+            return Err("核心解包超过声明大小".into());
+        }
+        file.write_all(&buffer[..n]).map_err(|e| e.to_string())?;
+    }
     if count != size {
         return Err("核心解包大小不符".into());
     }
@@ -77,7 +106,12 @@ fn save(output: &Path, input: &mut impl Read, size: u64) -> Result<(), String> {
         .and_then(|_| file.sync_all())
         .map_err(|e| e.to_string())
 }
-pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String> {
+pub fn unpack(
+    archive: &Path,
+    output: &Path,
+    windows: bool,
+    cancel: &AtomicBool,
+) -> Result<(), String> {
     let expected = if windows { "sing-box.exe" } else { "sing-box" };
     let mut found = false;
     let mut total = 0u64;
@@ -88,6 +122,7 @@ pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String
             return Err("归档条目过多".into());
         }
         for i in 0..zip.len() {
+            cancelled(cancel)?;
             let mut item = zip.by_index(i).map_err(|e| e.to_string())?;
             let name = item.name().map_err(|e| e.to_string())?.into_owned();
             let path = Path::new(&name);
@@ -104,7 +139,7 @@ pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String
                     return Err("核心入口重复或无效".into());
                 }
                 let size = item.size();
-                save(output, &mut item, size)?;
+                save(output, &mut item, size, cancel)?;
                 found = true;
             }
         }
@@ -112,6 +147,7 @@ pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String
         let gzip = flate2::read::GzDecoder::new(File::open(archive).map_err(|e| e.to_string())?);
         let mut tar = tar::Archive::new(gzip);
         for (index, item) in tar.entries().map_err(|e| e.to_string())?.enumerate() {
+            cancelled(cancel)?;
             if index >= 128 {
                 return Err("归档条目过多".into());
             }
@@ -130,7 +166,7 @@ pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String
                     return Err("核心入口重复或无效".into());
                 }
                 let size = item.size();
-                save(output, &mut item, size)?;
+                save(output, &mut item, size, cancel)?;
                 found = true;
             }
         }
@@ -146,86 +182,112 @@ pub fn unpack(archive: &Path, output: &Path, windows: bool) -> Result<(), String
     }
     Ok(())
 }
+// Managed paths never follow links outside the application-owned tree.
+pub fn owned(root: &Path, path: &Path) -> Result<(), String> {
+    let relative = path.strip_prefix(root).map_err(|_| "核心路径越界")?;
+    let mut current = root.to_path_buf();
+    for part in relative.components() {
+        if !matches!(part, Component::Normal(_)) {
+            return Err("核心路径无效".into());
+        }
+        current.push(part);
+        if let Ok(m) = fs::symlink_metadata(&current) {
+            if m.file_type().is_symlink() {
+                return Err("受管路径不能包含链接".into());
+            }
+        }
+    }
+    Ok(())
+}
 pub fn prepare(
-    store: &SettingsStore,
+    root: &Path,
     runtime: &RuntimeService,
     candidate: &Candidate,
     archive: &Path,
     cancel: &AtomicBool,
-) -> Result<String, String> {
-    let engine = Engine::Managed {
+) -> Result<ManagedRef, String> {
+    crate::updates::release::validate_engine(candidate)?;
+    if hash_cancel(archive, cancel)? != candidate.sha256
+        || fs::metadata(archive).map_err(|e| e.to_string())?.len() != candidate.size
+    {
+        return Err("核心归档摘要或大小不符".into());
+    }
+    let mut reference = ManagedRef {
         version: candidate.version.clone(),
         target: candidate.target.clone(),
+        hash: None,
+        source: None,
     };
-    let path = store.engine_path(&engine)?;
-    let directory = path.parent().unwrap();
-    fs::create_dir_all(directory).map_err(|e| e.to_string())?;
-    let staging = directory.join("sing-box.part");
+    let path = settings::managed_path(root, &reference)?;
+    owned(root, &path)?;
+    fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
+    let staging = path.with_extension("part");
+    owned(root, &staging)?;
     let result = (|| {
-        unpack(archive, &staging, cfg!(windows))?;
+        unpack(archive, &staging, cfg!(windows), cancel)?;
         verify_binary(&staging, crate::TARGET)?;
-        if runtime.probe(&staging, cancel)? != candidate.version {
+        if runtime.probe(&staging, cancel)? != reference.version {
             return Err("核心版本与候选不符".into());
         }
-        if let Some(config) = store.snapshot().config_path {
-            runtime.validate(&staging, &config, cancel)?;
-        }
-        let digest = hash(&staging)?;
-        if path.exists() {
-            if hash(&path)? != digest {
-                return Err("已有版本目录内容不一致".into());
-            }
-            fs::remove_file(&staging).map_err(|e| e.to_string())?;
-        } else {
-            fs::rename(&staging, &path).map_err(|e| e.to_string())?;
-        }
-        Ok(digest)
+        reference.hash = Some(hash_cancel(&staging, cancel)?);
+        reference.source = Some(candidate.clone());
+        // Keep replacement separate: the coordinator alone knows whether this version is running.
+        Ok(reference)
     })();
     if result.is_err() {
-        let _ = fs::remove_file(staging);
+        let _ = fs::remove_file(&staging);
     }
     result
 }
-pub fn verify(
-    store: &SettingsStore,
+pub fn staged_path(root: &Path, reference: &ManagedRef) -> Result<std::path::PathBuf, String> {
+    Ok(settings::managed_path(root, reference)?.with_extension("part"))
+}
+pub fn verify_path(
     runtime: &RuntimeService,
-    candidate: &Candidate,
-    expected: &str,
+    reference: &ManagedRef,
+    path: &Path,
     cancel: &AtomicBool,
 ) -> Result<(), String> {
-    let path = store.engine_path(&Engine::Managed {
-        version: candidate.version.clone(),
-        target: candidate.target.clone(),
-    })?;
-    if hash(&path)? != expected {
-        return Err("已准备核心被修改，请重新下载".into());
+    reference.validate()?;
+    verify_binary(path, crate::TARGET)?;
+    if let Some(hash) = &reference.hash {
+        if hash_cancel(path, cancel)? != *hash {
+            return Err("受管核心已损坏或被修改".into());
+        }
     }
-    verify_binary(&path, crate::TARGET)?;
-    if runtime.probe(&path, cancel)? != candidate.version {
-        return Err("已准备核心版本不符".into());
-    }
-    if let Some(config) = store.snapshot().config_path {
-        runtime.validate(&path, &config, cancel)?;
+    if runtime.probe(path, cancel)? != reference.version {
+        return Err("受管核心实际版本不符".into());
     }
     Ok(())
 }
-
-pub fn cleanup(store: &SettingsStore, current: &str, previous: Option<&str>) -> Result<(), String> {
-    let root = store.root.join("engines/sing-box");
-    for entry in fs::read_dir(&root).map_err(|e| e.to_string())? {
+pub fn verify(
+    root: &Path,
+    runtime: &RuntimeService,
+    reference: &ManagedRef,
+    cancel: &AtomicBool,
+) -> Result<(), String> {
+    let path = settings::managed_path(root, reference)?;
+    owned(root, &path)?;
+    verify_path(runtime, reference, &path, cancel)
+}
+pub fn cleanup(root: &Path, keep: &[String], cancel: &AtomicBool) -> Result<(), String> {
+    let directory = root.join("engines/sing-box");
+    owned(root, &directory)?;
+    if !directory.exists() {
+        return Ok(());
+    }
+    for entry in fs::read_dir(&directory).map_err(|e| e.to_string())? {
+        cancelled(cancel)?;
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.file_name().to_string_lossy().into_owned();
-        if name == current
-            || previous == Some(name.as_str())
-            || crate::settings::stable(&name).is_err()
+        if keep.contains(&name)
+            || settings::stable(&name).is_err()
             || !entry.file_type().map_err(|e| e.to_string())?.is_dir()
         {
             continue;
         }
         let path = entry.path();
-        if path.parent() != Some(root.as_path()) {
-            return Err("核心清理路径不符".into());
-        }
+        owned(root, &path)?;
         fs::remove_dir_all(path).map_err(|e| e.to_string())?;
     }
     Ok(())

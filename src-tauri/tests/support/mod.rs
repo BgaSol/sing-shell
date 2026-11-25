@@ -1,16 +1,19 @@
 #![allow(dead_code)]
 use sing_shell::{
+    app::Admission,
+    core::CoreService,
     logs::Log,
     runtime::RuntimeService,
     settings::{Settings, SettingsStore},
 };
 use std::{
     path::{Path, PathBuf},
-    sync::atomic::AtomicBool,
+    sync::Arc,
 };
 pub struct TestCore {
-    pub runtime: RuntimeService,
-    pub store: SettingsStore,
+    pub core: Arc<CoreService>,
+    pub runtime: Arc<RuntimeService>,
+    pub store: Arc<SettingsStore>,
 }
 pub struct Snapshot {
     pub status: String,
@@ -21,35 +24,49 @@ pub struct Snapshot {
 }
 impl TestCore {
     pub fn open(root: PathBuf) -> Result<Self, String> {
+        let store = Arc::new(SettingsStore::open(root)?);
+        let runtime = Arc::new(RuntimeService::default());
+        let core = CoreService::new(
+            store.clone(),
+            runtime.clone(),
+            Arc::new(Admission::default()),
+            Arc::new(tokio::sync::Notify::new()),
+        );
+        if let Err(e) = core.initialize() {
+            runtime.report(e);
+        }
         Ok(Self {
-            runtime: Default::default(),
-            store: SettingsStore::open(root)?,
+            core,
+            runtime,
+            store,
         })
     }
     pub fn select_core(&self, path: &Path) -> Result<(), String> {
-        self.runtime
-            .select(&self.store, path, &AtomicBool::new(false))
+        self.core.select(path)
     }
     pub fn import_config(&self, path: &Path) -> Result<(), String> {
-        self.runtime
-            .import(&self.store, path, &AtomicBool::new(false))
+        self.core.import(path)
     }
     pub fn start(&self) -> Result<(), String> {
-        self.runtime.start(&self.store, &AtomicBool::new(false))
+        let result = self.core.start();
+        if let Err(e) = &result {
+            self.runtime.report(e.clone());
+        }
+        result
     }
     pub fn stop(&self) -> Result<(), String> {
-        self.runtime.stop()
+        self.core.stop()
     }
     pub fn snapshot(&self) -> Result<Snapshot, String> {
-        let runtime = self.runtime.snapshot();
+        let r = self.runtime.snapshot();
         Ok(Snapshot {
             status: if self.store.error.is_some() {
                 "failed".into()
             } else {
-                runtime.status
+                r.status
             },
-            pid: runtime.pid,
-            error: self.store.error.clone().or(runtime.error),
+            pid: r.pid,
+            error: self.store.error.clone().or(r.error),
             settings: self.store.snapshot(),
             logs: self.runtime.logs.snapshot(),
         })

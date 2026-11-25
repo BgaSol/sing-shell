@@ -1,41 +1,41 @@
 # 架构
 
-Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。具体行为见[核心与配置](features/core.md)和[软件更新](features/updates.md)。
+Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同见[核心与配置](features/core.md)和[软件更新](features/updates.md)。
 
 ## 职责与链路
 
-`运行页/更新页 → Tauri IPC → Application 接纳 → SettingsStore / RuntimeService / UpdateService → Lifecycle 收尾 → 原生退出或重启`。
+`页面 → Tauri IPC → CoreService / UpdateService → 接纳与持久化 → 进程或平台安装器`。
 
-- `main.rs` 负责 Tauri 装配、原生文件框和命令转接，不在原生事件回调同步等待进程。
-- `app.rs` 组合服务，以短接纳锁维护 closing 和具体在途操作；票据结束释放占用，取消与真实结束分别处理。
-- `settings.rs` 拥有唯一设置、修订、串行写入与实例锁，磁盘操作不持应用全局状态锁。
-- `runtime.rs` 负责命令校验、启动、监督与停止，独立观察真实进程退出；快照只读。`logs.rs` 管理有界日志和输出 reader。
-- `platform.rs` 负责 Windows Job Object / Unix 进程组，不拼 shell 启动程序。
-- `lifecycle.rs` 是退出、重启及更新重启的唯一入口；先验证本地更新，再停止核心、切换受管选择及调用安装器。
-- `updates/service.rs` 拥有初始化、调度、两个组件的候选/进度/准备状态；`release.rs` 解释发行，`network.rs` 传输，`application.rs` 调用官方 updater，`engine.rs` 管理受管程序。
+- `main.rs` 只装配命令、文件框和原生窗口事件；文件框回调返回后才接纳选择，系统文件框不占核心变更票据。
+- `app.rs` 组合服务并拥有一次启动的后台唤醒循环。应用和核心分别到期判断，不因一项网络操作等待另一项。
+- `core/mod.rs` 的 CoreService 是来源、配置、受管选择、启停、采用和回退的唯一用例入口；它消费准备结果，不把采用交给下载回调。
+- `core/managed.rs` 的 ManagedCore 拥有候选、下载准备、核心维护周期和缓存，不自行改当前选择或运行代理。
+- `core/package.rs` 核对/解包核心文件和受管路径，提供可取消的散列与清理，不读取当前配置或决定来源。
+- `runtime.rs` 拥有临时校验进程、运行 Child、日志 reader、启动观察和真实退出结果；使用固定 StartSpec，不保存用户设置。supervisor 独占运行 Child，启动调用等待其有界结果。
+- `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform.rs` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
+- `updates/service.rs` 只负责应用检查、下载和准备；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
+- `lifecycle.rs` 封闭接纳、取消维护、等待所有者、停止核心，再处理退出或应用安装；不采用核心版本。
 
-只维护应用和引擎两个具体更新对象，不建立插件协议、通用工作流引擎或动态服务注册。后台任务属于应用，事件仅通知重读，快照和已提交结果是事实来源。
+前端只呈现快照、编辑偏好和发起意图，不维护自动更新计时器。仍只有运行与软件更新两页，不引入框架、数据库、插件协议或升级守护进程。
 
-## 存储
+## 设置、缓存与恢复
 
-设置 schema 1 为 `schemaVersion/revision/engine/configPath/updatePreferences`；engine 是未配置、`external {path}` 或 `managed {version,target}`。受管路径由本机应用目录和校验后的版本/目标推导，不由 UI 提供。
+settings schema 2 的 `coreSource` 区分 managed 和 external；managed 保存 active/previous、首次启动 trial 与至多一个 blocked 候选。受管引用绑定版本、target、程序摘要和可用的上游证据，路径从本机应用目录推导。configPath 是已检查路径，pendingConfigPath 是缺核心时先选择的路径，不上传配置正文。
 
-v0.1.0 设置迁移时保留 `settings.v0.backup.json`，旧 corePath 成为 external。未知 schema 或损坏文件保留原件并阻止覆盖。保存检查 expectedRevision，临时文件同步后替换。配置正文仍属于用户，使用原绝对路径及父目录工作路径，不复制上传。
+coreRevision 与 preferencesRevision 分开。每次局部提交从最新设置合并对应字段，不用后台旧快照覆写整个文件。采用时在同一串行提交内检查核心上下文、关闭/取消及自动采用偏好。磁盘写入临时文件同步后替换；设置损坏或未知 schema 保留原件，阻止覆盖。
 
-更新缓存独立于设置，准备记录绑定 schema、来源、目标、版本和摘要。恢复不相信上次进度文案，重新核对本地字节。稳定状态单独串行保存，避免双组件覆盖同一缓存文件。
+v0/v1 先备份再迁移；外部选择不变，v1 受管继承旧自动检查开关且不猜测上一版本。legacy 证据与官方新下载证据明确区分。迁移不联网，不在设置读取时运行外部程序。
 
-实例锁由应用持有直到收尾完成，新实例有界等待重启交接，真正第二实例被拒绝。
+核心准备记录最后提交，绑定来源请求和选择代次；恢复不相信上次进度文案，重新核对本地字节。active、previous 和 trial 一次保存，确认启动才清 trial，未确认中断按恢复规则处理。进程 PID/版本来自真实进程快照，不从预期选择伪造。
 
-## 并发和平台边界
+## 并发边界
 
-状态锁只维护短状态；网络、解包、校验进程、签名和安装交给有限 worker。supervisor 独占 Child，reader 只写日志。收尾超时保留实际状态、允许重试，不把取消信号当作资源已回收。
+短接纳锁管理具体操作：核心变更互斥、单个核心下载准备、单个应用检查/下载、偏好写入和诊断。下载与当前代理可并行。采用和清理另获取核心文件票据，保护 staging 与版本目录；网络 worker 释放维护票据后再请求采用，避免循环持锁。
 
-Windows Job 使用 KILL_ON_JOB_CLOSE；Unix 正常退出清理进程组，宿主被 SIGKILL 时无法执行收尾。应用与核心各自提交，不提供跨组件原子事务或应用内任意降级。
+进度/错误带任务所有权，来源变更使旧操作失效；线路设置变化不污染新健康结果。配置变化使兼容结论失效，每次启动重验。散列、解包和检查接受取消，票据在实际资源收尾后释放。退出不把取消请求当作完成，失败时保留实际状态、允许重试。
 
-Tauri 官方 updater 负责应用验签及安装，sing-box 自己负责配置语义、协议、DNS 和路由。前后端同包发行，不增加独立 RPC 主版本。
+本地版本切换无需停止正在运行的进程；只在已停止或用户下次启动前采用。应用更新与核心各自完成，不提供跨组件事务。Unix 宿主被 SIGKILL 无法执行退出清理；Windows Job 使用 KILL_ON_JOB_CLOSE。停止并非平滑关闭。
 
 ## 依赖
 
-清单和锁文件固定版本。更新依赖沿用 SoDeck 已使用的 Tauri updater/opener、reqwest/rustls、tokio、semver、sha2、zip/tar/flate2，分别用于官方安装、系统打开、HTTPS、调度、版本、摘要及 Windows/Unix 两种实际归档。由 Tauri 与对应 Rust 上游维护，升级前复核维护状态、安全修复及原生兼容。
-
-替代方案为自建安装器/加密实现，或依赖机器上的 curl、解包命令；本项目使用成熟库减少平台分支，不要求运行机器装开发工具。未增加前端框架、数据库、Go FFI 或升级守护进程。
+沿用已固定的 Tauri updater/opener、reqwest/rustls、Tokio、semver、sha2、zip/tar/flate2，不新增生产依赖或另一套运行时。应用验签与安装交给官方 updater，配置、网络协议、DNS 和转发语义交给 sing-box。工程命令和平台验证见[开发](development.md)。

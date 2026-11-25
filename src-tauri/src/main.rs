@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use sing_shell::{
     app::{Application, Kind, Receipt},
+    core::{Action, Maintenance},
     lifecycle,
     settings::UpdatePreferences,
     updates::{network, Component},
@@ -35,68 +36,77 @@ fn frontend_ready(
 }
 #[tauri::command]
 fn core_snapshot(app: State<App>) -> serde_json::Value {
-    serde_json::json!({"settings":app.store.snapshot(),"runtime":app.runtime.snapshot(),"runtimeBusy":app.gate.runtime_busy(),"logs":app.runtime.logs.snapshot(),"storageError":app.store.error,"closing":app.gate.closing()})
+    let settings = app.store.snapshot();
+    let runtime = app.runtime.snapshot();
+    let core = app.core.snapshot_for(&settings, &runtime);
+    serde_json::json!({"settings":settings,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.runtime.logs.snapshot(),"storageError":app.store.error,"closing":app.gate.closing()})
 }
 #[tauri::command]
-fn core_action(action: String, app: State<App>) -> Result<Receipt, String> {
-    if !["start", "stop", "check"].contains(&action.as_str()) {
-        return Err("未知操作".into());
-    }
-    let operation = app.gate.begin(Kind::Runtime)?;
-    let receipt = operation.receipt();
-    let app = app.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let result = match action.as_str() {
-            "start" => app.runtime.start(&app.store, &operation.cancel),
-            "stop" => app.runtime.stop(),
-            _ => app.runtime.check(&app.store, &operation.cancel),
-        };
-        if let Err(error) = result {
-            app.runtime.report(error);
-        }
-        drop(operation);
-    });
-    Ok(receipt)
+fn core_action(action: Action, app: State<App>) -> Result<Receipt, String> {
+    app.core.action(action)
 }
 #[tauri::command]
-fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Result<Receipt, String> {
+fn core_maintenance(action: Maintenance, app: State<App>) -> Result<Receipt, String> {
+    app.core.maintain(Some(action))
+}
+#[tauri::command]
+fn cancel_core_maintenance(app: State<App>) {
+    app.core.cancel();
+}
+#[tauri::command]
+async fn use_managed_core(app: State<'_, App>) -> Result<Receipt, String> {
+    let core = app.core.clone();
+    tauri::async_runtime::spawn_blocking(move || core.use_managed())
+        .await
+        .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Result<(), String> {
     if !["core", "config"].contains(&kind.as_str()) {
         return Err("未知文件类型".into());
     }
     app.runtime.stopped()?;
-    let operation = app.gate.begin(Kind::Selection)?;
-    let receipt = operation.receipt();
+    if app.gate.closing() {
+        return Err("应用正在退出".into());
+    }
+    if app.dialog_open.swap(true, Ordering::AcqRel) {
+        return Err("已有文件选择框".into());
+    }
     let app = app.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let dialog = handle.dialog().file();
-        let dialog = if kind == "core" {
-            dialog.set_title("选择 sing-box 核心")
-        } else {
-            dialog
-                .set_title("导入 sing-box 配置")
-                .add_filter("sing-box 配置", &["json", "jsonc"])
-        };
-        if let Some(path) = dialog.blocking_pick_file() {
-            let result = path
-                .into_path()
-                .map_err(|e| e.to_string())
-                .and_then(|path| {
-                    if operation.cancel.load(Ordering::Acquire) {
-                        return Err("文件选择已取消".into());
-                    }
-                    if kind == "core" {
-                        app.runtime.select(&app.store, &path, &operation.cancel)
-                    } else {
-                        app.runtime.import(&app.store, &path, &operation.cancel)
-                    }
-                });
-            if let Err(error) = result {
-                app.runtime.report(error);
-            }
+    let generation = app.core.generation();
+    let dialog = if kind == "core" {
+        handle.dialog().file().set_title("选择 sing-box 核心")
+    } else {
+        handle
+            .dialog()
+            .file()
+            .set_title("导入 sing-box 配置")
+            .add_filter("sing-box 配置", &["json", "jsonc"])
+    };
+    dialog.pick_file(move |path| {
+        app.dialog_open.store(false, Ordering::Release);
+        if app.gate.closing() || app.core.generation() != generation {
+            return;
         }
-        drop(operation);
+        if let Some(path) = path {
+            tauri::async_runtime::spawn_blocking(move || {
+                let result = path
+                    .into_path()
+                    .map_err(|e| e.to_string())
+                    .and_then(|path| {
+                        if kind == "core" {
+                            app.core.select(&path)
+                        } else {
+                            app.core.import(&path)
+                        }
+                    });
+                if let Err(error) = result {
+                    app.runtime.report(error);
+                }
+            });
+        }
     });
-    Ok(receipt)
+    Ok(())
 }
 #[tauri::command]
 fn update_snapshot(app: State<App>) -> sing_shell::updates::service::Snapshot {
@@ -124,11 +134,10 @@ fn set_update_preferences(
     preferences: UpdatePreferences,
     app: State<App>,
 ) -> Result<sing_shell::settings::Settings, String> {
-    let _operation = app.gate.begin(Kind::Selection)?;
-    let value = app
-        .store
-        .save(expected_revision, |s| s.update_preferences = preferences)?;
+    let _operation = app.gate.begin(Kind::Preferences)?;
+    let value = app.store.preferences(expected_revision, preferences)?;
     app.updates.reset_network();
+    app.core.preferences_changed();
     Ok(value)
 }
 #[tauri::command]
@@ -151,15 +160,11 @@ fn builtin_mirrors() -> Vec<network::BuiltinMirror> {
     network::BUILTIN_MIRRORS.to_vec()
 }
 #[tauri::command]
-fn request_restart(
-    components: Vec<Component>,
-    handle: tauri::AppHandle,
-    app: State<App>,
-) -> Result<(), String> {
+fn request_restart(handle: tauri::AppHandle, app: State<App>) -> Result<(), String> {
     if app.dirty.load(Ordering::Acquire) {
         return Err("请先保存或放弃下载网络设置".into());
     }
-    lifecycle::request(app.inner().clone(), handle, true, components)
+    lifecycle::request(app.inner().clone(), handle, true, true)
 }
 #[tauri::command]
 fn set_update_draft_dirty(dirty: bool, app: State<App>) {
@@ -170,7 +175,7 @@ fn request_exit(handle: tauri::AppHandle, app: State<App>) -> Result<(), String>
     if app.dirty.load(Ordering::Acquire) {
         return Err("仍有未处理的设置草稿".into());
     }
-    lifecycle::request(app.inner().clone(), handle, false, Vec::new())
+    lifecycle::request(app.inner().clone(), handle, false, false)
 }
 #[tauri::command]
 fn open_update_release(component: Component, handle: tauri::AppHandle) -> Result<(), String> {
@@ -210,11 +215,11 @@ fn close_requested(handle: &tauri::AppHandle, app: &App) {
                     return;
                 }
                 app.dirty.store(false, Ordering::Release);
-                let _ = lifecycle::request(app, handle, false, Vec::new());
+                let _ = lifecycle::request(app, handle, false, false);
             });
         }
     } else {
-        let _ = lifecycle::request(app.clone(), handle.clone(), false, Vec::new());
+        let _ = lifecycle::request(app.clone(), handle.clone(), false, false);
     }
 }
 fn main() {
@@ -237,9 +242,7 @@ fn main() {
                 directory.clone(),
                 tauri.package_info().version.to_string(),
             )?);
-            application
-                .updates
-                .start(tauri.handle().clone(), !smoke && !cfg!(debug_assertions));
+            application.start(tauri.handle().clone(), !smoke);
             tauri.manage(application);
             tauri.manage(Smoke {
                 enabled: smoke,
@@ -251,6 +254,9 @@ fn main() {
             frontend_ready,
             core_snapshot,
             core_action,
+            core_maintenance,
+            cancel_core_maintenance,
+            use_managed_core,
             choose_file,
             update_snapshot,
             check_updates,

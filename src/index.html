@@ -17,10 +17,9 @@
       <div id="runtime-panel">
       <section aria-labelledby="connection-title">
         <div class="section-heading"><h2 id="connection-title">运行配置</h2><span id="pid"></span></div>
-        <div class="setting-row">
-          <div class="setting-label"><h3>sing-box 核心</h3><p id="core-path">选择与你的系统及架构匹配的 sing-box 程序</p></div>
-          <button id="choose-core" type="button" disabled>选择核心</button>
-        </div>
+        <div class="setting-row"><div class="setting-label"><h3>sing-box 核心</h3><p id="home-core-version">正在准备核心</p><p id="home-core-state" role="status"></p><p id="home-core-error" role="alert" hidden></p><progress id="home-core-progress" aria-label="核心下载进度" hidden></progress></div></div>
+        <div class="actions"><button id="home-core-retry" type="button" hidden>重试准备核心</button><button id="home-core-cancel" type="button" hidden>取消下载</button></div>
+        <details><summary>高级：核心来源</summary><p class="hint">默认由应用管理官方核心。本机核心由你手动维护。</p><div class="actions"><button id="choose-core" type="button" disabled>使用本机核心</button><button id="home-core-managed" type="button">使用应用管理核心</button></div></details>
         <div class="setting-row">
           <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
           <button id="choose-config" type="button" disabled>导入配置</button>
@@ -37,22 +36,24 @@
       <section class="log-section" aria-labelledby="logs-title">
         <div class="section-heading"><h2 id="logs-title">运行日志</h2><label><input id="follow" type="checkbox" checked /> 跟随最新</label></div>
         <p class="hint">显示本次打开应用后的最近 1,000 条记录。</p>
-        <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">选择核心和配置文件后，点击「启动 sing-box」。</pre>
+        <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">导入配置后，等待核心就绪并点击「启动 sing-box」。</pre>
       </section>
       </div>
       <div id="updates-panel" hidden>
         <section aria-labelledby="updates-title">
-          <div class="section-heading"><h2 id="updates-title">软件更新</h2><button id="check-updates" type="button">检查全部</button></div>
+          <div class="section-heading"><h2 id="updates-title">软件更新</h2><button id="check-updates" type="button">检查应用更新</button></div>
           <p id="checked-at">尚未完成全量检查</p>
           <p id="update-error" role="alert" hidden></p>
           <div id="update-items"></div>
-          <div class="actions"><button id="download-selected" type="button">下载可用更新</button><button id="apply-updates" class="primary" type="button">重启并应用</button></div>
+          <div class="actions"><button id="download-selected" type="button">下载应用更新</button><button id="apply-updates" class="primary" type="button">重启并更新应用</button></div>
           <p id="pending-updates" class="hint"></p>
         </section>
+        <section aria-labelledby="core-updates-title"><h2 id="core-updates-title">sing-box 核心</h2><p id="update-core-version"></p><p id="update-core-state" role="status"></p><p id="update-core-error" role="alert" hidden></p><progress id="update-core-progress" aria-label="核心下载进度" hidden></progress><div class="actions"><button id="core-check" type="button">检查核心</button><button id="update-core-retry" type="button">更新核心</button><button id="update-core-cancel" type="button" hidden>取消下载</button><button id="update-core-managed" type="button" hidden>使用应用管理核心</button></div><p class="hint">运行中保持当前核心，新版下次启动生效，无需重启应用。</p></section>
         <section aria-labelledby="network-title">
           <h2 id="network-title">检查与下载网络</h2>
           <p class="hint">设置保存后用于新任务，在途下载继续使用原设置。</p>
-          <label><input id="automatic" type="checkbox" /> 每天自动检查更新</label>
+          <label><input id="automatic" type="checkbox" /> 每天检查应用更新</label>
+          <label><input id="automatic-core" type="checkbox" /> 自动更新核心</label>
           <label><input id="fallback" type="checkbox" /> 原始地址失败时尝试备用地址</label>
           <details><summary>内置备用地址</summary><div id="builtin-mirrors"></div></details>
           <h3 class="network-heading">自定义 HTTPS 前缀</h3><div id="custom-mirrors"></div>

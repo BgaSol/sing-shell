@@ -1,5 +1,5 @@
 use super::{
-    application, engine,
+    application,
     network::{self, Transport},
     release::{self, Candidate},
     Component,
@@ -8,7 +8,7 @@ use crate::{
     app::{Admission, Kind, Operation, Receipt},
     logs::now,
     runtime::RuntimeService,
-    settings::{stable, write_json, Engine, SettingsStore},
+    settings::{stable, write_json, SettingsStore},
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -19,7 +19,6 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    time::Duration,
 };
 
 #[derive(Clone, Default, Deserialize, Serialize)]
@@ -157,59 +156,30 @@ impl UpdateService {
             self.runtime.logs.push("updates", e);
         }
     }
-    pub fn current(&self, c: Component) -> String {
-        if c == Component::App {
-            return self.app_version.clone();
-        }
-        match self.store.snapshot().engine {
-            Some(Engine::Managed { version, .. }) => version,
-            _ => "0.0.0".into(),
+    pub fn current(&self, _c: Component) -> String {
+        self.app_version.clone()
+    }
+    pub fn initialize(&self, handle: &tauri::AppHandle) {
+        if !self.started.swap(true, Ordering::AcqRel) {
+            self.restore(handle);
         }
     }
-    pub fn start(self: &Arc<Self>, handle: tauri::AppHandle, automatic: bool) {
-        if self.started.swap(true, Ordering::AcqRel) {
-            return;
+    pub fn tick(self: &Arc<Self>) {
+        if self.snapshot().initialized
+            && self.store.error.is_none()
+            && self.store.snapshot().update_preferences.automatic
+            && self.snapshot().next_check_at <= now()
+            && !self.gate.closing()
+        {
+            let _ = self.check(Some(Component::App), true);
         }
-        let service = self.clone();
-        tauri::async_runtime::spawn_blocking(move || {
-            let initialization = match service.gate.begin(Kind::Check) {
-                Ok(op) => op,
-                Err(_) => return,
-            };
-            service.restore(&handle);
-            drop(initialization);
-            if !automatic {
-                return;
-            }
-            let weak = Arc::downgrade(&service);
-            drop(service);
-            tauri::async_runtime::spawn(async move {
-                tokio::time::sleep(Duration::from_secs(10)).await;
-                loop {
-                    let Some(service) = weak.upgrade() else {
-                        break;
-                    };
-                    if service.stop.load(Ordering::Acquire) {
-                        break;
-                    }
-                    if service.store.error.is_none()
-                        && service.store.snapshot().update_preferences.automatic
-                        && service.snapshot().next_check_at <= now()
-                        && !service.gate.closing()
-                    {
-                        let _ = service.check(None, true);
-                    }
-                    drop(service);
-                    tokio::time::sleep(Duration::from_secs(60)).await;
-                }
-            });
-        });
     }
     fn restore(&self, handle: &tauri::AppHandle) {
         if let Ok(bytes) = fs::read(self.store.root.join("updates.json")) {
             match serde_json::from_slice::<Snapshot>(&bytes) {
                 Ok(mut state) => {
                     state.restore_transient(now());
+                    state.items.retain(|c, _| *c == Component::App);
                     for (component, item) in &mut state.items {
                         item.restore_candidate(*component, &self.current(*component));
                     }
@@ -221,7 +191,7 @@ impl UpdateService {
                     .push("updates", format!("更新缓存无法读取：{e}")),
             }
         }
-        for c in [Component::App, Component::Engine] {
+        for c in [Component::App] {
             let path = self.cache(c).join("prepared.json");
             if path.exists() {
                 let result = (|| {
@@ -254,13 +224,6 @@ impl UpdateService {
                 }
             }
         }
-        if !matches!(self.store.snapshot().engine, Some(Engine::Managed { .. })) {
-            self.item(Component::Engine, |v| {
-                if v.phase != "ready" {
-                    v.phase = "external".into();
-                }
-            });
-        }
         #[cfg(target_os = "linux")]
         if std::env::var_os("APPIMAGE").is_none() {
             self.item(Component::App, |v| v.phase = "unsupported".into());
@@ -272,6 +235,9 @@ impl UpdateService {
         component: Option<Component>,
         automatic: bool,
     ) -> Result<Receipt, String> {
+        if component.is_some_and(|c| c != Component::App) {
+            return Err("核心维护请使用核心入口".into());
+        }
         if automatic
             && (!self.store.snapshot().update_preferences.automatic
                 || self.snapshot().next_check_at > now())
@@ -290,7 +256,7 @@ impl UpdateService {
             let mut successes = 0;
             for c in component
                 .map(|c| vec![c])
-                .unwrap_or_else(|| vec![Component::App, Component::Engine])
+                .unwrap_or_else(|| vec![Component::App])
             {
                 let item = service
                     .snapshot()
@@ -299,15 +265,6 @@ impl UpdateService {
                     .cloned()
                     .unwrap_or_default();
                 if ["ready", "unsupported"].contains(&item.phase.as_str()) {
-                    continue;
-                }
-                if c == Component::Engine
-                    && component.is_none()
-                    && !matches!(
-                        service.store.snapshot().engine,
-                        Some(Engine::Managed { .. })
-                    )
-                {
                     continue;
                 }
                 service.item(c, |v| {
@@ -341,7 +298,7 @@ impl UpdateService {
             {
                 let mut state = service.state.lock().unwrap();
                 state.checking = false;
-                if component.is_none() {
+                if component.is_none() || component == Some(Component::App) {
                     state.record_check(now(), successes, failures);
                 }
             }
@@ -373,7 +330,7 @@ impl UpdateService {
         handle: tauri::AppHandle,
         components: Vec<Component>,
     ) -> Result<Vec<Receipt>, String> {
-        if components.is_empty() || components.len() > 2 {
+        if components != [Component::App] {
             return Err("请选择应用或受管核心".into());
         }
         let mut ops = Vec::new();
@@ -456,17 +413,7 @@ impl UpdateService {
             return Err("操作已取消".into());
         }
         self.item(c, |v| v.phase = "preparing".into());
-        let engine_hash = if c == Component::Engine {
-            Some(engine::prepare(
-                &self.store,
-                &self.runtime,
-                &candidate,
-                &part,
-                &op.cancel,
-            )?)
-        } else {
-            None
-        };
+        let engine_hash = None;
         if op.cancel.load(Ordering::Acquire) || self.gate.closing() {
             return Err("操作已取消".into());
         }
@@ -507,41 +454,15 @@ impl UpdateService {
             return Err("缓存不属于当前应用版本".into());
         }
         let path = self.cache(p.candidate.component).join("package.bin");
-        if engine::hash(&path)? != p.candidate.sha256
+        if crate::core::package::hash(&path)? != p.candidate.sha256
             || fs::metadata(&path).map_err(|e| e.to_string())?.len() != p.candidate.size
         {
             return Err("准备包已损坏，请重新下载".into());
         }
-        match p.candidate.component {
-            Component::App => application::verify(handle, &p.candidate, &path),
-            Component::Engine => engine::verify(
-                &self.store,
-                &self.runtime,
-                &p.candidate,
-                p.engine_hash.as_deref().ok_or("缺少核心摘要")?,
-                &AtomicBool::new(false),
-            ),
+        if p.candidate.component != Component::App {
+            return Err("应用缓存组件不符".into());
         }
-    }
-    pub fn apply_engine(&self, p: &Prepared) -> Result<(), String> {
-        let settings = self.store.snapshot();
-        let previous = match &settings.engine {
-            Some(Engine::Managed { version, .. }) => Some(version.clone()),
-            _ => None,
-        };
-        self.store.save(settings.revision, |s| {
-            s.engine = Some(Engine::Managed {
-                version: p.candidate.version.clone(),
-                target: p.candidate.target.clone(),
-            })
-        })?;
-        self.item(Component::Engine, |v| v.phase = "current".into());
-        if let Err(e) = engine::cleanup(&self.store, &p.candidate.version, previous.as_deref()) {
-            self.runtime
-                .logs
-                .push("updates", format!("旧核心清理失败：{e}"));
-        }
-        Ok(())
+        application::verify(handle, &p.candidate, &path)
     }
     pub fn install(&self, handle: &tauri::AppHandle, p: &Prepared) -> Result<(), String> {
         let result = application::install(

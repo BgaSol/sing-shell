@@ -104,8 +104,12 @@ fn real_sing_box_proxies_loopback_traffic_and_stops() {
 #[ignore = "requires official core and archive paths"]
 fn managed_core_preparation_preserves_external_program_and_checks_saved_bytes() {
     use sing_shell::{
-        settings::Engine,
-        updates::{engine, release::Candidate, Component},
+        core::{managed::Origin, package},
+        settings::{self, CoreSource},
+        updates::{
+            release::{self, Candidate},
+            Component,
+        },
     };
     use std::sync::atomic::AtomicBool;
     let executable = PathBuf::from(std::env::var_os("SING_SHELL_TEST_CORE").unwrap());
@@ -119,70 +123,56 @@ fn managed_core_preparation_preserves_external_program_and_checks_saved_bytes() 
             .as_nanos()
     ));
     let core = Core::open(directory.clone()).unwrap();
-    let original = engine::hash(&executable).unwrap();
+    let original = package::hash(&executable).unwrap();
     core.select_core(&executable).unwrap();
     let config = directory.join("config.json");
     fs::write(&config,r#"{"inbounds":[{"type":"mixed","listen":"127.0.0.1","listen_port":0}],"outbounds":[{"type":"direct"}]}"#).unwrap();
     core.import_config(&config).unwrap();
+    let name = release::engine_asset("1.14.4", sing_shell::TARGET).unwrap();
     let candidate = Candidate {
         component: Component::Engine,
         version: "1.14.4".into(),
         target: sing_shell::TARGET.into(),
-        url: "https://github.com/SagerNet/sing-box/releases/download/v1.14.4/test".into(),
+        url: format!("https://github.com/SagerNet/sing-box/releases/download/v1.14.4/{name}"),
         signature: String::new(),
-        sha256: engine::hash(&archive).unwrap(),
+        sha256: package::hash(&archive).unwrap(),
         size: fs::metadata(&archive).unwrap().len(),
         notes: String::new(),
         release_url: String::new(),
-        asset_name: archive.file_name().unwrap().to_string_lossy().into_owned(),
+        asset_name: name,
         asset_id: 1,
         tag: "v1.14.4".into(),
     };
-    let digest = engine::prepare(
-        &core.store,
-        &core.runtime,
-        &candidate,
-        &archive,
-        &AtomicBool::new(false),
-    )
-    .unwrap();
-    assert!(matches!(
-        core.store.snapshot().engine,
-        Some(Engine::External { .. })
-    ));
-    engine::verify(
-        &core.store,
-        &core.runtime,
-        &candidate,
-        &digest,
-        &AtomicBool::new(false),
-    )
-    .unwrap();
-    let settings = core.store.snapshot();
-    core.store
-        .save(settings.revision, |s| {
-            s.engine = Some(Engine::Managed {
-                version: "1.14.4".into(),
-                target: sing_shell::TARGET.into(),
-            })
-        })
+    let cancel = AtomicBool::new(false);
+    core.core
+        .managed
+        .stage_archive(&candidate, &archive, Origin::Manual, 1, &cancel)
         .unwrap();
+    assert!(matches!(
+        core.store.snapshot().core_source,
+        CoreSource::External { .. }
+    ));
+    core.core.try_adopt().unwrap();
+    assert!(matches!(
+        core.store.snapshot().core_source,
+        CoreSource::External { .. }
+    ));
+    core.core.use_managed().unwrap();
+    // use_managed increments the source generation; explicitly prepared bytes then enter the production adoption path.
+    let generation = core.core.generation();
+    core.core
+        .managed
+        .stage_archive(&candidate, &archive, Origin::Manual, generation, &cancel)
+        .unwrap();
+    core.core.try_adopt().unwrap();
+    assert!(core.store.snapshot().managed());
     core.start().unwrap();
     core.stop().unwrap();
-    let managed = core
-        .store
-        .engine_path(core.store.snapshot().engine.as_ref().unwrap())
-        .unwrap();
+    let r = core.store.snapshot().managed.active.unwrap();
+    let managed = settings::managed_path(&core.store.root, &r).unwrap();
     fs::write(managed, b"tampered").unwrap();
-    assert!(engine::verify(
-        &core.store,
-        &core.runtime,
-        &candidate,
-        &digest,
-        &AtomicBool::new(false)
-    )
-    .is_err());
-    assert_eq!(engine::hash(&executable).unwrap(), original);
+    assert!(core.core.verify(&r, &cancel).is_err());
+    assert_eq!(package::hash(&executable).unwrap(), original);
     drop(core);
     fs::remove_dir_all(directory).unwrap();
 }

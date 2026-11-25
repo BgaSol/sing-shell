@@ -82,6 +82,39 @@ pub fn digest(value: &str) -> Result<&str, String> {
     }
     Ok(value)
 }
+pub fn validate_engine(c: &Candidate) -> Result<(), String> {
+    if c.component != Component::Engine
+        || c.target != crate::TARGET
+        || c.tag != format!("v{}", c.version)
+        || c.asset_name != engine_asset(&c.version, &c.target)?
+        || c.url
+            != format!(
+                "https://github.com/SagerNet/sing-box/releases/download/{}/{}",
+                c.tag, c.asset_name
+            )
+        || c.size == 0
+        || c.size > 512 * 1024 * 1024
+    {
+        return Err("核心资产来源、目标或大小不符".into());
+    }
+    digest(&c.sha256)?;
+    Ok(())
+}
+pub fn engine_version(transport: &Transport, version: &str) -> Result<Candidate, String> {
+    stable(version)?;
+    let client = transport.clone().only_endpoint(None)?;
+    let release: Release = client.json(
+        &format!("https://api.github.com/repos/SagerNet/sing-box/releases/tags/v{version}"),
+        RequestKind::Api,
+        ACCEPT,
+    )?;
+    if release.draft || release.prerelease || release.tag_name != format!("v{version}") {
+        return Err("核心发行状态不符".into());
+    }
+    let c = candidate(&client, Component::Engine, version, release)?;
+    validate_engine(&c)?;
+    Ok(c)
+}
 
 pub fn discover(
     transport: &Transport,
