@@ -586,9 +586,13 @@ fn valid_cached_archive_repairs_same_version_offline_without_overwriting_externa
     assert!(core.start().is_err());
     core.core.tick();
     wait(|| {
-        core.core.managed.ready().is_some() || core.core.managed.snapshot().phase == Phase::Error
-    });
-    wait(|| {
+        let maintenance = core.core.managed.snapshot();
+        assert_ne!(
+            maintenance.phase,
+            Phase::Error,
+            "repair failed: {:?}",
+            maintenance.error
+        );
         package::hash(&path).is_ok_and(|h| Some(h) == active.hash)
             && !core.core.gate.core_fetching()
     });
