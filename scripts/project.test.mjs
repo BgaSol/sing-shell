@@ -27,3 +27,16 @@ test('every npm command called by a workflow exists', () => {
     }
   }
 });
+
+test('release aggregation runs after verified reuse and refuses failed or cancelled verification', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github/workflows/package.yml'), 'utf8');
+  const metadata = workflow.split('\n  metadata:')[1];
+  const expression = metadata?.match(/^    if: \$\{\{ (.+) \}\}/m)?.[1];
+  assert.ok(expression, 'metadata needs an explicit status condition when package is skipped');
+  const accepts = new Function('cancelled', 'needs', `return (${expression});`);
+  const needs = {select:{result:'success'}, package:{result:'skipped'}, verify:{result:'success'}};
+  assert.equal(accepts(() => false, needs), true);
+  assert.equal(accepts(() => true, needs), false);
+  assert.equal(accepts(() => false, {...needs, verify:{result:'failure'}}), false);
+  assert.equal(accepts(() => false, {...needs, select:{result:'failure'}}), false);
+});

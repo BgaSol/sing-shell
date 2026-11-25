@@ -141,6 +141,7 @@ jobs:
           retention-days: 30
   metadata:
     needs: [select, verify]
+    if: ${{ !cancelled() && needs.select.result == 'success' && needs.verify.result == 'success' }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v7
