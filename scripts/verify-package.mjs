@@ -14,9 +14,10 @@ assert.equal(original.target,target);assert.equal(candidate.target,target);asser
 const version=JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json')).version;
 assert.equal(original.version,version);
 const parts=version.split('.').map(Number);parts[2]++;assert.equal(candidate.version,parts.join('.'));
+const nativeHost={platform:process.platform,arch:process.arch,release:os.release()};
 const directory=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'sing-shell-package-')));
 const driver=path.resolve(`src-tauri/target/debug/upgrade-fixture${process.platform==='win32'?'.exe':''}`);
-const report={version,target,source:original.source,toolSource:process.env.GITHUB_SHA??original.source,run:process.env.PACKAGE_RUN_ID??process.env.GITHUB_RUN_ID??null,verificationRun:process.env.GITHUB_RUN_ID??null,passed:false,packages:original.files,verified:[],skipped:['publisher code signing','macOS notarization','TUN and system proxy']};
+const report={version,target,source:original.source,toolSource:process.env.GITHUB_SHA??original.source,run:process.env.PACKAGE_RUN_ID??process.env.GITHUB_RUN_ID??null,verificationRun:process.env.GITHUB_RUN_ID??null,nativeHost,passed:false,packages:original.files,verified:[],skipped:['publisher code signing','macOS notarization','TUN and system proxy']};
 function run(command,args,env={}){const result=spawnSync(command,args,{stdio:'inherit',windowsHide:true,timeout:300_000,env:{...process.env,...env}});if(result.error)throw result.error;assert.equal(result.status,0,`${command}: ${result.status}/${result.signal}`);}
 function file(role,manifest=original,root=input){const found=manifest.files.filter(f=>f.role===role);assert.equal(found.length,1,`expected one ${role}`);return path.join(root,found[0].name);}
 function smoke(executable,label,expected=version,env={}){verifyBinary(executable,target);run(process.execPath,['scripts/smoke.mjs',executable],{APPIMAGE_EXTRACT_AND_RUN:'1',WEBKIT_DISABLE_DMABUF_RENDERER:'1',EXPECTED_VERSION:expected,...env});report.verified.push(label);}
