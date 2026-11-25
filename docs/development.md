@@ -40,4 +40,4 @@ cargo test --manifest-path src-tauri/Cargo.toml --locked --test real_core -- --i
 
 并行测试目录使用进程 ID、时间戳及进程内原子序号，并以 `create_dir` 拒绝复用已有目录，避免时钟精度不足造成不同测试争用同一实例锁。
 
-初始本机验证环境为 Windows x86_64。其余平台仅在对应 CI / 实机执行成功后报告通过；矩阵存在不等于已验收。构建程序 smoke 不替代实际安装包提取或安装后的验收，发行要求见[分发](distribution.md)。
+初始本机验证环境为 Windows x86_64。其余平台仅在对应 CI / 实机执行成功后报告通过；矩阵存在不等于已验收。构建程序 smoke 不替代实际安装包提取或安装后的验收；打包工作流在每个平台运行 `scripts/verify-package.mjs`，实际范围见[分发](distribution.md)。
