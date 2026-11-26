@@ -202,7 +202,7 @@ mod tests {
     fn authorization_quotes_arguments_without_running_shell_text_from_paths() {
         let path = "/tmp/a b'\"; $(exit 71) `exit 72`\ncontrol.sock";
         let output = std::process::Command::new("/usr/bin/osascript")
-            .args(["-e", &AUTHORIZE.replace(" with administrator privileges with prompt \"Sing Shell 需要管理员权限来建立 TUN 网络；断开后释放网络并退出。\"", "")])
+            .args(["-e", &AUTHORIZE.replace(" with administrator privileges with prompt \"Sing Shell 需要管理员权限来建立 TUN 网络；断开后释放网络并退出。\"", " without altering line endings")])
             .args(["/bin/echo", path, "123"]).output().unwrap();
         assert!(
             output.status.success(),
