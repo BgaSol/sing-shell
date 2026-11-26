@@ -159,7 +159,16 @@ mod native {
             tokio::pin!(wait);
             let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
             loop {
-                tokio::select! {result=&mut wait=>{result.map_err(|e|e.to_string())?;break;},_ =tokio::time::sleep(Duration::from_millis(100))=>{if cancel.load(Ordering::Acquire){return Err("网络授权已取消".into());}if tokio::time::Instant::now()>=deadline{return Err("网络授权超时，请重试".into());}}}
+                tokio::select! {result=&mut wait=>{result.map_err(|e|e.to_string())?;break;},_ =tokio::time::sleep(Duration::from_millis(100))=>{
+                    if cancel.load(Ordering::Acquire){return Err("网络授权已取消".into());}
+                    if let Some(process) = &process {
+                        let mut code = 259;
+                        if unsafe {windows_sys::Win32::System::Threading::GetExitCodeProcess(process.as_raw_handle(), &mut code)} != 0 && code != 259 {
+                            return Err("网络 helper 已退出，请确认其他连接已停止，再重试授权".into());
+                        }
+                    }
+                    if tokio::time::Instant::now()>=deadline{return Err("网络授权超时，请重试".into());}
+                }}
             }
         }
         let mut pid = 0;

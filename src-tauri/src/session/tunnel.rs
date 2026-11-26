@@ -401,6 +401,7 @@ impl Worker {
             let result = (|| {
                 runtime.logs.redact(input.node.spec.secrets());
                 input.profile().validate()?;
+                network::recover(&root)?;
                 crate::rulesets::prepare(&root, &input.rule_commit, &cancel)?;
                 let core = trusted_core(&root, &version, &runtime, &cancel)?;
                 crate::platform::network::require_clear()?;
@@ -481,6 +482,7 @@ impl Worker {
         }
         self.state.lock().unwrap().phase = "stopping".into();
         self.runtime.stop()?;
+        network::recover(&self.root)?;
         let deadline = Instant::now() + Duration::from_secs(5);
         loop {
             let observation = network::observe()?;
@@ -598,7 +600,6 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
         crate::platform::network_worker().map_err(|e| e.to_string())?;
         let root = authorization::prepare_root()?;
         let _lease = crate::instance::Lease::acquire(&root)?;
-        network::recover(&root)?;
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()

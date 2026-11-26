@@ -88,6 +88,9 @@ fn birth(pid: u32) -> Result<String, String> {
         if ok == 0 {
             return Err(std::io::Error::last_os_error().to_string());
         }
+        if exit.dwHighDateTime != 0 || exit.dwLowDateTime != 0 {
+            return Err("核心进程已经退出".into());
+        }
         Ok(format!(
             "{}:{}",
             created.dwHighDateTime, created.dwLowDateTime
@@ -131,13 +134,11 @@ pub fn recover(root: &Path) -> Result<(), String> {
     let current = match birth(record.pid) {
         Ok(birth) => birth,
         Err(_) => {
-            require_clear()?;
-            return forget(root);
+            return clear_record(root);
         }
     };
     if current != record.birth {
-        require_clear()?;
-        return forget(root);
+        return clear_record(root);
     }
     let expected = std::fs::canonicalize(&record.executable).map_err(|e| e.to_string())?;
     let actual = std::fs::canonicalize(executable(record.pid)?).map_err(|e| e.to_string())?;
@@ -176,8 +177,17 @@ pub fn recover(root: &Path) -> Result<(), String> {
         }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
-    require_clear()?;
-    forget(root)
+    clear_record(root)
+}
+fn clear_record(root: &Path) -> Result<(), String> {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        match require_clear() {
+            Ok(()) => return forget(root),
+            Err(error) if std::time::Instant::now() >= deadline => return Err(error),
+            Err(_) => std::thread::sleep(std::time::Duration::from_millis(100)),
+        }
+    }
 }
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -360,6 +370,17 @@ pub fn require_clear() -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn exited_process_is_not_a_live_recovery_target_even_with_an_open_child_handle() {
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .arg("--help")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()
+            .unwrap();
+        child.wait().unwrap();
+        assert!(super::birth(child.id()).is_err());
+    }
     #[test]
     fn process_identity_matches_current_executable() {
         let pid = std::process::id();
