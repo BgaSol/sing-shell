@@ -4,6 +4,7 @@ import path from 'node:path';
 import net from 'node:net';
 import dgram from 'node:dgram';
 import os from 'node:os';
+import {lookup} from 'node:dns/promises';
 import {spawn,spawnSync} from 'node:child_process';
 import {echoPair} from './network-echo.mjs';
 
@@ -36,6 +37,16 @@ function authorizedProcess(parent){
   assert.equal(matches.length,1,'one authenticated worker owned by the fixture controller');
   assert.ok(Number.isInteger(matches[0])&&matches[0]>0&&matches[0]!==parent);return {helper:matches[0],controller:parent};
 }
+function macDns() {
+  const result=spawnSync('/usr/sbin/scutil',['--dns'],{encoding:'utf8',timeout:5000});assert.equal(result.status,0);return result.stdout;
+}
+function macPreferences() {
+  const services=spawnSync('/usr/sbin/networksetup',['-listallnetworkservices'],{encoding:'utf8',timeout:5000});assert.equal(services.status,0);
+  return services.stdout.split('\n').slice(1).map(s=>s.trim()).filter(Boolean).map(service=>{
+    const result=spawnSync('/usr/sbin/networksetup',['-getdnsservers',service.replace(/^\*/, '')],{encoding:'utf8',timeout:5000});assert.equal(result.status,0);return [service,result.stdout];
+  });
+}
+const dnsBefore=process.platform==='darwin'?macPreferences():null;
 let proxy,worker,tcp,udp;
 let logs='';
 try{
@@ -43,10 +54,16 @@ try{
   const holder=net.createServer();await new Promise(resolve=>holder.listen(0,'127.0.0.1',resolve));const proxyPort=holder.address().port;await new Promise(resolve=>holder.close(resolve));
   const password='sing-shell-fixture-password';
   const serverConfig={log:{level:'warn'},inbounds:[{type:'shadowsocks',tag:'ss-in',listen:'127.0.0.1',listen_port:proxyPort,method:'aes-128-gcm',password}],outbounds:[{type:'direct',tag:'echo'}],route:{rules:[{ip_cidr:['198.18.77.1/32','2001:db8:198::99/128'],action:'route',outbound:'echo',override_address:'127.0.0.1',override_port:echoPort}],final:'echo'}};
+  if(process.platform==='darwin') {
+    const route=spawnSync('/sbin/route',['-n','get','default'],{encoding:'utf8'});assert.equal(route.status,0);
+    const physical=route.stdout.match(/interface:\s+(\S+)/)?.[1];assert.ok(physical&&!physical.startsWith('utun'));
+    serverConfig.outbounds[0].bind_interface=physical;
+  }
   const config=path.join(directory,'proxy-server.json');await fs.writeFile(config,JSON.stringify(serverConfig));
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
   const input={node:{id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultAction:'proxy',customRules:[],siteRules:[{site:'github',action:'direct'}]},coreVersion:'1.14.4',control};
   if(approvedMac)input.routing={defaultAction:'direct',customRules:['198.18.77.1/32','2001:db8:198::99/128'].map(value=>({kind:'ip',value,action:'proxy'})),siteRules:[]};
+  if(process.platform==='darwin')input.routing.customRules.push({kind:'domain',value:'example.com',includeSubdomains:false,action:'proxy'});
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
     for(const file of ['started.json','stopped.json','stop'])await fs.rm(path.join(control,file),{force:true});
@@ -61,10 +78,21 @@ try{
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
   report.verified.push('production network worker authenticates control channel and independently verifies official core','typed node and routing become checked private TUN config','native interface and IPv4/IPv6 routes are confirmed');
   for(const address of ['198.18.77.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);report.verified.push(`TCP and UDP ${net.isIP(address)===6?'IPv6':'IPv4'} forwarded through selected encrypted Shadowsocks node`);}
+  if(process.platform==='darwin') {
+    const dns=macDns();assert.match(dns,/nameserver\[0\] : 172\.19\.0\.2/);
+    const addresses=await Promise.race([lookup('example.com',{all:true}),delay(15000).then(()=>{throw Error('system DNS lookup timeout');})]);
+    assert.ok(addresses.length&&addresses.every(a=>net.isIP(a.address)));
+    report.verified.push('macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)');
+  }
   await tcpEcho('127.0.0.1',echoPort);report.verified.push('loopback bypass remains direct');
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
   assert.ok(!JSON.stringify(started).includes(password));report.verified.push('stop releases actual TUN and terminates authorization worker','worker diagnostics do not return known node credential');
+  if(process.platform==='darwin') {
+    assert.ok(!macDns().includes('172.19.0.2'),'temporary resolver removed after disconnect');
+    assert.deepEqual(macPreferences(),dnsBefore,'persistent service DNS preferences remain unchanged');
+    report.verified.push('temporary resolver released and all existing network-service DNS preferences preserved');
+  }
   if(approvedMac){
     report.verified.push('ordinary installed app uses system administrator authorization, authenticates the root helper and confirms its exit');
   }else{
@@ -78,6 +106,7 @@ try{
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown');
   await launch();const crashed=authorizedProcess(worker.pid);process.kill(crashed.helper,'SIGKILL');process.kill(crashed.controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
+  if(process.platform==='darwin')assert.ok(!macDns().includes('172.19.0.2'),'configd removes temporary resolver after worker SIGKILL');
   const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.18.77.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');

@@ -134,9 +134,8 @@ pub fn recover(root: &Path) -> Result<(), String> {
     }
     let current = match birth(record.pid) {
         Ok(birth) => birth,
-        Err(_) => {
-            return clear_record(root);
-        }
+        Err(_) if gone(record.pid)? => return clear_record(root),
+        Err(error) => return Err(error),
     };
     if current != record.birth {
         return clear_record(root);
@@ -172,13 +171,57 @@ pub fn recover(root: &Path) -> Result<(), String> {
         }
     }
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
-    while birth(record.pid).is_ok_and(|b| b == record.birth) {
+    while !gone(record.pid)? && birth(record.pid)? == record.birth {
         if std::time::Instant::now() >= deadline {
             return Err("旧授权核心仍在退出，请重试".into());
         }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
     clear_record(root)
+}
+fn gone(pid: u32) -> Result<bool, String> {
+    #[cfg(unix)]
+    {
+        if pid == 0 || pid > i32::MAX as u32 {
+            return Ok(true);
+        }
+        if unsafe { libc::kill(pid as i32, 0) } == 0 {
+            return Ok(false);
+        }
+        let error = std::io::Error::last_os_error();
+        match error.raw_os_error() {
+            Some(libc::ESRCH) => Ok(true),
+            Some(libc::EPERM) => Ok(false),
+            _ => Err(error.to_string()),
+        }
+    }
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::{
+            Foundation::CloseHandle,
+            System::Threading::{
+                GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+            },
+        };
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if handle.is_null() {
+            let error = std::io::Error::last_os_error();
+            return if error.raw_os_error() == Some(87) {
+                Ok(true)
+            } else {
+                Err(error.to_string())
+            };
+        }
+        let mut exit = 259;
+        let ok = GetExitCodeProcess(handle, &mut exit);
+        let error = std::io::Error::last_os_error();
+        CloseHandle(handle);
+        if ok == 0 {
+            Err(error.to_string())
+        } else {
+            Ok(exit != 259)
+        }
+    }
 }
 fn clear_record(root: &Path) -> Result<(), String> {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);

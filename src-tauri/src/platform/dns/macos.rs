@@ -20,6 +20,7 @@ extern "C" {
 }
 #[link(name = "SystemConfiguration", kind = "framework")]
 extern "C" {
+    fn SCError() -> i32;
     fn SCDynamicStoreCreate(allocator: CF, name: CF, callback: CF, context: CF) -> CF;
     fn SCDynamicStoreAddTemporaryValue(store: CF, key: CF, value: CF) -> u8;
     fn SCDynamicStoreCopyValue(store: CF, key: CF) -> CF;
@@ -167,7 +168,10 @@ impl Registration {
         loop {
             let actual = Owned(unsafe { SCDynamicStoreCopyValue(observation.0, self.key.0) });
             if actual.0.is_null() {
-                break;
+                if unsafe { SCError() } == 1004 {
+                    break;
+                }
+                return Err("无法确认系统 DNS 已释放，请重试停止".into());
             }
             if Instant::now() >= deadline {
                 return Err("本次临时 DNS 尚未释放，请重试停止".into());

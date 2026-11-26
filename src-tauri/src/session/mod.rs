@@ -135,7 +135,8 @@ impl SessionService {
                     settings.config_path.is_some()
                 },
             can_stop: !self.gate.closing()
-                && (r.pid.is_some()
+                && (self.tunnel.occupied()
+                    || r.pid.is_some()
                     || r.cleanup_pending
                     || r.status == "starting"
                     || self.gate.runtime_busy()
@@ -143,6 +144,7 @@ impl SessionService {
             can_import: !busy
                 && r.pid.is_none()
                 && !r.cleanup_pending
+                && self.runtime.stopped().is_ok()
                 && self.store.error.is_none(),
             core,
             restore,

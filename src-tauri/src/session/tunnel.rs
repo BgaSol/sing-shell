@@ -75,6 +75,9 @@ impl Tunnel {
     fn released(&self) {
         self.occupation.store(false, Ordering::Release);
     }
+    pub(crate) fn occupied(&self) -> bool {
+        self.occupation.load(Ordering::Acquire)
+    }
     pub fn snapshot(&self) -> Snapshot {
         self.state.lock().unwrap().clone()
     }

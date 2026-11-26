@@ -53,7 +53,15 @@ fn resolver_ready(text: &str, physical_name: &str, require_tunnel: bool) -> bool
                     .any(|dns| line.contains(dns))
         })
     });
-    let tunnel = global.split("resolver #").any(|block| {
+    let default = global.split("resolver #").find(|block| {
+        block
+            .lines()
+            .any(|line| line.trim_start().starts_with("nameserver["))
+            && !block
+                .lines()
+                .any(|line| line.trim_start().starts_with("domain"))
+    });
+    let tunnel = default.is_some_and(|block| {
         !block
             .lines()
             .any(|line| line.trim_start().starts_with("domain"))
@@ -78,6 +86,11 @@ mod tests {
         assert!(resolver_ready(physical, "en0", false));
         assert!(!resolver_ready(physical, "en0", true));
         assert!(!resolver_ready(tunnel, "en0", true));
+        assert!(!resolver_ready(
+            &format!("resolver #1\n nameserver[0] : 1.1.1.1\n order    : 0\n{tunnel}{physical}"),
+            "en0",
+            true
+        ));
         assert!(resolver_ready(&format!("{tunnel}{physical}"), "en0", true));
         assert!(!resolver_ready(
             &format!("{tunnel}{}", physical.replace("en0", "utun223")),
