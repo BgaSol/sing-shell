@@ -1,6 +1,11 @@
 name: Native TUN Preflight
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/nodes-tun-routing]
+    paths:
+      - .github/workflows/network-preflight.yml
+      - scripts/network-preflight.mjs
 permissions:
   contents: read
 concurrency:
