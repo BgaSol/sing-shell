@@ -27,6 +27,7 @@ pub struct Snapshot {
     pub error: Option<String>,
     pub logs: Vec<Log>,
     pub failure: Option<Failure>,
+    pub authorization_stage: Option<authorization::Stage>,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,6 +73,7 @@ impl Default for Snapshot {
             error: None,
             logs: vec![],
             failure: None,
+            authorization_stage: None,
         }
     }
 }

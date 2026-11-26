@@ -10,6 +10,14 @@ mod macos;
 pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
 impl<T: AsyncRead + AsyncWrite + Unpin + Send> Stream for T {}
 pub type Channel = Box<dyn Stream>;
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Stage {
+    Registration,
+    Activation,
+    Authentication,
+    Protocol,
+}
 pub struct Connection {
     pub channel: Channel,
     process: Option<Process>,
@@ -179,7 +187,12 @@ mod native {
             result
         }
     }
-    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
+    pub async fn connect(
+        _root: &Path,
+        cancel: &AtomicBool,
+        progress: &impl Fn(Stage),
+    ) -> Result<Connection, String> {
+        progress(Stage::Activation);
         let pipe = PathBuf::from(format!("\\\\.\\pipe\\sing-shell-network-{}", nonce()?));
         let server = crate::instance::network_pipe(&pipe)?;
         let executable = wide(std::env::current_exe().map_err(|e| e.to_string())?);
@@ -228,12 +241,16 @@ mod native {
         if unsafe { GetNamedPipeClientProcessId(server.as_raw_handle(), &mut pid) } == 0 {
             return Err("无法核对网络进程身份".into());
         }
+        progress(Stage::Authentication);
         same_executable(&process_path(pid, true)?)?;
         let mut server = server;
         let result = handshake::bounded(
             cancel,
             handshake::ACTIVATION,
-            handshake::client(&mut server, |_| Ok(())),
+            handshake::client(&mut server, |_| {
+                progress(Stage::Protocol);
+                Ok(())
+            }),
         )
         .await;
         let connection = Connection {
@@ -346,7 +363,12 @@ mod native {
         #[cfg(target_os = "linux")]
         same_executable(&path)
     }
-    pub async fn direct_connect(root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
+    pub async fn direct_connect(
+        root: &Path,
+        cancel: &AtomicBool,
+        progress: &impl Fn(Stage),
+    ) -> Result<Connection, String> {
+        progress(Stage::Activation);
         let _ = root;
         use std::os::unix::fs::DirBuilderExt;
         let directory = PathBuf::from("/tmp").join(format!(
@@ -395,7 +417,12 @@ mod native {
         let result = handshake::bounded(
             cancel,
             handshake::ACTIVATION,
-            handshake::client(&mut stream, |s| verify(s, None, true)),
+            handshake::client(&mut stream, |s| {
+                progress(Stage::Authentication);
+                verify(s, None, true)?;
+                progress(Stage::Protocol);
+                Ok(())
+            }),
         )
         .await;
         let connection = Connection {
@@ -409,28 +436,43 @@ mod native {
         Ok(connection)
     }
     #[cfg(target_os = "linux")]
-    pub async fn connect(root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
-        direct_connect(root, cancel).await
+    pub async fn connect(
+        root: &Path,
+        cancel: &AtomicBool,
+        progress: &impl Fn(Stage),
+    ) -> Result<Connection, String> {
+        direct_connect(root, cancel, progress).await
     }
     #[cfg(target_os = "macos")]
-    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
+    pub async fn connect(
+        _root: &Path,
+        cancel: &AtomicBool,
+        progress: &impl Fn(Stage),
+    ) -> Result<Connection, String> {
         if elevated() {
             if std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1") {
-                return direct_connect(_root, cancel).await;
+                return direct_connect(_root, cancel, progress).await;
             }
             return Err("请以普通用户运行 Sing Shell，TUN 将单独请求系统授权".into());
         }
+        progress(Stage::Registration);
         super::macos::ensure_registered()?;
         if cancel.load(Ordering::Acquire) {
             return Err("网络授权已取消".into());
         }
+        progress(Stage::Activation);
         let mut stream = tokio::net::UnixStream::connect(super::macos::SOCKET)
             .await
             .map_err(|e| format!("网络授权进程尚未就绪：{e}"))?;
         handshake::bounded(
             cancel,
             handshake::ACTIVATION,
-            handshake::client(&mut stream, |s| verify(s, None, true)),
+            handshake::client(&mut stream, |s| {
+                progress(Stage::Authentication);
+                verify(s, None, true)?;
+                progress(Stage::Protocol);
+                Ok(())
+            }),
         )
         .await?;
         let process = super::macos::token(&stream)?;

@@ -76,6 +76,7 @@ impl Tunnel {
             phase: state.phase.clone(),
             error: state.error.clone(),
             failure: state.failure,
+            authorization_stage: state.authorization_stage,
             logs: vec![],
         }
     }
@@ -110,7 +111,11 @@ impl Tunnel {
                         .build()
                         .map_err(|e| e.to_string())?;
                     runtime.block_on(async {
-                        let mut connection = authorization::connect(&root, &actor_signal).await?;
+                        let mut connection =
+                            authorization::connect(&root, &actor_signal, &|stage| {
+                                state.lock().unwrap().authorization_stage = Some(stage);
+                            })
+                            .await?;
                         let result = async {
                             let channel = &mut connection.channel;
                             loop {

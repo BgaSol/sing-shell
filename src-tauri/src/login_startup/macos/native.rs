@@ -1,5 +1,5 @@
 use objc2::{msg_send, rc::autoreleasepool, rc::Retained, runtime::AnyClass, runtime::AnyObject};
-use objc2_foundation::{NSAppleEventManager, NSError, NSString};
+use objc2_foundation::{NSAppleEventManager, NSError, NSString, NSURL};
 use std::path::Path;
 
 #[link(name = "ServiceManagement", kind = "framework")]

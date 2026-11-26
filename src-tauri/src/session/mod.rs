@@ -53,6 +53,7 @@ pub struct Snapshot {
     pub running_node: Option<crate::profile::NodeSummary>,
     pub pending_changes: bool,
     pub phase: String,
+    pub authorization_stage: Option<crate::platform::authorization::Stage>,
 }
 pub struct SessionService {
     pub engine: Arc<CoreService>,
@@ -160,6 +161,11 @@ impl SessionService {
                 tunnel.phase.as_str().into()
             } else {
                 r.status.clone()
+            },
+            authorization_stage: if generated {
+                tunnel.authorization_stage
+            } else {
+                None
             },
         }
     }
