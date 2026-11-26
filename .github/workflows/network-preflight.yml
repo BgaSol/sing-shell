@@ -58,5 +58,7 @@ jobs:
         if: always()
         with:
           name: network-preflight-${{ matrix.target }}
-          path: artifacts/network-preflight/**/report.json
+          path: |
+            artifacts/network-preflight/**/*report.json
+            artifacts/network-preflight/**/service-diagnostics.log
           if-no-files-found: warn
