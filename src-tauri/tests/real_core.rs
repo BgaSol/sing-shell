@@ -158,12 +158,7 @@ fn managed_core_preparation_preserves_external_program_and_checks_saved_bytes() 
         CoreSource::External { .. }
     ));
     core.core.use_managed().unwrap();
-    // use_managed increments the source generation; explicitly prepared bytes then enter the production adoption path.
-    let generation = core.core.generation();
-    core.core
-        .managed
-        .stage_archive(&candidate, &archive, Origin::Manual, generation, &cancel)
-        .unwrap();
+    // Explicit takeover reuses the verified preparation with the new source generation.
     core.core.try_adopt().unwrap();
     assert!(core.store.snapshot().managed());
     core.start().unwrap();

@@ -57,19 +57,44 @@ pub struct Snapshot {
     pub network: Option<network::Attempt>,
     pub last_checked_at: u64,
     pub next_check_at: u64,
+    #[serde(default)]
+    pub failure_kind: Option<FailureKind>,
+    #[serde(default)]
+    pub warning: Option<String>,
+    #[serde(default)]
+    pub prepared_version: Option<String>,
+}
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum FailureKind {
+    Network,
+    Package,
+    Cache,
+    Local,
+    Compatibility,
+    Conflict,
 }
 #[derive(Debug)]
 pub enum FetchError {
     Network(String),
     Package(String),
     Local(String),
+    Conflict(String),
     Cancelled,
+}
+impl FetchError {
+    pub fn message(self) -> String {
+        match self {
+            Self::Network(e) | Self::Package(e) | Self::Local(e) | Self::Conflict(e) => e,
+            Self::Cancelled => "操作已取消".into(),
+        }
+    }
 }
 pub struct ManagedCore {
     pub store: Arc<SettingsStore>,
     pub runtime: Arc<RuntimeService>,
     state: Mutex<Snapshot>,
-    pub prepared: Mutex<Option<Prepared>>,
+    prepared: Mutex<Option<Prepared>>,
     pub network: Arc<network::State>,
     pub suppressed: AtomicBool,
     writer: Mutex<()>,
@@ -91,7 +116,9 @@ impl ManagedCore {
         }
     }
     pub fn snapshot(&self) -> Snapshot {
-        self.state.lock().unwrap().clone()
+        let mut s = self.state.lock().unwrap().clone();
+        s.prepared_version = self.ready().map(|p| p.reference.version);
+        s
     }
     pub fn update(&self, f: impl FnOnce(&mut Snapshot)) {
         f(&mut self.state.lock().unwrap());
@@ -101,6 +128,26 @@ impl ManagedCore {
     }
     pub fn ready(&self) -> Option<Prepared> {
         self.prepared.lock().unwrap().clone()
+    }
+    pub fn save_prepared(&self, p: Prepared) -> Result<(), String> {
+        write_json(&self.cache().join("prepared.json"), &p)?;
+        *self.prepared.lock().unwrap() = Some(p);
+        Ok(())
+    }
+    pub fn resume(&self, generation: u64) -> Result<(), String> {
+        if let Some(mut p) = self.ready() {
+            p.generation = generation;
+            p.origin = Origin::Manual;
+            self.save_prepared(p)?;
+        }
+        self.suppressed.store(false, Ordering::Release);
+        let prepared = self.ready().is_some();
+        self.update(|s| {
+            s.error = None;
+            s.failure_kind = None;
+            s.phase = if prepared { Phase::Ready } else { Phase::Idle };
+        });
+        Ok(())
     }
     pub fn persist(&self) {
         let _writer = self.writer.lock().unwrap();
@@ -116,13 +163,15 @@ impl ManagedCore {
         }
     }
     pub fn initialize(&self, generation: u64, cancel: &AtomicBool) -> Result<(), String> {
+        *self.prepared.lock().unwrap() = None;
+        *self.state.lock().unwrap() = Snapshot::default();
         fs::create_dir_all(self.cache()).map_err(|e| e.to_string())?;
         if let Ok(bytes) = fs::read(self.cache().join("state.json")) {
-            if let Ok(mut s) = serde_json::from_slice::<Snapshot>(&bytes) {
-                s.phase = Phase::Idle;
-                s.network = None;
-                s.next_check_at = s.next_check_at.min(now() + 86_400_000);
-                *self.state.lock().unwrap() = s;
+            if let Ok(s) = serde_json::from_slice::<Snapshot>(&bytes) {
+                self.update(|current| {
+                    current.last_checked_at = s.last_checked_at;
+                    current.next_check_at = s.next_check_at.min(now() + 86_400_000);
+                });
             }
         }
         let path = self.cache().join("prepared.json");
@@ -161,18 +210,15 @@ impl ManagedCore {
             return Err("核心缓存格式不符".into());
         }
         p.reference.validate()?;
-        let c = p.reference.source.as_ref().ok_or("准备记录缺少来源")?;
+        let c = p.reference.source.clone().ok_or("准备记录缺少来源")?;
+        self.update(|s| s.candidate = Some(c.clone()));
         let archive = self.cache().join("package.bin");
         if package::hash_cancel(&archive, cancel)? != c.sha256
             || fs::metadata(&archive).map_err(|e| e.to_string())?.len() != c.size
         {
             return Err("缓存归档损坏".into());
         }
-        let installed = crate::settings::managed_path(&self.store.root, &p.reference)?;
-        let staging = package::staged_path(&self.store.root, &p.reference)?;
-        let program = if staging.exists() { staging } else { installed };
-        package::owned(&self.store.root, &program)?;
-        package::verify_path(&self.runtime, &p.reference, &program, cancel)?;
+        self.restore_program(&mut p, cancel)?;
         p.generation = generation;
         if self.store.snapshot().managed() && self.store.snapshot().managed.active.is_none() {
             p.origin = Origin::Required;
@@ -185,9 +231,37 @@ impl ManagedCore {
             s.phase = Phase::Ready;
             s.candidate = Some(c.clone());
         });
-        write_json(&path, &p)?;
-        *self.prepared.lock().unwrap() = Some(p);
+        self.save_prepared(p)?;
         Ok(())
+    }
+    // A valid archive can rebuild staging; an installed file alone never invents its source.
+    pub fn restore_program(
+        &self,
+        p: &mut Prepared,
+        cancel: &AtomicBool,
+    ) -> Result<PathBuf, String> {
+        p.reference.validate()?;
+        let installed = crate::settings::managed_path(&self.store.root, &p.reference)?;
+        let staging = package::staged_path(&self.store.root, &p.reference)?;
+        for program in [&staging, &installed] {
+            package::owned(&self.store.root, program)?;
+            if program.is_file()
+                && package::verify_path(&self.runtime, &p.reference, program, cancel).is_ok()
+            {
+                return Ok(program.clone());
+            }
+            package::cancelled(cancel)?;
+        }
+        let candidate = p.reference.source.as_ref().ok_or("准备记录缺少来源")?;
+        p.reference = package::prepare(
+            &self.store.root,
+            &self.runtime,
+            candidate,
+            &self.cache().join("package.bin"),
+            cancel,
+        )
+        .map_err(String::from)?;
+        Ok(staging)
     }
     pub fn transport(self: &Arc<Self>, op: &Operation) -> Result<Transport, String> {
         let weak = Arc::downgrade(self);
@@ -232,6 +306,7 @@ impl ManagedCore {
             s.phase = Phase::Downloading;
             s.candidate = Some(candidate.clone());
             s.error = None;
+            s.failure_kind = None;
         });
         fs::create_dir_all(self.cache()).map_err(|e| FetchError::Local(e.to_string()))?;
         let part = self.cache().join("package.part");
@@ -282,6 +357,10 @@ impl ManagedCore {
         generation: u64,
         cancel: &AtomicBool,
     ) -> Result<Prepared, FetchError> {
+        if self.ready().is_some() {
+            return Err(FetchError::Local("已有核心准备结果，请先完成或清理".into()));
+        }
+        self.clear_ready().map_err(FetchError::Local)?;
         fs::create_dir_all(self.cache()).map_err(|e| FetchError::Local(e.to_string()))?;
         self.update(|s| s.phase = Phase::Preparing);
         let reference =
@@ -290,7 +369,11 @@ impl ManagedCore {
                     if cancel.load(Ordering::Acquire) {
                         FetchError::Cancelled
                     } else {
-                        FetchError::Package(e)
+                        match e {
+                            package::PrepareError::Local(e) => FetchError::Local(e),
+                            package::PrepareError::Invalid(e) => FetchError::Package(e),
+                            package::PrepareError::Cancelled => FetchError::Cancelled,
+                        }
                     }
                 },
             )?;
@@ -327,27 +410,70 @@ impl ManagedCore {
             origin,
             generation,
         };
-        write_json(&self.cache().join("prepared.json"), &p).map_err(FetchError::Local)?;
-        *self.prepared.lock().unwrap() = Some(p.clone());
+        self.save_prepared(p.clone()).map_err(FetchError::Local)?;
         self.update(|s| {
             s.phase = Phase::Ready;
             s.error = None;
+            s.failure_kind = None;
         });
         Ok(p)
     }
-    pub fn clear_ready(&self) {
+    pub fn clear_ready(&self) -> Result<(), String> {
+        match fs::remove_file(self.cache().join("prepared.json")) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.to_string()),
+        }
         *self.prepared.lock().unwrap() = None;
-        let _ = fs::remove_file(self.cache().join("prepared.json"));
         self.update(|s| {
             s.phase = Phase::Idle;
             s.error = None;
+            s.failure_kind = None;
         });
+        Ok(())
+    }
+    pub fn consume_ready(&self) {
+        let prepared = self.ready();
+        if let Err(e) = self.clear_ready() {
+            *self.prepared.lock().unwrap() = None;
+            self.update(|s| {
+                s.phase = Phase::Idle;
+                s.error = None;
+                s.failure_kind = None;
+            });
+            self.warn(format!("核心已采用，准备记录清理未完成：{e}"));
+        }
+        if let Some(p) = prepared {
+            if let Ok(path) = package::staged_path(&self.store.root, &p.reference) {
+                if let Err(e) = package::owned(&self.store.root, &path).and_then(|_| {
+                    match fs::remove_file(&path) {
+                        Ok(()) => Ok(()),
+                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+                        Err(e) => Err(e.to_string()),
+                    }
+                }) {
+                    self.warn(format!("核心已采用，临时程序清理未完成：{e}"));
+                }
+            }
+        }
+    }
+    pub fn warn(&self, message: String) {
+        self.runtime.logs.push("core-update", message.clone());
+        self.update(|s| s.warning = Some(message));
+    }
+    pub fn fail(&self, kind: FailureKind, error: String) {
+        self.error(error);
+        self.update(|s| s.failure_kind = Some(kind));
     }
     pub fn error(&self, error: String) {
+        if self.state.lock().unwrap().error.as_ref() == Some(&error) {
+            return;
+        }
         self.runtime.logs.push("core-update", error.clone());
         self.update(|s| {
             s.phase = Phase::Error;
             s.error = Some(error);
+            s.failure_kind = None;
         });
     }
     pub fn checked(&self, at: u64, failed: bool) {

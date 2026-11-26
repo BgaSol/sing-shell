@@ -12,6 +12,7 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [v0.6.1 发行记录](releases/v0.6.1.md)：受管核心安装恢复、分阶段重试与取消边界
 - [v0.6.0 发行记录](releases/v0.6.0.md)：节点、分流、活动与设置重构及数据格式变更
 - [v0.6.0 包验证证据](releases/v0.6.0-verification.json)：固定原包、五原生安装升级、旧设置保留与签名核对
 - [v0.6.0 网络验证证据](releases/v0.6.0-network-verification.json)：五原生 TUN、实际节点替换、结构化活动与异常清理

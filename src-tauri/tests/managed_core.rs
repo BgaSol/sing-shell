@@ -133,6 +133,59 @@ fn baseline(core: &TestCore, d: &Directory) {
     core.stop().unwrap();
 }
 #[test]
+fn identical_unrecorded_program_recovers_without_overwriting_or_restarting_trial() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    install(&core, &d, "1.14.4");
+    let reference = core.store.snapshot().managed.active.unwrap();
+    let program = sing_shell::settings::managed_path(&core.store.root, &reference).unwrap();
+    let modified = fs::metadata(&program).unwrap().modified().unwrap();
+    core.store
+        .core(core.store.snapshot().core_revision, |s| {
+            s.managed = Default::default();
+            Ok(())
+        })
+        .unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    core.core.try_adopt().unwrap();
+    assert_eq!(
+        fs::metadata(&program).unwrap().modified().unwrap(),
+        modified
+    );
+    let revision = core.store.snapshot().core_revision;
+    core.core.try_adopt().unwrap();
+    assert_eq!(core.store.snapshot().core_revision, revision);
+    assert_eq!(
+        core.store.snapshot().managed.trial,
+        Some(Trial::AwaitingStart)
+    );
+    assert!(core.runtime.snapshot().pid.is_none());
+}
+#[test]
+fn explicit_schema_reset_recovers_preserved_prepared_material_in_the_same_process() {
+    let d = Directory::new();
+    let data = d.0.join("data");
+    let core = TestCore::open(data.clone()).unwrap();
+    install(&core, &d, "1.14.4");
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let mut old = serde_json::to_value(core.store.snapshot()).unwrap();
+    old["schemaVersion"] = serde_json::json!(4);
+    let bytes = serde_json::to_vec(&old).unwrap();
+    fs::write(data.join("settings.json"), &bytes).unwrap();
+    drop(core);
+    let core = TestCore::open(data).unwrap();
+    assert!(core.store.error().is_some());
+    let backup = core.session.reset_settings().unwrap();
+    assert_eq!(fs::read(backup).unwrap(), bytes);
+    core.core.try_adopt().unwrap();
+    assert_eq!(
+        core.store.snapshot().managed.active.unwrap().version,
+        "1.14.4"
+    );
+    assert!(!core.store.snapshot().startup.resume_core);
+    assert!(core.runtime.snapshot().pid.is_none());
+}
+#[test]
 fn generated_mode_rejects_an_unvalidated_core_before_importing_nodes() {
     let d = Directory::new();
     let c = TestCore::open(d.0.join("data")).unwrap();
@@ -476,58 +529,9 @@ fn cancelled_hash_and_archive_do_not_publish_ready() {
 }
 #[test]
 fn background_tick_without_frontend_discovers_downloads_and_adopts_official_shape() {
-    use sing_shell::updates::network::{State, Transport};
-    use std::net::TcpListener;
     let d = Directory::new();
     let core = TestCore::open(d.0.join("data")).unwrap();
-    let (path, c) = archive(&d, "1.14.4");
-    let bytes = fs::read(path).unwrap();
-    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
-    listener.set_nonblocking(true).unwrap();
-    let base = format!("http://{}", listener.local_addr().unwrap());
-    let done = Arc::new(AtomicBool::new(false));
-    let stopped = done.clone();
-    let worker = thread::spawn(move || {
-        while !stopped.load(Ordering::Acquire) {
-            let Ok((mut socket, _)) = listener.accept() else {
-                thread::sleep(Duration::from_millis(2));
-                continue;
-            };
-            socket.set_nonblocking(false).unwrap();
-            socket
-                .set_read_timeout(Some(Duration::from_secs(2)))
-                .unwrap();
-            let mut request = Vec::new();
-            let mut one = [0];
-            while !request.ends_with(b"\r\n\r\n") {
-                if socket.read(&mut one).unwrap_or(0) == 0 {
-                    break;
-                }
-                request.push(one[0]);
-            }
-            let request = String::from_utf8_lossy(&request);
-            let body = if request.contains("matching-refs") {
-                serde_json::json!([{"ref":"refs/tags/v1.14.4"}])
-                    .to_string()
-                    .into_bytes()
-            } else if request.contains("/releases/tags/") {
-                serde_json::json!({"tag_name":"v1.14.4","draft":false,"prerelease":false,"body":"official-shape fixture","html_url":c.release_url,"assets":[{"id":c.asset_id,"name":c.asset_name,"browser_download_url":c.url,"size":c.size,"digest":format!("sha256:{}",c.sha256)}]}).to_string().into_bytes()
-            } else {
-                bytes.clone()
-            };
-            let _ = write!(
-                socket,
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                body.len()
-            );
-            let _ = socket.write_all(&body);
-        }
-    });
-    *core.core.managed.test_transport.lock().unwrap() = Some(Transport::test_server(
-        &base,
-        vec![],
-        Arc::new(State::default()),
-    ));
+    let (done, worker, _) = release_server(&core, &d, "1.14.4");
     let mut prefs = core.store.snapshot().update_preferences;
     prefs.automatic = false;
     prefs.automatic_core = false;
@@ -577,18 +581,19 @@ fn cancelled_ready_is_not_applied_on_start_or_tick() {
     core.stop().unwrap();
 }
 #[test]
-fn tampered_ready_cache_is_not_restored_or_executed() {
+fn tampered_staging_is_rebuilt_from_verified_archive_without_execution() {
     let d = Directory::new();
     let data = d.0.join("data");
     let core = TestCore::open(data.clone()).unwrap();
     prepare(&core, &d, "1.14.4", Origin::Required);
     let p = core.core.managed.ready().unwrap();
     let staging = package::staged_path(&data, &p.reference).unwrap();
-    fs::write(staging, b"tampered").unwrap();
+    fs::write(&staging, b"tampered").unwrap();
     drop(core);
     let restored = TestCore::open(data).unwrap();
-    assert!(restored.core.managed.ready().is_none());
-    assert_eq!(restored.core.managed.snapshot().phase, Phase::Error);
+    assert!(restored.core.managed.ready().is_some());
+    assert_eq!(restored.core.managed.snapshot().phase, Phase::Ready);
+    assert_eq!(package::hash(&staging).unwrap(), p.reference.hash.unwrap());
     assert!(restored.runtime.snapshot().pid.is_none());
 }
 #[test]
@@ -638,4 +643,509 @@ fn failed_start_confirmation_never_leaves_an_unrecorded_proxy_running() {
         .error
         .unwrap()
         .contains("启动确认保存失败"));
+}
+
+#[test]
+fn unrecorded_conflict_pauses_automatic_work_and_explicit_retry_repairs_only_the_program() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let p = core.core.managed.ready().unwrap();
+    let program = sing_shell::settings::managed_path(&core.store.root, &p.reference).unwrap();
+    fs::write(&program, b"unrecorded bytes").unwrap();
+    let other = program.with_file_name("keep.txt");
+    fs::write(&other, b"keep").unwrap();
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(
+        core.core.managed.snapshot().failure_kind,
+        Some(sing_shell::core::managed::FailureKind::Conflict)
+    );
+    let logs = core.runtime.logs.snapshot().len();
+    core.core.tick();
+    assert_eq!(core.runtime.logs.snapshot().len(), logs);
+    core.core
+        .maintain(Some(sing_shell::core::Maintenance::Retry))
+        .unwrap();
+    wait(|| core.store.snapshot().managed.active.is_some() && !core.core.gate.core_fetching());
+    assert_eq!(package::hash(&program).unwrap(), p.reference.hash.unwrap());
+    assert_eq!(fs::read(other).unwrap(), b"keep");
+    assert!(core.runtime.snapshot().pid.is_none());
+}
+
+#[test]
+fn published_program_survives_failed_settings_write_and_retries_without_a_download() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let temp = core.store.root.join("settings.private-tmp");
+    let blocked = temp.clone();
+    *core.core.adoption_hook.lock().unwrap() = Some(Arc::new(move |stage| {
+        if stage == "after_publish" {
+            fs::create_dir(&blocked).unwrap();
+        }
+    }));
+    assert!(core.core.try_adopt().is_err());
+    assert!(core.store.snapshot().managed.active.is_none());
+    let p = core.core.managed.ready().unwrap();
+    let installed = sing_shell::settings::managed_path(&core.store.root, &p.reference).unwrap();
+    let modified = fs::metadata(&installed).unwrap().modified().unwrap();
+    assert!(!package::staged_path(&core.store.root, &p.reference)
+        .unwrap()
+        .exists());
+    assert!(core.store.snapshot().managed.blocked.is_none());
+    *core.core.adoption_hook.lock().unwrap() = None;
+    fs::remove_dir(temp).unwrap();
+    core.core
+        .maintain(Some(sing_shell::core::Maintenance::Retry))
+        .unwrap();
+    wait(|| core.store.snapshot().managed.active.is_some() && !core.core.gate.core_fetching());
+    assert_eq!(
+        fs::metadata(installed).unwrap().modified().unwrap(),
+        modified
+    );
+    assert!(core.runtime.snapshot().pid.is_none());
+}
+
+#[test]
+fn committed_selection_survives_prepared_cleanup_failure_and_restart_preserves_trial() {
+    let d = Directory::new();
+    let data = d.0.join("data");
+    let core = TestCore::open(data.clone()).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let record = core.core.managed.cache().join("prepared.json");
+    let bytes = fs::read(&record).unwrap();
+    let blocked = record.clone();
+    *core.core.adoption_hook.lock().unwrap() = Some(Arc::new(move |stage| {
+        if stage == "after_commit" {
+            fs::remove_file(&blocked).unwrap();
+            fs::create_dir(&blocked).unwrap();
+        }
+    }));
+    assert_eq!(
+        core.core.try_adopt().unwrap(),
+        sing_shell::core::Adoption::Applied
+    );
+    assert!(core.core.snapshot().usable);
+    assert!(core.core.managed.snapshot().warning.is_some());
+    assert!(core.core.managed.ready().is_none());
+    let revision = core.store.snapshot().core_revision;
+    drop(core);
+    fs::remove_dir(&record).unwrap();
+    fs::write(record, bytes).unwrap();
+    let core = TestCore::open(data).unwrap();
+    assert_eq!(
+        core.core.try_adopt().unwrap(),
+        sing_shell::core::Adoption::AlreadyCurrent
+    );
+    assert_eq!(core.store.snapshot().core_revision, revision);
+    assert_eq!(
+        core.store.snapshot().managed.trial,
+        Some(Trial::AwaitingStart)
+    );
+}
+
+#[test]
+fn cancellation_before_commit_never_selects_the_candidate_and_after_commit_is_truthful() {
+    for checkpoint in [
+        "before_publish",
+        "after_publish",
+        "before_commit",
+        "after_commit",
+    ] {
+        let d = Directory::new();
+        let core = TestCore::open(d.0.join("data")).unwrap();
+        prepare(&core, &d, "1.14.4", Origin::Required);
+        let weak = Arc::downgrade(&core.core);
+        *core.core.adoption_hook.lock().unwrap() = Some(Arc::new(move |stage| {
+            if stage == checkpoint {
+                weak.upgrade().unwrap().cancel();
+            }
+        }));
+        let outcome = core.core.try_adopt().unwrap();
+        if checkpoint == "after_commit" {
+            assert_eq!(outcome, sing_shell::core::Adoption::Applied);
+            assert!(core.store.snapshot().managed.active.is_some());
+            assert!(core.core.snapshot().usable);
+        } else {
+            assert_eq!(outcome, sing_shell::core::Adoption::Deferred);
+            assert!(core.store.snapshot().managed.active.is_none());
+            assert!(core.core.managed.ready().is_some());
+            *core.core.adoption_hook.lock().unwrap() = None;
+            core.core
+                .maintain(Some(sing_shell::core::Maintenance::Retry))
+                .unwrap();
+            wait(|| {
+                core.store.snapshot().managed.active.is_some() && !core.core.gate.core_fetching()
+            });
+        }
+        assert!(core.runtime.snapshot().pid.is_none());
+    }
+}
+
+#[test]
+fn disabling_automatic_adoption_after_publication_preserves_the_old_selection() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    baseline(&core, &d);
+    prepare(&core, &d, "1.14.4", Origin::Automatic);
+    let store = core.store.clone();
+    *core.core.adoption_hook.lock().unwrap() = Some(Arc::new(move |stage| {
+        if stage == "after_publish" {
+            let s = store.snapshot();
+            let mut prefs = s.update_preferences;
+            prefs.automatic_core = false;
+            store.preferences(s.preferences_revision, prefs).unwrap();
+        }
+    }));
+    assert_eq!(
+        core.core.try_adopt().unwrap(),
+        sing_shell::core::Adoption::Deferred
+    );
+    assert_eq!(
+        core.store.snapshot().managed.active.unwrap().version,
+        "1.14.3"
+    );
+    assert!(core.core.managed.ready().is_some());
+}
+
+#[test]
+fn preparation_io_failure_is_local_and_preserves_selected_core() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    baseline(&core, &d);
+    let (archive, candidate) = archive(&d, "1.14.4");
+    let reference = sing_shell::settings::ManagedRef {
+        version: candidate.version.clone(),
+        target: candidate.target.clone(),
+        hash: None,
+        source: None,
+    };
+    let stage = package::staged_path(&core.store.root, &reference).unwrap();
+    fs::create_dir_all(&stage).unwrap();
+    assert!(matches!(
+        core.core.managed.stage_archive(
+            &candidate,
+            &archive,
+            Origin::Manual,
+            core.core.generation(),
+            &AtomicBool::new(false)
+        ),
+        Err(sing_shell::core::managed::FetchError::Local(_))
+    ));
+    assert_eq!(
+        core.store.snapshot().managed.active.unwrap().version,
+        "1.14.3"
+    );
+    assert!(core.store.snapshot().managed.blocked.is_none());
+}
+
+#[test]
+fn network_occupation_and_core_file_tasks_prevent_adoption_and_reset() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    core.runtime.network_owned(true);
+    assert_eq!(
+        core.core.try_adopt().unwrap(),
+        sing_shell::core::Adoption::Deferred
+    );
+    core.runtime.network_owned(false);
+    let files = core
+        .core
+        .gate
+        .begin(sing_shell::app::Kind::CoreFetch)
+        .unwrap();
+    assert!(core.session.reset_settings().is_err());
+    assert_eq!(
+        core.core.try_adopt().unwrap(),
+        sing_shell::core::Adoption::Deferred
+    );
+    drop(files);
+    core.core.try_adopt().unwrap();
+    assert!(core.core.snapshot().usable);
+}
+
+#[test]
+fn a_new_candidate_cannot_overwrite_the_single_prepared_slot() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let before = fs::read(core.core.managed.cache().join("prepared.json")).unwrap();
+    let (path, candidate) = archive(&d, "1.14.5");
+    assert!(core
+        .core
+        .managed
+        .stage_archive(
+            &candidate,
+            &path,
+            Origin::Manual,
+            core.core.generation(),
+            &AtomicBool::new(false)
+        )
+        .is_err());
+    assert_eq!(
+        fs::read(core.core.managed.cache().join("prepared.json")).unwrap(),
+        before
+    );
+    core.core.try_adopt().unwrap();
+    assert_eq!(
+        core.store.snapshot().managed.active.unwrap().version,
+        "1.14.4"
+    );
+}
+
+fn release_server(
+    core: &TestCore,
+    d: &Directory,
+    version: &str,
+) -> (Arc<AtomicBool>, thread::JoinHandle<()>, Arc<AtomicU64>) {
+    use sing_shell::updates::network::{State, Transport};
+    use std::net::TcpListener;
+    let (path, c) = archive(d, version);
+    let bytes = fs::read(path).unwrap();
+    let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let base = format!("http://{}", listener.local_addr().unwrap());
+    let done = Arc::new(AtomicBool::new(false));
+    let stopped = done.clone();
+    let downloads = Arc::new(AtomicU64::new(0));
+    let downloaded = downloads.clone();
+    let worker = thread::spawn(move || {
+        while !stopped.load(Ordering::Acquire) {
+            let Ok((mut socket, _)) = listener.accept() else {
+                thread::sleep(Duration::from_millis(2));
+                continue;
+            };
+            socket.set_nonblocking(false).unwrap();
+            socket
+                .set_read_timeout(Some(Duration::from_secs(2)))
+                .unwrap();
+            let mut request = Vec::new();
+            let mut one = [0];
+            while !request.ends_with(b"\r\n\r\n") {
+                if socket.read(&mut one).unwrap_or(0) == 0 {
+                    break;
+                }
+                request.push(one[0]);
+            }
+            let request = String::from_utf8_lossy(&request);
+            let body = if request.contains("matching-refs") {
+                serde_json::json!([{"ref":format!("refs/tags/v{}",c.version)}])
+                    .to_string()
+                    .into_bytes()
+            } else if request.contains("/releases/tags/") {
+                serde_json::json!({"tag_name":format!("v{}",c.version),"draft":false,"prerelease":false,"body":"official-shape fixture","html_url":c.release_url,"assets":[{"id":c.asset_id,"name":c.asset_name,"browser_download_url":c.url,"size":c.size,"digest":format!("sha256:{}",c.sha256)}]}).to_string().into_bytes()
+            } else {
+                downloaded.fetch_add(1, Ordering::Relaxed);
+                bytes.clone()
+            };
+            let _ = write!(
+                socket,
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                body.len()
+            );
+            let _ = socket.write_all(&body);
+        }
+    });
+    *core.core.managed.test_transport.lock().unwrap() = Some(Transport::test_server(
+        &base,
+        vec![],
+        Arc::new(State::default()),
+    ));
+    (done, worker, downloads)
+}
+
+#[test]
+fn check_with_prepared_material_does_not_adopt_promote_origin_or_clear_failure() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.5", Origin::Automatic);
+    core.core.managed.fail(
+        sing_shell::core::managed::FailureKind::Conflict,
+        "preserve adoption failure".into(),
+    );
+    core.core.managed.suppressed.store(true, Ordering::Release);
+    let (done, worker, downloads) = release_server(&core, &d, "1.14.6");
+    core.core
+        .maintain(Some(sing_shell::core::Maintenance::Check))
+        .unwrap();
+    wait(|| !core.core.gate.core_fetching());
+    assert!(core.store.snapshot().managed.active.is_none());
+    assert_eq!(core.core.managed.ready().unwrap().origin, Origin::Automatic);
+    assert_eq!(
+        core.core.managed.snapshot().error.as_deref(),
+        Some("preserve adoption failure")
+    );
+    assert_eq!(
+        core.core.managed.snapshot().candidate.unwrap().version,
+        "1.14.6"
+    );
+    assert!(core.core.managed.suppressed.load(Ordering::Acquire));
+    assert_eq!(downloads.load(Ordering::Relaxed), 0);
+    done.store(true, Ordering::Release);
+    worker.join().unwrap();
+}
+
+#[test]
+fn retry_of_corrupt_archive_and_staging_rechecks_and_downloads_the_same_asset() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.5", Origin::Required);
+    let prepared = core.core.managed.ready().unwrap();
+    let (_, newer) = archive(&d, "1.14.6");
+    core.core.managed.update(|s| s.candidate = Some(newer));
+    fs::write(
+        package::staged_path(&core.store.root, &prepared.reference).unwrap(),
+        b"broken",
+    )
+    .unwrap();
+    fs::write(core.core.managed.cache().join("package.bin"), b"broken").unwrap();
+    let (done, worker, downloads) = release_server(&core, &d, "1.14.5");
+    core.core
+        .maintain(Some(sing_shell::core::Maintenance::Retry))
+        .unwrap();
+    wait(|| {
+        core.store.snapshot().managed.active.is_some()
+            || (core.core.managed.snapshot().phase == Phase::Error
+                && !core.core.gate.core_fetching())
+    });
+    assert_eq!(
+        core.store
+            .snapshot()
+            .managed
+            .active
+            .as_ref()
+            .map(|r| r.version.as_str()),
+        Some("1.14.5"),
+        "{:?}",
+        core.core.managed.snapshot().error
+    );
+    assert_eq!(downloads.load(Ordering::Relaxed), 1);
+    done.store(true, Ordering::Release);
+    worker.join().unwrap();
+    wait(|| !core.core.gate.core_fetching());
+}
+
+#[test]
+fn an_existing_target_directory_is_never_replaced_even_by_manual_retry() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Manual);
+    let prepared = core.core.managed.ready().unwrap();
+    let target = sing_shell::settings::managed_path(&core.store.root, &prepared.reference).unwrap();
+    fs::create_dir(&target).unwrap();
+    fs::write(target.join("keep"), b"keep").unwrap();
+    assert!(core.core.try_adopt().is_err());
+    core.core.managed.resume(core.core.generation()).unwrap();
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(fs::read(target.join("keep")).unwrap(), b"keep");
+    assert!(core.store.snapshot().managed.active.is_none());
+}
+
+#[cfg(unix)]
+#[test]
+fn existing_target_symlink_is_rejected_without_touching_the_external_program() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Manual);
+    let prepared = core.core.managed.ready().unwrap();
+    let target = sing_shell::settings::managed_path(&core.store.root, &prepared.reference).unwrap();
+    let external = d.0.join("external");
+    fs::write(&external, b"external").unwrap();
+    std::os::unix::fs::symlink(&external, &target).unwrap();
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(fs::read(external).unwrap(), b"external");
+    assert!(core.store.snapshot().managed.active.is_none());
+}
+
+#[test]
+fn manual_retry_does_not_replace_a_referenced_previous_program() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    baseline(&core, &d);
+    prepare(&core, &d, "1.14.4", Origin::Manual);
+    let p = core.core.managed.ready().unwrap();
+    let installed = sing_shell::settings::managed_path(&core.store.root, &p.reference).unwrap();
+    fs::write(&installed, b"preserve referenced program").unwrap();
+    core.store
+        .core(core.store.snapshot().core_revision, |s| {
+            s.managed.previous = Some(p.reference.clone());
+            Ok(())
+        })
+        .unwrap();
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(fs::read(installed).unwrap(), b"preserve referenced program");
+    assert_eq!(
+        core.store.snapshot().managed.active.unwrap().version,
+        "1.14.3"
+    );
+}
+
+#[test]
+fn explicit_takeover_does_not_overwrite_an_external_program_in_the_managed_target() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    prepare(&core, &d, "1.14.4", Origin::Required);
+    let p = core.core.managed.ready().unwrap();
+    let installed = sing_shell::settings::managed_path(&core.store.root, &p.reference).unwrap();
+    fs::copy(env!("CARGO_BIN_EXE_core-fixture"), &installed).unwrap();
+    fs::OpenOptions::new()
+        .append(true)
+        .open(&installed)
+        .unwrap()
+        .write_all(b"external variant")
+        .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&installed, fs::Permissions::from_mode(0o700)).unwrap();
+    }
+    let hash = package::hash(&installed).unwrap();
+    core.select_core(&installed).unwrap();
+    core.core.use_managed().unwrap();
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(package::hash(&installed).unwrap(), hash);
+    assert!(matches!(
+        core.store.snapshot().core_source,
+        CoreSource::External { .. }
+    ));
+}
+
+#[test]
+fn equal_version_and_bytes_cannot_hide_changed_asset_identity() {
+    let d = Directory::new();
+    let core = TestCore::open(d.0.join("data")).unwrap();
+    install(&core, &d, "1.14.4");
+    prepare(&core, &d, "1.14.4", Origin::Manual);
+    let mut p = core.core.managed.ready().unwrap();
+    p.reference.source.as_mut().unwrap().asset_id += 1;
+    core.core.managed.save_prepared(p).unwrap();
+    let revision = core.store.snapshot().core_revision;
+    assert!(core.core.try_adopt().is_err());
+    assert_eq!(core.store.snapshot().core_revision, revision);
+    assert_eq!(
+        core.store.snapshot().managed.trial,
+        Some(Trial::AwaitingStart)
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn managed_path_rejects_windows_junctions_without_touching_the_target() {
+    let d = Directory::new();
+    let target = d.0.join("external");
+    let link = d.0.join("junction");
+    fs::create_dir(&target).unwrap();
+    fs::write(target.join("keep"), b"keep").unwrap();
+    let result = std::process::Command::new("powershell.exe").args(["-NoProfile","-NonInteractive","-Command","$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path $env:SING_SHELL_TEST_LINK -Target $env:SING_SHELL_TEST_TARGET | Out-Null"])
+        .env("SING_SHELL_TEST_LINK",&link).env("SING_SHELL_TEST_TARGET",&target).output().unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let rejected = package::owned(&d.0, &link.join("keep")).is_err();
+    fs::remove_dir(&link).unwrap();
+    assert!(rejected);
+    assert_eq!(fs::read(target.join("keep")).unwrap(), b"keep");
 }

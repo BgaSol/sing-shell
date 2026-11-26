@@ -17,7 +17,8 @@ export function createCoreStatus(prefix: string) {
       error.hidden = false;
     }
   };
-  retry.onclick = () => void action(() => core.maintain("retry"));
+  let maintenance: "retry" | "update" = "update";
+  retry.onclick = () => void action(() => core.maintain(maintenance));
   cancel.onclick = () => void action(core.cancelCore);
   managed.onclick = () => void action(core.managed);
   if (prefix === "update-core")
@@ -40,6 +41,8 @@ export function createCoreStatus(prefix: string) {
       retry.hidden =
         prefix === "home-core" ? !p.retry || s.core.usable : !p.managed;
       retry.disabled = !p.retry;
+      retry.textContent = p.retryLabel;
+      maintenance = p.action;
       cancel.hidden = !p.cancel;
       managed.hidden = p.managed;
       managed.disabled = !s.core.canImport;

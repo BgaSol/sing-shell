@@ -14,6 +14,8 @@
 - ActivityCollector 跟随 worker 中的真实核心，探测能力后只读采样本机鉴权接口；连接按运行时 tag 清单归因。原始配置不注入监控，不能用展示故障推断网络已停止。
 - CoreService / ManagedCore 保留官方材料、来源、版本采用及回退；UpdateService 只负责应用更新，复用官方 Tauri updater，不覆盖外部核心。
 
+核心采用集中在 `core/adoption.rs`，由 CoreService 决定资格并提交选择；ManagedCore 独占单个准备槽及缓存恢复，package 负责字节校验与文件操作。设置中的 active/previous/trial 表达已提交选择，Prepared 保留未完成采用的来源依据；文件发布和选择提交之间允许重启后继续，不增加跨文件事务日志。设置重置由 SessionService 接纳，在现有门禁内备份并重新恢复本地核心状态。
+
 受控替换固定当前核心，不同时试用待更新核心；首次停止状态启动才可采用新核心并最多回退一次。两类用例均最多两次核心启动，不递归叠加连接回退与核心回退。原始配置继续使用普通 RuntimeService，停止后重新校验启动。
 
 ## 授权协议与资源释放

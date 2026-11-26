@@ -26,7 +26,7 @@ function smoke(executable,label,expected=version,env={}){verifyBinary(executable
 function appimageSmoke(executable,label,expected=version,env={}){run(process.execPath,['scripts/smoke.mjs',executable],{APPIMAGE_EXTRACT_AND_RUN:'1',WEBKIT_DISABLE_DMABUF_RENDERER:'1',EXPECTED_VERSION:expected,...env});report.verified.push(label);}
 function driverInput(manifest,root,executable,data,verifyOnly,currentVersion=version){const update=updater(manifest);const name=path.join(directory,`driver-${verifyOnly?'verify':'install'}-${manifest.version}.json`);fs.writeFileSync(name,JSON.stringify({root:data,executable,package:path.join(root,update.name),signature:fs.readFileSync(path.join(root,update.name+'.sig'),'utf8').trim(),current:verifyOnly?'0.0.1':currentVersion,version:manifest.version,verifyOnly}));return name;}
 function verifySignature(manifest,root){run(driver,[driverInput(manifest,root,driver,directory,true)]);}
-let official;
+let official,officialArchive;
 function networkPackage(executable,label){
   const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:official,APPIMAGE_EXTRACT_AND_RUN:'1'};
   if(process.platform==='win32')run(process.execPath,['scripts/network-integration.mjs',target],env);
@@ -48,6 +48,21 @@ function upgrade(executable,isImage=false,destination=candidate,destinationRoot=
   const data=path.join(directory,`upgrade-data-${from}`);fs.mkdirSync(data,{recursive:true});const config=path.join(directory,`preserved config-${from}.json`);fs.writeFileSync(config,'{"outbounds":[{"type":"direct"}]}');
   const old=from==='0.5.4';const savedSettings={schemaVersion:old?4:5,coreRevision:3,preferencesRevision:2,coreSource:{mode:'external',path:official},managed:{active:null,previous:null,trial:null,blocked:null},configPath:config,pendingConfigPath:null,updatePreferences:{automatic:false,automaticCore:false,network:{revision:0,fallbackEnabled:true,disabledBuiltins:[],customMirrors:[]}},profile:{mode:'externalConfig',nodes:[],selectedNode:null,routing:old?{defaultAction:'proxy',customRules:[],siteRules:[]}:{defaultExit:'proxy',policies:[]},...(old?{ruleCommit:'8b8788649349cf73fcd12fc81a5cae580e60360c'}:{})},startup:{restoreCoreOnLaunch:false,resumeCore:false,lastConnection:null},desktop:{backgroundNoticeShown:true},...(old?{profileRevision:7}:{nodesRevision:7,routingRevision:0,rulePreferences:[]})};
   fs.writeFileSync(path.join(data,'settings.json'),JSON.stringify(savedSettings));
+  let managedData,managedOriginal;
+  if(old || from==='0.6.0'){
+    managedData=path.join(directory,`upgrade-managed-${from}`);fs.mkdirSync(managedData);
+    const metadata=JSON.parse(fs.readFileSync('src-tauri/resources/core-1.14.4.json'));
+    const asset=metadata.assets.find(a=>a.name===path.basename(officialArchive));assert.ok(asset);
+    const source={component:'engine',version:'1.14.4',target,url:asset.browser_download_url,signature:'',sha256:asset.digest.slice(7),size:asset.size,notes:metadata.body,releaseUrl:metadata.html_url,assetName:asset.name,assetId:asset.id,tag:metadata.tag_name};
+    const program=path.join(managedData,'engines/sing-box/1.14.4',target,path.basename(official));fs.mkdirSync(path.dirname(program),{recursive:true});fs.copyFileSync(official,program);if(process.platform!=='win32')fs.chmodSync(program,0o700);
+    const settings=structuredClone(savedSettings);settings.coreSource={mode:'managed'};const reference={version:'1.14.4',target,hash:hash(program),source};settings.managed.active=old?reference:null;
+    fs.writeFileSync(path.join(managedData,'settings.json'),JSON.stringify(settings));
+    fs.mkdirSync(path.join(managedData,'updates/engine'),{recursive:true});fs.copyFileSync(officialArchive,path.join(managedData,'updates/engine/package.bin'));
+    if(!old)fs.writeFileSync(path.join(managedData,'updates/engine/prepared.json'),JSON.stringify({schemaVersion:2,reference,origin:'required',generation:0}));
+    fs.writeFileSync(path.join(managedData,'recovery-config.json'),'{"outbounds":[{"type":"direct"}]}');
+    (isImage?appimageSmoke:smoke)(executable,'published old version reads its managed core and schema',from,{SING_SHELL_TEST_DATA:managedData,EXPECTED_CONFIG:config,EXPECTED_LEGACY:old?'1':''});
+    managedOriginal=fs.readFileSync(path.join(managedData,'settings.json'));
+  }
   const env={SING_SHELL_TEST_DATA:data,EXPECTED_CONFIG:config,EXPECTED_LEGACY:old?'1':''};
   (isImage?appimageSmoke:smoke)(executable,'signed previous version starts with its own settings schema',from,env);const originalSettings=fs.readFileSync(path.join(data,'settings.json'));
   run(driver,[driverInput(destination,destinationRoot,executable,data,false,from)],isImage?{APPIMAGE:executable,APPIMAGE_EXTRACT_AND_RUN:'1'}:{});
@@ -56,6 +71,15 @@ function upgrade(executable,isImage=false,destination=candidate,destinationRoot=
   assert.equal(result.status,0,`upgraded executable did not confirm ${destination.version}: ${result.stdout}\n${result.stderr}`);
   if(old)assert.deepEqual(fs.readFileSync(path.join(data,'settings.json')),originalSettings,'new major version preserves the exact old settings and refuses implicit restoration');else{const saved=JSON.parse(fs.readFileSync(path.join(data,'settings.json')));assert.equal(saved.schemaVersion,5);assert.equal(saved.configPath,config);assert.deepEqual(saved.coreSource,{mode:'external',path:official});}
   assert.equal(fs.readFileSync(config,'utf8'),'{"outbounds":[{"type":"direct"}]}');
+  if(managedData){
+    (isImage?appimageSmoke:smoke)(executable,'upgraded package preserves managed settings and existing core bytes',destination.version,{SING_SHELL_TEST_DATA:managedData,EXPECTED_INCOMPATIBLE:old?'1':''});
+    assert.deepEqual(fs.readFileSync(path.join(managedData,'settings.json')),managedOriginal);
+    (isImage?appimageSmoke:smoke)(executable,'explicit initialization recovers an existing official core, starts and stops it',destination.version,{SING_SHELL_TEST_DATA:managedData,SING_SHELL_CORE_RECOVERY_TEST:'1'});
+    const recovery=JSON.parse(fs.readFileSync(path.join(managedData,'core-recovery-result.json')));
+    if(old)assert.deepEqual(fs.readFileSync(recovery.backup),managedOriginal);else assert.equal(recovery.backup,null);assert.equal(recovery.programHash,hash(official));assert.equal(recovery.version,'1.14.4');assert.equal(recovery.runningVersion,'1.14.4');assert.ok(recovery.startedPid);assert.equal(recovery.stopped,true);assert.equal(recovery.automaticConnection,false);
+    (report.managedRecovery??=[]).push({from,to:destination.version,coreVersion:recovery.version,backupHash:recovery.backupHash,programHash:recovery.programHash,started:true,stopped:true,automaticConnection:false});
+  }
+
   (report.previousUpgrades??=[]).push({from,to:destination.version,signatureVerified:true,actualVersionConfirmed:true,oldSchemaPreserved:old,candidateFiles:destination.files});report.verified.push('official updater installs the signed major version; old schema is preserved and requires explicit initialization');
 }
 function windowsLogin(action,executable){
@@ -106,9 +130,10 @@ try{
   verifySignature(original,input);verifySignature(candidate,candidateInput);report.verified.push('baseline and upgrade-candidate Tauri signatures');
   const coreVersion='1.14.4',platform={win32:'windows',linux:'linux',darwin:'darwin'}[process.platform],arch=process.arch==='arm64'?'arm64':'amd64';const upstream=`sing-box-${coreVersion}-${platform}-${arch}`,archive=`${upstream}.${process.platform==='win32'?'zip':'tar.gz'}`;
   const expected={'windows-amd64':'99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df','windows-arm64':'8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae','linux-amd64':'699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968','linux-arm64':'436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26','darwin-arm64':'0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838'}[`${platform}-${arch}`];
-  run('gh',['release','download',`v${coreVersion}`,'--repo','SagerNet/sing-box','--pattern',archive,'--dir',directory]);const coreArchive=path.join(directory,archive);assert.equal(hash(coreArchive),expected);run('tar',['-xf',coreArchive,'-C',directory]);official=path.join(directory,upstream,process.platform==='win32'?'sing-box.exe':'sing-box');verifyBinary(official,target);
+  run('gh',['release','download',`v${coreVersion}`,'--repo','SagerNet/sing-box','--pattern',archive,'--dir',directory]);const coreArchive=path.join(directory,archive);officialArchive=coreArchive;assert.equal(hash(coreArchive),expected);run('tar',['-xf',coreArchive,'-C',directory]);official=path.join(directory,upstream,process.platform==='win32'?'sing-box.exe':'sing-box');verifyBinary(official,target);
   run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','real_core','--','--ignored'],{SING_SHELL_TEST_CORE:official,SING_SHELL_TEST_ARCHIVE:coreArchive});run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','managed_core']);run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','profile','--','--include-ignored'],{SING_SHELL_TEST_CORE:official});run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','rules','--','--include-ignored'],{SING_SHELL_TEST_CORE:official});report.verified.push('same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration');report.officialCore={version:coreVersion,archive,sha256:expected};report.verified.push('official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection');
   publishedUpgrade('0.5.4');
+  publishedUpgrade('0.6.0');
   if(process.platform==='win32'){
     for(const scope of ['/AllUsers','/CurrentUser']){
       const install=scope==='/AllUsers'?path.join(process.env.ProgramFiles,`Sing Shell CI-${process.pid}`):path.join(directory,'installed');
