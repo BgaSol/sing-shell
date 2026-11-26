@@ -11,6 +11,9 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [v0.5.2 候选验证](releases/v0.5.2.md)：托盘及 TUN 授权整改，五原生/实际包通过，等待用户 Mac 验收
+- [v0.5.2 包验证证据](releases/v0.5.2-verification.json)：固定来源、原包摘要、升级及草稿状态
+- [v0.5.2 网络验证证据](releases/v0.5.2-network-verification.json)：五原生转发与异常清理，用户授权路径另验
 - [v0.5.1 发行记录](releases/v0.5.1.md)：节点分享链接兼容、预览事务与发行验收
 - [v0.5.1 完整验收](releases/v0.5.1-verification.json)：五原生签名包、核心/升级和公开附件核对
 - [v0.5.0 发行记录](releases/v0.5.0.md)：节点、TUN、分流与平台验收边界
