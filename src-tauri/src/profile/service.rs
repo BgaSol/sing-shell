@@ -9,10 +9,7 @@ use crate::{
 };
 use serde::Serialize;
 use std::{
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc, Mutex,
-    },
+    sync::{atomic::Ordering, Arc, Mutex},
     time::{Duration, Instant},
 };
 
@@ -34,11 +31,33 @@ struct Pending {
     created: Instant,
     nodes: Vec<Node>,
 }
+#[derive(Default)]
+struct PreviewState {
+    next: u64,
+    pending: Option<Pending>,
+}
+impl PreviewState {
+    fn invalidate(&mut self) -> u64 {
+        self.next += 1;
+        self.pending = None;
+        self.next
+    }
+    fn publish(&mut self, id: u64, nodes: Vec<Node>, cancelled: bool) -> Result<(), String> {
+        if self.next != id || cancelled {
+            return Err("导入预览已取消，请重新预览".into());
+        }
+        self.pending = Some(Pending {
+            id,
+            created: Instant::now(),
+            nodes,
+        });
+        Ok(())
+    }
+}
 pub struct Service {
     store: Arc<SettingsStore>,
     gate: Arc<Admission>,
-    pending: Mutex<Option<Pending>>,
-    next: AtomicU64,
+    preview: Mutex<PreviewState>,
     runtime: Arc<crate::runtime::RuntimeService>,
 }
 impl Service {
@@ -50,8 +69,7 @@ impl Service {
         Self {
             store,
             gate,
-            pending: Mutex::new(None),
-            next: AtomicU64::new(0),
+            preview: Mutex::new(PreviewState::default()),
             runtime,
         }
     }
@@ -64,7 +82,7 @@ impl Service {
     }
     pub fn preview(&self, input: &str) -> Result<Preview, String> {
         let _op = self.gate.begin(Kind::Profile)?;
-        let id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
+        let id = self.preview.lock().unwrap().invalidate();
         let settings = self.store.snapshot();
         if self.store.error.is_some() {
             return Err("设置无法读取，请先处理存储错误".into());
@@ -110,30 +128,32 @@ impl Service {
                 n
             })
             .collect();
-        let mut pending = self.pending.lock().unwrap();
-        if self.next.load(Ordering::Acquire) != id || _op.cancel.load(Ordering::Acquire) {
-            return Err("导入预览已取消，请重新预览".into());
-        }
-        *pending = Some(Pending {
-            id,
-            created: Instant::now(),
-            nodes,
-        });
+        self.preview
+            .lock()
+            .unwrap()
+            .publish(id, nodes, _op.cancel.load(Ordering::Acquire))?;
         Ok(Preview {
             ticket: id,
             items: preview.items,
         })
     }
     pub fn cancel(&self) {
-        self.next.fetch_add(1, Ordering::AcqRel);
-        self.pending.lock().unwrap().take();
+        self.preview.lock().unwrap().invalidate();
     }
     pub fn commit(&self, id: u64, expected: u64) -> Result<Snapshot, String> {
         let _op = self.gate.begin(Kind::Profile)?;
-        let mut pending = self.pending.lock().unwrap();
-        let p = pending
+        let mut state = self.preview.lock().unwrap();
+        if state
+            .pending
             .as_ref()
-            .filter(|p| p.id == id && p.created.elapsed() < Duration::from_secs(600))
+            .is_some_and(|p| p.created.elapsed() >= Duration::from_secs(600))
+        {
+            state.pending = None;
+        }
+        let p = state
+            .pending
+            .as_ref()
+            .filter(|p| p.id == id)
             .ok_or("导入预览已过期，请重新预览")?;
         let nodes = p.nodes.clone();
         self.store.profile(expected, |profile| {
@@ -148,7 +168,7 @@ impl Service {
             }
             Ok(())
         })?;
-        pending.take();
+        state.pending = None;
         Ok(self.snapshot())
     }
     pub fn select(&self, id: String, expected: u64) -> Result<Snapshot, String> {
@@ -208,37 +228,46 @@ mod tests {
     use super::*;
     #[test]
     fn cancellation_rejects_a_preview_that_finishes_after_cancel() {
+        let mut state = PreviewState::default();
+        let old = state.invalidate();
+        state.invalidate();
+        assert!(state.publish(old, vec![], false).is_err());
+        assert!(state.pending.is_none());
+        let current = state.invalidate();
+        assert!(state.publish(current, vec![], true).is_err());
+        assert!(state.pending.is_none());
+        state.publish(current, vec![], false).unwrap();
+        assert_eq!(state.pending.as_ref().unwrap().id, current);
+        assert!(state.publish(old, vec![], false).is_err());
+        assert_eq!(state.pending.as_ref().unwrap().id, current);
+        state.invalidate();
+        assert!(state.pending.is_none());
+    }
+    #[test]
+    fn expired_preview_is_destroyed_without_writing_settings() {
         let root = std::env::temp_dir().join(format!(
-            "sing-shell-cancel-import-{}-{}",
+            "sing-shell-expired-import-{}-{}",
             std::process::id(),
             crate::logs::now()
         ));
         let store = Arc::new(SettingsStore::open(root.clone()).unwrap());
-        let service = Arc::new(Service::new(
+        let service = Service::new(
             store.clone(),
             Arc::new(Admission::default()),
             Arc::new(Default::default()),
-        ));
-        let pending = service.pending.lock().unwrap();
-        let preview_service = service.clone();
-        let preview =
-            std::thread::spawn(move || preview_service.preview("trojan://test@example.test:443"));
-        let deadline = Instant::now() + Duration::from_secs(3);
-        while service.next.load(Ordering::Acquire) < 1 {
-            assert!(Instant::now() < deadline);
-            std::thread::yield_now();
-        }
-        let cancel_service = service.clone();
-        let cancel = std::thread::spawn(move || cancel_service.cancel());
-        while service.next.load(Ordering::Acquire) < 2 {
-            assert!(Instant::now() < deadline);
-            std::thread::yield_now();
-        }
-        drop(pending);
-        assert!(preview.join().unwrap().is_err());
-        cancel.join().unwrap();
-        assert!(service.commit(1, 0).is_err());
-        assert!(service.snapshot().profile.nodes.is_empty());
+        );
+        let preview = service.preview("trojan://test@example.test:443").unwrap();
+        service
+            .preview
+            .lock()
+            .unwrap()
+            .pending
+            .as_mut()
+            .unwrap()
+            .created = Instant::now() - Duration::from_secs(600);
+        assert!(service.commit(preview.ticket, 0).is_err());
+        assert!(service.preview.lock().unwrap().pending.is_none());
+        assert_eq!(store.snapshot().profile_revision, 0);
         drop(service);
         drop(store);
         std::fs::remove_dir_all(root).unwrap();
