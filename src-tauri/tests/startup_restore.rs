@@ -2,7 +2,7 @@
 mod support;
 use sing_shell::{
     app::Kind,
-    core::{Action, Restore},
+    session::{Action, Restore},
     settings::SettingsStore,
 };
 use std::{
@@ -56,19 +56,19 @@ fn successful_run_survives_internal_cleanup_and_restores_once_without_frontend()
     let d = Directory::new();
     {
         let c = d.configured(serde_json::json!({}));
-        c.core.set_restore(true).unwrap();
+        c.session.set_restore(true).unwrap();
         c.start().unwrap();
         assert!(c.store.snapshot().startup.resume_core);
-        c.runtime.stop().unwrap();
+        c.session.stop_internal().unwrap();
         assert!(c.store.snapshot().startup.resume_core);
     }
     let c = TestCore::open(d.0.join("data")).unwrap();
-    assert_eq!(c.core.snapshot().restore, Restore::Waiting);
-    c.core.restore_tick();
-    wait(|| c.core.snapshot().restore == Restore::Finished);
+    assert_eq!(c.session.snapshot().restore, Restore::Waiting);
+    c.session.restore_tick();
+    wait(|| c.session.snapshot().restore == Restore::Finished);
     assert!(c.runtime.snapshot().pid.is_some());
-    c.runtime.stop().unwrap();
-    c.core.restore_tick();
+    c.session.stop_internal().unwrap();
+    c.session.restore_tick();
     assert!(c.runtime.snapshot().pid.is_none());
     assert!(c.store.snapshot().startup.resume_core);
     c.stop().unwrap();
@@ -78,9 +78,9 @@ fn successful_run_survives_internal_cleanup_and_restores_once_without_frontend()
 fn stop_cancels_start_without_competing_with_diagnostics() {
     let d = Directory::new();
     let c = d.configured(serde_json::json!({"checkDelayMs":700}));
-    c.core.action(Action::Start).unwrap();
+    c.session.action(Action::Start).unwrap();
     let diagnostic = c.core.gate.begin(Kind::Diagnostic).unwrap();
-    c.core.action(Action::Stop).unwrap();
+    c.session.action(Action::Stop).unwrap();
     wait(|| !c.core.gate.runtime_busy());
     assert!(c.runtime.snapshot().pid.is_none());
     assert!(!c.store.snapshot().startup.resume_core);
@@ -92,23 +92,23 @@ fn pending_restore_is_revoked_by_stop_selection_or_disabling() {
         let d = Directory::new();
         {
             let c = d.configured(serde_json::json!({}));
-            c.core.set_restore(true).unwrap();
+            c.session.set_restore(true).unwrap();
             c.store.resume(true).unwrap();
         }
         let c = TestCore::open(d.0.join("data")).unwrap();
         match cancel {
             0 => c.stop().unwrap(),
             1 => {
-                c.core.set_restore(false).unwrap();
+                c.session.set_restore(false).unwrap();
             }
             _ => c
                 .import_config(&c.store.snapshot().config_path.unwrap())
                 .unwrap(),
         }
-        c.core.restore_tick();
+        c.session.restore_tick();
         thread::sleep(Duration::from_millis(100));
         assert!(c.runtime.snapshot().pid.is_none());
-        assert_eq!(c.core.snapshot().restore, Restore::Finished);
+        assert_eq!(c.session.snapshot().restore, Restore::Finished);
     }
 }
 #[test]
@@ -118,17 +118,17 @@ fn failed_restore_is_consumed_and_does_not_retry_changed_configuration() {
     {
         let c = d.configured(serde_json::json!({}));
         config = c.store.snapshot().config_path.unwrap();
-        c.core.set_restore(true).unwrap();
+        c.session.set_restore(true).unwrap();
         c.store.resume(true).unwrap();
     }
     fs::write(&config, "{invalid").unwrap();
     let c = TestCore::open(d.0.join("data")).unwrap();
-    c.core.restore_tick();
-    wait(|| c.core.snapshot().restore == Restore::Finished);
+    c.session.restore_tick();
+    wait(|| c.session.snapshot().restore == Restore::Finished);
     assert!(c.runtime.snapshot().pid.is_none());
     assert!(c.runtime.snapshot().error.unwrap().contains("自动恢复失败"));
     fs::write(config, "{}").unwrap();
-    c.core.restore_tick();
+    c.session.restore_tick();
     thread::sleep(Duration::from_millis(100));
     assert!(c.runtime.snapshot().pid.is_none());
 }
@@ -143,7 +143,7 @@ fn migration_preserves_backup_and_independent_writes_preserve_network_draft_revi
         let store = Arc::new(SettingsStore::open(data.clone()).unwrap());
         assert!(store.error.is_none());
         let baseline = store.snapshot();
-        assert_eq!(baseline.schema_version, 3);
+        assert_eq!(baseline.schema_version, 4);
         assert!(!baseline.startup.resume_core);
         store.restore_preference(true).unwrap();
         store.resume(true).unwrap();
@@ -169,7 +169,7 @@ fn failed_intent_save_still_stops_real_process() {
     let d = Directory::new();
     let c = d.configured(serde_json::json!({}));
     c.start().unwrap();
-    fs::create_dir(c.store.root.join("settings.json.tmp")).unwrap();
+    fs::create_dir(c.store.root.join("settings.private-tmp")).unwrap();
     assert!(c.stop().unwrap_err().contains("下次启动仍可能恢复"));
     assert!(c.runtime.snapshot().pid.is_none());
 }
@@ -197,8 +197,8 @@ fn migration_does_not_replace_unrecognized_legacy_fields() {
 fn disabling_restore_does_not_cancel_a_manual_start() {
     let d = Directory::new();
     let c = d.configured(serde_json::json!({"checkDelayMs":500}));
-    c.core.action(Action::Start).unwrap();
-    c.core.set_restore(false).unwrap();
+    c.session.action(Action::Start).unwrap();
+    c.session.set_restore(false).unwrap();
     wait(|| !c.core.gate.runtime_busy());
     assert!(c.runtime.snapshot().pid.is_some());
     c.stop().unwrap();
@@ -208,13 +208,13 @@ fn cancelling_required_preparation_consumes_a_waiting_restore() {
     let d = Directory::new();
     {
         let c = TestCore::open(d.0.join("data")).unwrap();
-        c.core.set_restore(true).unwrap();
+        c.session.set_restore(true).unwrap();
         c.store.resume(true).unwrap();
     }
     let c = TestCore::open(d.0.join("data")).unwrap();
-    assert_eq!(c.core.snapshot().restore, Restore::Waiting);
-    c.core.cancel();
-    c.core.restore_tick();
-    assert_eq!(c.core.snapshot().restore, Restore::Finished);
+    assert_eq!(c.session.snapshot().restore, Restore::Waiting);
+    c.session.cancel_core();
+    c.session.restore_tick();
+    assert_eq!(c.session.snapshot().restore, Restore::Finished);
     assert!(c.runtime.snapshot().pid.is_none());
 }

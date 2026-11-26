@@ -144,7 +144,8 @@ pub fn decision(
 }
 fn finish(app: Arc<Application>, handle: tauri::AppHandle, target: Target) -> Result<(), String> {
     app.gate.close()?;
-    app.core.invalidate_restore();
+    app.profiles.cancel();
+    app.session.invalidate_restore();
     tauri::async_runtime::spawn_blocking(move || {
         let result = (|| {
             app.gate.wait()?;
@@ -155,7 +156,7 @@ fn finish(app: Arc<Application>, handle: tauri::AppHandle, target: Target) -> Re
             } else {
                 None
             };
-            app.runtime.stop()?;
+            app.session.stop_internal()?;
             // NSIS can terminate inside install; required cleanup must precede it.
             app.updates.stop();
             app.handed_off.store(true, Ordering::Release);

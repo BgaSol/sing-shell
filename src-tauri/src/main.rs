@@ -1,8 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use sing_shell::{
     app::{Application, Kind, Receipt},
-    core::{Action, Maintenance},
+    core::Maintenance,
     lifecycle,
+    session::Action,
     settings::UpdatePreferences,
     updates::{network, Component},
 };
@@ -61,7 +62,7 @@ fn run_smoke(native: tauri::AppHandle, application: App, restore: bool) {
 }
 fn smoke_failure(handle: &tauri::AppHandle, app: &App, error: impl ToString) {
     let message = error.to_string();
-    let value = serde_json::json!({"error":message,"desktop":app.desktop.snapshot(handle,app),"runtime":app.runtime.snapshot(),"core":app.core.snapshot()});
+    let value = serde_json::json!({"error":message,"desktop":app.desktop.snapshot(handle,app),"runtime":app.runtime.snapshot(),"core":app.session.snapshot()});
     let _ = std::fs::write(
         handle.state::<Smoke>().directory.join("smoke-error.json"),
         value.to_string(),
@@ -150,7 +151,7 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
             .items
             .get(&Component::App)
             .is_some_and(|i| i.phase == "ready");
-    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"loginRegistration":login_registration,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot()});
+    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"loginRegistration":login_registration,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot().public()});
     std::fs::write(
         smoke.directory.join("smoke-result.json"),
         report.to_string(),
@@ -221,23 +222,109 @@ async fn login_startup_set(
     .map_err(|e| e.to_string())?
 }
 #[tauri::command]
-fn set_restore_core(
-    enabled: bool,
-    app: State<App>,
-) -> Result<sing_shell::settings::Settings, String> {
+fn set_restore_core(enabled: bool, app: State<App>) -> Result<serde_json::Value, String> {
     let _operation = app.gate.begin(Kind::Preferences)?;
-    app.core.set_restore(enabled)
+    app.session.set_restore(enabled).map(|s| s.public())
 }
 #[tauri::command]
 fn core_snapshot(app: State<App>) -> serde_json::Value {
     let settings = app.store.snapshot();
-    let runtime = app.runtime.snapshot();
-    let core = app.core.snapshot_for(&settings, &runtime);
-    serde_json::json!({"settings":settings,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.runtime.logs.snapshot(),"storageError":app.store.error,"closing":app.gate.closing()})
+    let runtime = app.session.runtime_snapshot();
+    let core = app.session.snapshot_for(&settings, &runtime);
+    let settings_value = settings.public();
+    serde_json::json!({"settings":settings_value,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.session.logs(),"storageError":app.store.error,"closing":app.gate.closing()})
+}
+#[tauri::command]
+async fn profile_import_preview(
+    input: String,
+    app: State<'_, App>,
+) -> Result<sing_shell::profile::service::Preview, String> {
+    let application = app.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || application.profiles.preview(&input))
+        .await
+        .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+fn profile_import_cancel(app: State<App>) {
+    app.profiles.cancel();
+}
+#[tauri::command]
+fn profile_import_commit(
+    ticket: u64,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    app.profiles.commit(ticket, expected_revision)
+}
+#[tauri::command]
+fn profile_select_node(
+    id: String,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    app.profiles.select(id, expected_revision)
+}
+#[tauri::command]
+fn profile_rename_node(
+    id: String,
+    name: String,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    app.profiles.rename(id, name, expected_revision)
+}
+#[tauri::command]
+fn profile_delete_node(
+    id: String,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    if app.session.runtime_snapshot().pid.is_some() {
+        return Err("运行时请先停止，再删除节点".into());
+    }
+    app.profiles.delete(id, expected_revision)
+}
+#[tauri::command]
+fn profile_snapshot(app: State<App>) -> sing_shell::profile::service::Snapshot {
+    app.profiles.snapshot()
+}
+#[tauri::command]
+fn profile_mode(
+    mode: sing_shell::profile::Mode,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    app.session.mode(mode, expected_revision)
+}
+#[tauri::command]
+async fn profile_update_rules(
+    expected_revision: u64,
+    app: State<'_, App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    let operation = app.gate.begin(Kind::Rules)?;
+    let application = app.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let commit = sing_shell::rulesets::latest(&application.store.root, &operation.cancel)?;
+        application.store.profile(expected_revision, |p| {
+            p.rule_commit = commit;
+            Ok(())
+        })?;
+        Ok(application.profiles.snapshot())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+fn profile_set_routing(
+    routing: sing_shell::profile::routing::Routing,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    app.profiles.routing(routing, expected_revision)
 }
 #[tauri::command]
 fn core_action(action: Action, app: State<App>) -> Result<Receipt, String> {
-    app.core.action(action)
+    app.session.action(action)
 }
 #[tauri::command]
 fn core_maintenance(action: Maintenance, app: State<App>) -> Result<Receipt, String> {
@@ -245,12 +332,12 @@ fn core_maintenance(action: Maintenance, app: State<App>) -> Result<Receipt, Str
 }
 #[tauri::command]
 fn cancel_core_maintenance(app: State<App>) {
-    app.core.cancel();
+    app.session.cancel_core();
 }
 #[tauri::command]
 async fn use_managed_core(app: State<'_, App>) -> Result<Receipt, String> {
-    let core = app.core.clone();
-    tauri::async_runtime::spawn_blocking(move || core.use_managed())
+    let session = app.session.clone();
+    tauri::async_runtime::spawn_blocking(move || session.use_managed())
         .await
         .map_err(|e| e.to_string())?
 }
@@ -261,7 +348,7 @@ fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Resul
     }
     app.desktop.present(&handle, true)?;
     let parent = handle.get_webview_window("main").ok_or("主窗口不可用")?;
-    app.runtime.stopped()?;
+    app.session.ensure_stopped()?;
     if app.gate.closing() {
         return Err("应用正在退出".into());
     }
@@ -296,9 +383,9 @@ fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Resul
                     .map_err(|e| e.to_string())
                     .and_then(|path| {
                         if kind == "core" {
-                            app.core.select(&path)
+                            app.session.select_core(&path)
                         } else {
-                            app.core.import(&path)
+                            app.session.import_config(&path)
                         }
                     });
                 if let Err(error) = result {
@@ -334,12 +421,12 @@ fn set_update_preferences(
     expected_revision: u64,
     preferences: UpdatePreferences,
     app: State<App>,
-) -> Result<sing_shell::settings::Settings, String> {
+) -> Result<serde_json::Value, String> {
     let _operation = app.gate.begin(Kind::Preferences)?;
     let value = app.store.preferences(expected_revision, preferences)?;
     app.updates.reset_network();
     app.core.preferences_changed();
-    Ok(value)
+    Ok(value.public())
 }
 #[tauri::command]
 async fn test_update_mirror(
@@ -377,6 +464,10 @@ fn request_exit(handle: tauri::AppHandle, app: State<App>) -> Result<(), String>
     lifecycle::request(app.inner().clone(), handle, lifecycle::Target::Quit)
 }
 #[tauri::command]
+fn open_network_settings() -> Result<(), String> {
+    sing_shell::session::open_network_settings()
+}
+#[tauri::command]
 fn open_update_release(component: Component, handle: tauri::AppHandle) -> Result<(), String> {
     let repository = if component == Component::App {
         "BgaSol/sing-shell"
@@ -393,6 +484,26 @@ fn open_update_release(component: Component, handle: tauri::AppHandle) -> Result
 }
 fn main() {
     let args: Vec<_> = std::env::args_os().collect();
+    if let Some(result) = sing_shell::session::tunnel::dispatch(&args) {
+        if let Err(error) = result {
+            eprintln!("Sing Shell network helper: {error}");
+            std::process::exit(1);
+        }
+        return;
+    }
+    if args.iter().any(|a| a == "--smoke-test")
+        && std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1")
+    {
+        if let Some(index) = args.iter().position(|a| a == "--network-fixture-input") {
+            let file = args.get(index + 1).expect("network fixture input missing");
+            let fixture_args = vec![args[0].clone(), file.clone()];
+            if let Err(error) = sing_shell::session::tunnel::fixture(&fixture_args) {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+            return;
+        }
+    }
     let launch = sing_shell::startup::Launch::parse(&args).expect("启动参数无效");
     let app = tauri::Builder::default()
         .manage(sing_shell::startup::Launch::restart_environment(&args))
@@ -517,8 +628,19 @@ fn main() {
             builtin_mirrors,
             request_restart,
             request_exit,
+            open_network_settings,
             set_update_draft_dirty,
-            open_update_release
+            open_update_release,
+            profile_import_preview,
+            profile_import_cancel,
+            profile_snapshot,
+            profile_mode,
+            profile_update_rules,
+            profile_rename_node,
+            profile_delete_node,
+            profile_import_commit,
+            profile_select_node,
+            profile_set_routing
         ])
         .build(tauri::generate_context!())
         .expect("无法启动 Sing Shell");

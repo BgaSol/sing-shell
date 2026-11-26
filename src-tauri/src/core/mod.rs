@@ -2,7 +2,7 @@ pub mod managed;
 pub mod package;
 use crate::{
     app::{Admission, Kind, Operation, Receipt},
-    runtime::{self, RuntimeService, StartSpec},
+    runtime::{self, RuntimeService},
     settings::{self, Blocked, CoreSource, FailureStage, ManagedRef, SettingsStore, Trial},
     updates::{release, Component},
 };
@@ -17,13 +17,6 @@ use std::{
     },
 };
 
-#[derive(Clone, Copy, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum Action {
-    Start,
-    Stop,
-    Check,
-}
 #[derive(Clone, Copy, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Maintenance {
@@ -39,26 +32,7 @@ pub struct Snapshot {
     pub usable: bool,
     pub notice: Option<String>,
     pub config_error: Option<String>,
-    pub restore: Restore,
-    pub can_start: bool,
-    pub can_stop: bool,
-    pub can_import: bool,
     pub can_retry: bool,
-}
-#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub enum Restore {
-    #[default]
-    None,
-    Waiting,
-    Starting,
-    Finished,
-}
-#[derive(Default)]
-struct Intent {
-    epoch: u64,
-    restore: Restore,
-    restore_operation: Option<u64>,
 }
 pub struct CoreService {
     pub store: Arc<SettingsStore>,
@@ -68,15 +42,28 @@ pub struct CoreService {
     wake: Arc<tokio::sync::Notify>,
     generation: AtomicU64,
     initialized: AtomicBool,
-    usable: AtomicBool,
+    pub(crate) usable: AtomicBool,
     notice: Mutex<Option<String>>,
     config_error: Mutex<Option<String>>,
     takeover: Mutex<Option<u64>>,
     fetch_origin: Mutex<Option<Origin>>,
-    intent: Mutex<Intent>,
-    restore_safe: AtomicBool,
+    pub(crate) restore_safe: AtomicBool,
 }
 impl CoreService {
+    fn config_for(&self, s: &settings::Settings) -> Result<Option<std::path::PathBuf>, String> {
+        if s.profile.mode == crate::profile::Mode::Generated {
+            if s.profile.selected().is_none() {
+                Ok(None)
+            } else {
+                self.runtime
+                    .logs
+                    .redact(s.profile.selected().unwrap().spec.secrets());
+                crate::profile::config::build(&s.profile, &self.store.root).map(|c| Some(c.path))
+            }
+        } else {
+            Ok(s.config_path.clone())
+        }
+    }
     pub fn new(
         store: Arc<SettingsStore>,
         runtime: Arc<RuntimeService>,
@@ -96,7 +83,6 @@ impl CoreService {
             config_error: Mutex::new(None),
             takeover: Mutex::new(None),
             fetch_origin: Mutex::new(None),
-            intent: Mutex::new(Intent::default()),
             restore_safe: AtomicBool::new(true),
         })
     }
@@ -104,47 +90,16 @@ impl CoreService {
         self.generation.load(Ordering::Acquire)
     }
     pub fn snapshot(&self) -> Snapshot {
-        let settings = self.store.snapshot();
-        let r = self.runtime.snapshot();
-        self.snapshot_for(&settings, &r)
-    }
-    pub fn snapshot_for(
-        &self,
-        settings: &settings::Settings,
-        r: &runtime::RuntimeSnapshot,
-    ) -> Snapshot {
-        let busy = self.gate.runtime_busy()
-            || self.gate.closing()
-            || !self.initialized.load(Ordering::Acquire);
-        let usable = self.usable.load(Ordering::Acquire);
-        let restore = self.intent.lock().unwrap().restore;
         Snapshot {
-            restore,
             maintenance: self.managed.snapshot(),
             initialized: self.initialized.load(Ordering::Acquire),
-            usable,
+            usable: self.usable.load(Ordering::Acquire),
             notice: self.notice.lock().unwrap().clone(),
             config_error: self.config_error.lock().unwrap().clone(),
-            can_start: !busy
-                && r.pid.is_none()
-                && !r.cleanup_pending
-                && self.store.error.is_none()
-                && usable
-                && settings.config_path.is_some(),
-            can_stop: !self.gate.closing()
-                && (r.pid.is_some()
-                    || r.cleanup_pending
-                    || r.status == "starting"
-                    || self.gate.runtime_busy()
-                    || matches!(restore, Restore::Waiting | Restore::Starting)),
-            can_import: !busy
-                && r.pid.is_none()
-                && !r.cleanup_pending
-                && self.store.error.is_none(),
             can_retry: !self.gate.closing() && !self.gate.core_fetching(),
         }
     }
-    fn notify(&self, message: impl Into<String>) {
+    pub(crate) fn notify(&self, message: impl Into<String>) {
         let message = message.into();
         self.runtime.logs.push("core", message.clone());
         *self.notice.lock().unwrap() = Some(message);
@@ -234,7 +189,6 @@ impl CoreService {
             self.managed.update(|v| v.next_check_at = 0);
         }
         self.initialized.store(true, Ordering::Release);
-        self.arm_restore();
         Ok(())
     }
     pub fn verify(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
@@ -242,7 +196,7 @@ impl CoreService {
     }
     fn compatible(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
         self.verify(reference, cancel)?;
-        if let Some(config) = self.store.snapshot().config_path {
+        if let Some(config) = self.config_for(&self.store.snapshot())? {
             self.runtime.validate(
                 &settings::managed_path(&self.store.root, reference)?,
                 &config,
@@ -251,7 +205,7 @@ impl CoreService {
         }
         Ok(())
     }
-    fn selected(&self, cancel: &AtomicBool) -> Result<std::path::PathBuf, String> {
+    pub(crate) fn selected(&self, cancel: &AtomicBool) -> Result<std::path::PathBuf, String> {
         let s = self.store.snapshot();
         let p = s.selected_path(&self.store.root)?;
         if s.managed() {
@@ -261,7 +215,6 @@ impl CoreService {
     }
     pub fn select(&self, path: &Path) -> Result<(), String> {
         let op = self.gate.begin(Kind::Selection)?;
-        self.invalidate_restore();
         self.runtime.stopped()?;
         let s = self.store.snapshot();
         let path = runtime::file(path)?;
@@ -282,7 +235,6 @@ impl CoreService {
     }
     pub fn import(&self, path: &Path) -> Result<(), String> {
         let op = self.gate.begin(Kind::Selection)?;
-        self.invalidate_restore();
         self.runtime.stopped()?;
         let s = self.store.snapshot();
         let path = runtime::file(path)?;
@@ -293,6 +245,8 @@ impl CoreService {
                 self.store.core(s.core_revision, |v| {
                     v.config_path = Some(path);
                     v.pending_config_path = None;
+                    v.profile.mode = crate::profile::Mode::ExternalConfig;
+                    v.profile_revision += 1;
                     if v.managed
                         .blocked
                         .as_ref()
@@ -307,6 +261,8 @@ impl CoreService {
             Err(_) if s.managed() => {
                 self.store.core(s.core_revision, |v| {
                     v.pending_config_path = Some(path);
+                    v.profile.mode = crate::profile::Mode::ExternalConfig;
+                    v.profile_revision += 1;
                     Ok(())
                 })?;
                 self.notify("配置路径已保存，等待核心校验");
@@ -318,7 +274,7 @@ impl CoreService {
         self.wake.notify_one();
         Ok(())
     }
-    fn validate_pending(&self, cancel: &AtomicBool) -> Result<(), String> {
+    pub(crate) fn validate_pending(&self, cancel: &AtomicBool) -> Result<(), String> {
         let s = self.store.snapshot();
         let Some(config) = s.pending_config_path.clone() else {
             return Ok(());
@@ -341,7 +297,7 @@ impl CoreService {
         let op = self.gate.begin(Kind::Selection)?;
         self.check_local(&op.cancel)
     }
-    fn check_local(&self, cancel: &AtomicBool) -> Result<(), String> {
+    pub(crate) fn check_local(&self, cancel: &AtomicBool) -> Result<(), String> {
         self.validate_pending(cancel)?;
         let s = self.store.snapshot();
         let core = self.selected(cancel)?;
@@ -355,159 +311,13 @@ impl CoreService {
         *self.config_error.lock().unwrap() = None;
         Ok(())
     }
-    pub fn action(self: &Arc<Self>, action: Action) -> Result<Receipt, String> {
-        let op = self.gate.begin(if matches!(action, Action::Stop) {
-            Kind::Stop
-        } else {
-            Kind::Runtime
-        })?;
-        if matches!(action, Action::Start | Action::Stop) {
-            self.invalidate_restore();
-        }
-        let receipt = op.receipt();
-        let core = self.clone();
-        tauri::async_runtime::spawn_blocking(move || {
-            let result = match action {
-                Action::Start => core.start_owned(&op),
-                Action::Stop => core.stop_owned(&op),
-                Action::Check => core.check_local(&op.cancel),
-            };
-            if let Err(e) = result {
-                core.runtime.report(e);
-            }
-            drop(op);
-            core.wake.notify_one();
-        });
-        Ok(receipt)
-    }
-    pub fn start(&self) -> Result<(), String> {
-        let op = self.gate.begin(Kind::Runtime)?;
-        self.invalidate_restore();
-        self.start_owned(&op)
-    }
-    fn start_owned(&self, op: &Operation) -> Result<(), String> {
-        let epoch = self.intent.lock().unwrap().epoch;
-        self.start_process(op)?;
-        let intent = self.intent.lock().unwrap();
-        let result: Result<(), String> = (|| {
-            if intent.epoch != epoch || self.gate.closing() {
-                return Err("启动已取消".into());
-            }
-            package::cancelled(&op.cancel)?;
-            self.store
-                .confirm_start(self.store.snapshot().core_revision)?;
-            Ok(())
-        })();
-        drop(intent);
-        if let Err(e) = result {
-            let stop = self.runtime.stop();
-            if op.cancel.load(Ordering::Acquire) && stop.is_ok() {
-                let s = self.store.snapshot();
-                if s.managed.trial == Some(Trial::Starting) {
-                    let _ = self.store.core(s.core_revision, |v| {
-                        v.managed.trial = Some(Trial::AwaitingStart);
-                        Ok(())
-                    });
-                }
-            }
-            return Err(format!("启动确认保存失败：{e}；停止结果：{stop:?}"));
-        }
-        Ok(())
-    }
-    fn start_process(&self, op: &Operation) -> Result<(), String> {
-        if self.runtime.snapshot().pid.is_some() {
-            return Err("sing-box 已在运行".into());
-        }
-        self.runtime.stopped()?;
-        self.runtime.clear_error();
-        if let Err(e) = self.adopt_owned(op) {
-            self.managed.error(e);
-        }
-        self.validate_pending(&op.cancel)?;
-        let s = self.store.snapshot();
-        let config = s.config_path.clone().ok_or("请先导入有效配置")?;
-        let spec = StartSpec {
-            executable: s.selected_path(&self.store.root)?,
-            config: config.clone(),
-            version: if s.managed() {
-                s.managed.active.as_ref().map(|r| r.version.clone())
-            } else {
-                None
-            },
-        };
-        let trial = s.managed() && s.managed.trial.is_some();
-        if trial {
-            self.store.core(s.core_revision, |v| {
-                v.managed.trial = Some(Trial::Starting);
-                Ok(())
-            })?;
-        }
-        let result = (|| {
-            if let Err(e) = self.selected(&op.cancel) {
-                self.usable.store(false, Ordering::Release);
-                return Err(e);
-            }
-            self.runtime.start(&spec, op.cancel.clone())
-        })();
-        if result.is_ok() {
-            self.usable.store(true, Ordering::Release);
-            return Ok(());
-        }
-        let error = result.unwrap_err();
-        if !trial {
-            if s.managed()
-                && !self.usable.load(Ordering::Acquire)
-                && !op.cancel.load(Ordering::Acquire)
-                && self.rollback(&error, &op.cancel)?
-            {
-                self.notify(format!("当前核心文件不可用，已回退：{error}"));
-                let previous = self.store.snapshot();
-                return self
-                    .runtime
-                    .start(
-                        &StartSpec {
-                            executable: previous.selected_path(&self.store.root)?,
-                            config,
-                            version: previous.managed.active.map(|r| r.version),
-                        },
-                        op.cancel.clone(),
-                    )
-                    .map_err(|e| format!("当前版本失败：{error}；上一版本未启动：{e}"));
-            }
-            return Err(error);
-        }
-        self.runtime.stopped()?;
-        if op.cancel.load(Ordering::Acquire) || self.gate.closing() {
-            let s = self.store.snapshot();
-            self.store.core(s.core_revision, |v| {
-                v.managed.trial = Some(Trial::AwaitingStart);
-                Ok(())
-            })?;
-            return Err(error);
-        }
-        if self.rollback(&error, &op.cancel)? {
-            self.notify(format!("新版启动失败，已回退上一版本：{error}"));
-            let previous = self.store.snapshot();
-            let spec = StartSpec {
-                executable: previous.selected_path(&self.store.root)?,
-                config,
-                version: previous.managed.active.map(|r| r.version),
-            };
-            return self
-                .runtime
-                .start(&spec, op.cancel.clone())
-                .map_err(|e| format!("新版失败：{error}；上一版本也未启动：{e}"));
-        }
-        self.managed.suppressed.store(true, Ordering::Release);
-        Err(error)
-    }
-    fn rollback(&self, error: &str, cancel: &AtomicBool) -> Result<bool, String> {
+    pub(crate) fn rollback(&self, error: &str, cancel: &AtomicBool) -> Result<bool, String> {
         let s = self.store.snapshot();
         let Some(previous) = s.managed.previous.clone() else {
             return Ok(false);
         };
         self.verify(&previous, cancel)?;
-        if let Some(config) = &s.config_path {
+        if let Some(config) = self.config_for(&s)?.as_ref() {
             self.runtime.validate(
                 &settings::managed_path(&self.store.root, &previous)?,
                 config,
@@ -533,116 +343,9 @@ impl CoreService {
         self.usable.store(true, Ordering::Release);
         Ok(true)
     }
-    pub fn stop(&self) -> Result<(), String> {
-        let op = self.gate.begin(Kind::Stop)?;
-        self.invalidate_restore();
-        self.stop_owned(&op)
-    }
-    fn stop_owned(&self, op: &Operation) -> Result<(), String> {
-        let saved = self.store.resume(false);
-        self.gate.cancel_runtime();
-        // When cancelling an in-flight start, its owner must release the runtime ticket first.
-        if self.gate.runtime_other(op.id) {
-            self.gate.wait_runtime(op.id)?;
-        }
-        let stopped = self.runtime.stop();
-        if let Err(e) = saved {
-            return Err(format!(
-                "恢复状态保存失败，下次启动仍可能恢复：{e}；实际停止结果：{stopped:?}"
-            ));
-        }
-        stopped
-    }
-    pub fn invalidate_restore(&self) {
-        let mut i = self.intent.lock().unwrap();
-        i.epoch += 1;
-        i.restore = Restore::Finished;
-        if let Some(id) = i.restore_operation {
-            self.gate.cancel_operation(id);
-        }
-    }
-    pub fn set_restore(&self, enabled: bool) -> Result<settings::Settings, String> {
-        let value = self.store.restore_preference(enabled)?;
-        if !enabled {
-            let mut i = self.intent.lock().unwrap();
-            if matches!(i.restore, Restore::Waiting | Restore::Starting) {
-                i.epoch += 1;
-                i.restore = Restore::Finished;
-                if let Some(id) = i.restore_operation {
-                    self.gate.cancel_operation(id);
-                }
-            }
-        }
-        Ok(value)
-    }
-    fn arm_restore(&self) {
-        let s = self.store.snapshot();
-        let mut i = self.intent.lock().unwrap();
-        if i.epoch == 0 && s.startup.restore_core_on_launch && s.startup.resume_core {
-            if self.restore_safe.load(Ordering::Acquire) && self.store.error.is_none() {
-                i.restore = Restore::Waiting;
-            } else {
-                i.restore = Restore::Finished;
-                self.notify("自动恢复已暂停：上次启动未确认，请手动处理");
-            }
-        }
-    }
-    pub fn restore_tick(self: &Arc<Self>) {
-        let mut i = self.intent.lock().unwrap();
-        if i.restore != Restore::Waiting || self.gate.closing() {
-            return;
-        }
-        let s = self.store.snapshot();
-        let fail = if !s.startup.restore_core_on_launch || !s.startup.resume_core {
-            Some("自动恢复已取消".into())
-        } else if s.config_path.is_none() && s.pending_config_path.is_none() {
-            Some("自动恢复失败：请先导入配置".into())
-        } else if !s.managed() && !self.usable.load(Ordering::Acquire) {
-            Some("自动恢复失败：外部核心路径不可用".into())
-        } else if !self.usable.load(Ordering::Acquire)
-            && !self.gate.core_fetching()
-            && matches!(self.managed.snapshot().phase, Phase::Error | Phase::Paused)
-        {
-            Some("自动恢复失败：必需核心准备未完成，请手动重试".into())
-        } else {
-            None
-        };
-        if let Some(error) = fail {
-            i.restore = Restore::Finished;
-            self.runtime.report(error);
-            return;
-        }
-        if !self.usable.load(Ordering::Acquire) || self.gate.runtime_busy() {
-            return;
-        }
-        let Ok(op) = self.gate.begin(Kind::Runtime) else {
-            return;
-        };
-        i.restore = Restore::Starting;
-        i.restore_operation = Some(op.id);
-        drop(i);
-        let core = self.clone();
-        tauri::async_runtime::spawn_blocking(move || {
-            if let Err(e) = core.start_owned(&op) {
-                core.runtime.report(format!("自动恢复失败：{e}"));
-            }
-            let mut i = core.intent.lock().unwrap();
-            i.restore = Restore::Finished;
-            i.restore_operation = None;
-            drop(i);
-            drop(op);
-            core.wake.notify_one();
-        });
-    }
     pub fn cancel(&self) {
         self.managed.suppressed.store(true, Ordering::Release);
         self.gate.cancel_core();
-        let mut intent = self.intent.lock().unwrap();
-        if intent.restore == Restore::Waiting && !self.usable.load(Ordering::Acquire) {
-            intent.restore = Restore::Finished;
-            self.runtime
-                .report("自动恢复已取消：必需核心准备被取消".into());
-        }
     }
     pub fn preferences_changed(&self) {
         self.managed.network.clear();
@@ -656,7 +359,6 @@ impl CoreService {
     }
     pub fn use_managed(self: &Arc<Self>) -> Result<Receipt, String> {
         let op = self.gate.begin(Kind::Selection)?;
-        self.invalidate_restore();
         self.runtime.stopped()?;
         let gen = self.generation.fetch_add(1, Ordering::AcqRel) + 1;
         self.gate.cancel_core();
@@ -672,7 +374,7 @@ impl CoreService {
         let s = self.store.snapshot();
         if let Some(reference) = &s.managed.active {
             if self.verify(reference, &op.cancel).is_ok() {
-                if let Some(config) = &s.config_path {
+                if let Some(config) = self.config_for(&s)?.as_ref() {
                     self.runtime.validate(
                         &settings::managed_path(&self.store.root, reference)?,
                         config,
@@ -800,6 +502,8 @@ impl CoreService {
                     ));
                 }
                 Some(c)
+            } else if required && s.profile.mode == crate::profile::Mode::Generated {
+                Some(release::engine_version(&t, "1.14.4").map_err(FetchError::Network)?)
             } else {
                 release::discover(
                     &t,
@@ -914,7 +618,7 @@ impl CoreService {
         }
         result
     }
-    fn adopt_owned(&self, op: &Operation) -> Result<(), String> {
+    pub(crate) fn adopt_owned(&self, op: &Operation) -> Result<(), String> {
         let Ok(_files) = self.gate.begin(Kind::CoreFetch) else {
             return Ok(());
         };
@@ -965,7 +669,18 @@ impl CoreService {
         let program = if staged.exists() { &staged } else { &installed };
         package::owned(&self.store.root, program)?;
         package::verify_path(&self.runtime, &p.reference, program, &op.cancel)?;
-        let config = s.config_path.clone();
+        if s.profile.mode == crate::profile::Mode::Generated
+            && (settings::stable(&p.reference.version)? < semver::Version::new(1, 14, 4)
+                || settings::stable(&p.reference.version)? >= semver::Version::new(1, 15, 0))
+        {
+            self.block(
+                &p,
+                FailureStage::Compatibility,
+                "此核心版本尚未验证受控 TUN，保留现有版本".into(),
+            )?;
+            return Err("此核心版本尚未验证受控 TUN，保留现有版本".into());
+        }
+        let config = self.config_for(&s)?;
         let mut config_hash = None;
         if s.managed.active.is_some() || !s.managed() {
             if let Some(config) = &config {

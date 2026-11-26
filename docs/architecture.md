@@ -4,27 +4,28 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 
 ## 职责与链路
 
-`页面 → Tauri IPC → CoreService / UpdateService → 接纳与持久化 → 进程或平台安装器`。
+`页面/托盘/启动恢复 → SessionService → CoreService / RuntimeService → 核心进程`；应用更新由 UpdateService 准备，经统一退出协调器交接安装器。
 
 - `main.rs` 只装配命令、文件框和原生窗口事件；文件框回调返回后才接纳选择，系统文件框不占核心变更票据。
 - `app.rs` 组合服务并拥有一次启动的后台唤醒循环。应用和核心分别到期判断，不因一项网络操作等待另一项。
-- `core/mod.rs` 的 CoreService 是来源、配置、受管选择、启停、采用和回退的唯一用例入口；它消费准备结果，不把采用交给下载回调。
+- `session/mod.rs` 的 SessionService 统一用户启停、内部停止、启动确认与恢复意图；页面、托盘、启动恢复及退出协调器使用同一入口。
+- `core/mod.rs` 的 CoreService 管理来源、原始配置校验、受管选择、采用与版本回退；SessionService 在固定启动用例中调用其资产操作，不反向引用会话。
 - `core/managed.rs` 的 ManagedCore 拥有候选、下载准备、核心维护周期和缓存，不自行改当前选择或运行代理。
 - `core/package.rs` 核对/解包核心文件和受管路径，提供可取消的散列与清理，不读取当前配置或决定来源。
 - `runtime.rs` 拥有临时校验进程、运行 Child、日志 reader、启动观察和真实退出结果；使用固定 StartSpec，不保存用户设置。supervisor 独占运行 Child，启动调用等待其有界结果。
-- `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform.rs` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
-- `updates/service.rs` 只负责应用检查、下载和准备；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
+- `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform/` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
+- `updates/service.rs` 只负责应用检查、下载和准备，仅持有 Logs，不拥有核心运行服务；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
 - `lifecycle.rs` 封闭接纳、取消维护、等待所有者、停止核心，再处理退出或应用安装；不采用核心版本。
 
-前端只呈现快照、编辑偏好和发起意图，不维护自动更新计时器。仍只有运行与设置两页，不引入框架、数据库、插件协议或升级守护进程。
+前端四页为运行、节点、分流、设置，只呈现脱敏快照、编辑意图，不维护自动更新计时器。profile/service 管理导入票据与节点事务；profile/config 生成能力档固定的配置；rulesets 管理固定来源和不可变规则版本。session/tunnel 管理授权通道和闭合消息，platform/authorization 处理系统提权及身份，platform/network 观察接口路由与残留恢复。不引入框架、数据库或通用守护进程。
 
 ## 设置、缓存与恢复
 
-settings schema 3 的 `coreSource` 区分 managed 和 external；managed 保存 active/previous、首次启动 trial 与至多一个 blocked 候选。受管引用绑定版本、target、程序摘要和可用的上游证据，路径从本机应用目录推导。configPath 是已检查路径，pendingConfigPath 是缺核心时先选择的路径，不上传配置正文。
+settings schema 4 的 coreSource 区分 managed/external，managed 保存 active/previous/trial/blocked。profile 保存模式、节点、选择、全局分流和规则提交，startup.lastConnection 保存最后成功的固定输入。公开 DTO 排除凭据和 lastConnection。原始 configPath/pendingConfigPath 保留兼容，不上传配置正文。
 
-coreRevision 与 preferencesRevision 分开。每次局部提交从最新设置合并对应字段，不用后台旧快照覆写整个文件。采用时在同一串行提交内检查核心上下文、关闭/取消及自动采用偏好。磁盘写入临时文件同步后替换；设置损坏或未知 schema 保留原件，阻止覆盖。
+coreRevision、profileRevision 与 preferencesRevision 分开。局部提交从最新设置合并对应字段，后台旧快照不能覆盖草稿。采用时串行核对核心上下文、关闭/取消和自动采用偏好。私有临时文件同步后原子替换；设置损坏或未知结构保留原件，阻止覆盖。
 
-v0/v1/v2 先备份再迁移；外部选择不变，v1 受管继承旧自动检查开关且不猜测上一版本。legacy 证据与官方新下载证据明确区分。迁移不联网，不在设置读取时运行外部程序。
+v0/v1/v2/v3 先备份再迁移；外部选择不变，有原始配置的用户保持原始配置模式。legacy 与官方证据区分。迁移不联网、不运行外部程序、不自动接管网络。
 
 核心准备记录最后提交，绑定来源请求和选择代次；恢复不相信上次进度文案，重新核对本地字节。active、previous 和 trial 一次保存，确认启动才清 trial，未确认中断按恢复规则处理。进程 PID/版本来自真实进程快照，不从预期选择伪造。
 
@@ -34,7 +35,7 @@ v0/v1/v2 先备份再迁移；外部选择不变，v1 受管继承旧自动检�
 
 进度/错误带任务所有权，来源变更使旧操作失效；线路设置变化不污染新健康结果。配置变化使兼容结论失效，每次启动重验。散列、解包和检查接受取消，票据在实际资源收尾后释放。退出不把取消请求当作完成，失败时保留实际状态、允许重试。
 
-本地版本切换无需停止正在运行的进程；只在已停止或用户下次启动前采用。应用更新与核心各自完成，不提供跨组件事务。Unix 宿主被 SIGKILL 无法执行退出清理；Windows Job 使用 KILL_ON_JOB_CLOSE。停止并非平滑关闭。
+受管版本只在停止或下次启动前采用。应用/核心/规则各自准备，不提供跨组件事务。网络 worker 独占机器级租约和受保护核心，控制端失联触发停止；残留记录绑定 PID/启动时间/路径。停止先有界优雅关闭再强制终止，Windows Job 使用 KILL_ON_JOB_CLOSE。接口未释放则保持 cleanupRequired，禁止重入。
 
 ## 依赖
 
@@ -46,6 +47,6 @@ SettingsStore 持有 instance::Lease；读取和迁移设置前完成独占与�
 
 desktop.rs 管理单窗口、托盘、模态保护与待导航，不管理 Child。startup.rs 归一化启动来源和重启环境。login_startup 读取/修改系统当前用户登记，不在设置复制 enabled。开发/隔离验收禁止修改真实登录项。
 
-CoreService 在同一启动用例完成启动观察、可选一次回退和成功提交。startup.restoreCoreOnLaunch 为用户开关，resumeCore 为成功运行意图；主动停止撤销，内部停止和异常退出不改写。一次恢复请求可等待必需核心，失败/取消后消费，不形成守护循环。Stop 有独立票据并等待原启动所有者回收资源，意图代次拒绝迟到成功提交。
+SessionService 在同一启动用例完成启动观察、可选一次核心回退和成功提交。startup.restoreCoreOnLaunch 为用户开关，resumeCore 为成功运行意图；主动停止撤销，内部停止和异常退出不改写。一次恢复请求可等待必需核心，失败/取消后消费，不形成守护循环。Stop 有独立票据并等待原启动所有者回收资源，意图代次拒绝迟到成功提交。
 
 lifecycle.rs 使用 Quit / InstallAndRestart，先向当前前端文档发出带 ID 的预检，再封闭 Admission，等待 bootstrap、核心、网络和登录项操作，验包、内部停止核心，最后交给安装器。安装器直接终止进程前已经完成必要清理。

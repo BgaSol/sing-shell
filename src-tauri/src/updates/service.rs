@@ -7,7 +7,7 @@ use super::{
 use crate::{
     app::{Admission, Kind, Operation, Receipt},
     logs::now,
-    runtime::RuntimeService,
+    logs::Logs,
     settings::{stable, write_json, SettingsStore},
 };
 use serde::{Deserialize, Serialize};
@@ -97,7 +97,7 @@ pub struct Prepared {
 }
 pub struct UpdateService {
     pub store: Arc<SettingsStore>,
-    pub runtime: Arc<RuntimeService>,
+    pub logs: Logs,
     pub gate: Arc<Admission>,
     state: Mutex<Snapshot>,
     network: Arc<network::State>,
@@ -109,13 +109,13 @@ pub struct UpdateService {
 impl UpdateService {
     pub fn new(
         store: Arc<SettingsStore>,
-        runtime: Arc<RuntimeService>,
+        logs: Logs,
         gate: Arc<Admission>,
         version: String,
     ) -> Arc<Self> {
         Arc::new(Self {
             store,
-            runtime,
+            logs,
             gate,
             state: Mutex::new(Default::default()),
             network: Arc::new(Default::default()),
@@ -132,7 +132,7 @@ impl UpdateService {
         update(self.state.lock().unwrap().items.entry(c).or_default());
     }
     fn error(&self, c: Component, stage: &str, e: String) {
-        self.runtime.logs.push("updates", e.clone());
+        self.logs.push("updates", e.clone());
         self.item(c, |v| {
             v.phase = "error".into();
             v.error = Some(e);
@@ -153,7 +153,7 @@ impl UpdateService {
             item.network = None;
         }
         if let Err(e) = write_json(&self.store.root.join("updates.json"), &value) {
-            self.runtime.logs.push("updates", e);
+            self.logs.push("updates", e);
         }
     }
     pub fn current(&self, _c: Component) -> String {
@@ -185,10 +185,7 @@ impl UpdateService {
                     }
                     *self.state.lock().unwrap() = state;
                 }
-                Err(e) => self
-                    .runtime
-                    .logs
-                    .push("updates", format!("更新缓存无法读取：{e}")),
+                Err(e) => self.logs.push("updates", format!("更新缓存无法读取：{e}")),
             }
         }
         for c in [Component::App] {

@@ -6,7 +6,7 @@ export function createDesktop(navigate:(target:string)=>void,mayLeave:()=>Promis
   const documentId=crypto.randomUUID();
   let processing=false,lastRequest=0;
   const error=element('desktop-error');
-  function freeze(value:boolean){for(const id of ['runtime-panel','updates-panel'])element(id).inert=value;}
+  function freeze(value:boolean){for(const id of ['runtime-panel','nodes-panel','routing-panel','updates-panel'])element(id).inert=value;}
   async function refresh(closing=false){
     try{
       const s=await invoke<DesktopSnapshot>('desktop_snapshot');

@@ -12,6 +12,7 @@ pub struct Application {
     pub store: Arc<crate::settings::SettingsStore>,
     pub runtime: Arc<crate::runtime::RuntimeService>,
     pub core: Arc<crate::core::CoreService>,
+    pub session: Arc<crate::session::SessionService>,
     pub wake: Arc<tokio::sync::Notify>,
     pub updates: Arc<crate::updates::service::UpdateService>,
     pub gate: Arc<Admission>,
@@ -22,6 +23,7 @@ pub struct Application {
     pub login: crate::login_startup::Service,
     pub exit: crate::lifecycle::Coordinator,
     background_started: AtomicBool,
+    pub profiles: crate::profile::service::Service,
 }
 impl Application {
     pub fn open(root: std::path::PathBuf, version: String) -> Result<Self, String> {
@@ -42,14 +44,18 @@ impl Application {
             gate.clone(),
             wake.clone(),
         );
+        let session = crate::session::SessionService::new(core.clone(), wake.clone());
         let updates = crate::updates::service::UpdateService::new(
             store.clone(),
-            runtime.clone(),
+            runtime.logs.clone(),
             gate.clone(),
             version,
         );
+        let profiles =
+            crate::profile::service::Service::new(store.clone(), gate.clone(), runtime.clone());
         Self {
             core,
+            session,
             wake,
             store,
             runtime,
@@ -62,6 +68,7 @@ impl Application {
             login: crate::login_startup::Service::new(isolated),
             exit: Default::default(),
             background_started: AtomicBool::new(false),
+            profiles,
         }
     }
     pub fn start(self: &Arc<Self>, handle: tauri::AppHandle, automatic: bool, restore: bool) {
@@ -73,11 +80,11 @@ impl Application {
         };
         let app = self.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            if let Err(e) = app.core.initialize() {
+            if let Err(e) = app.session.initialize() {
                 app.runtime.report(e);
             }
             if (automatic || restore) && !app.gate.closing() {
-                app.core.restore_tick();
+                app.session.restore_tick();
             }
             app.updates.initialize(&handle);
             drop(bootstrap);
@@ -95,7 +102,7 @@ impl Application {
                     };
                     if !app.gate.closing() {
                         app.core.tick();
-                        app.core.restore_tick();
+                        app.session.restore_tick();
                     }
                     if !app.gate.closing() && tokio::time::Instant::now() >= app_check_after {
                         app.updates.tick();
@@ -117,6 +124,8 @@ pub enum Kind {
     Selection,
     CoreFetch,
     Preferences,
+    Profile,
+    Rules,
     Check,
     Download(crate::updates::Component),
     Diagnostic,
@@ -197,6 +206,8 @@ impl Admission {
             (Kind::Download(a), Kind::Download(b)) => a == b,
             (Kind::CoreFetch, Kind::CoreFetch)
             | (Kind::Preferences, Kind::Preferences)
+            | (Kind::Profile, Kind::Profile)
+            | (Kind::Rules, Kind::Rules)
             | (Kind::Diagnostic, Kind::Diagnostic) => true,
             _ => false,
         });

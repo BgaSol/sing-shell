@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.bgasol.singshell.network</string>
+  <key>UserName</key><string>root</string>
+  <key>AssociatedBundleIdentifiers</key><array><string>com.bgasol.singshell</string></array>
+  <key>BundleProgram</key><string>Contents/MacOS/sing-shell</string>
+  <key>ProgramArguments</key><array><string>sing-shell</string><string>--network-daemon</string></array>
+  <key>Sockets</key><dict><key>Control</key><dict>
+    <key>SockPathName</key><string>/var/run/com.bgasol.singshell.network.sock</string>
+    <key>SockPathMode</key><integer>438</integer>
+    <key>SockType</key><string>stream</string>
+  </dict></dict>
+</dict></plist>

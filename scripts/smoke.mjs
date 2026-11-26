@@ -64,7 +64,7 @@ try {
   assert.equal(report.frontendReady, true);
   assert.equal(report.closeRequestIntercepted, true);
   if(runningCore){assert.equal(report.restoredPid,hiddenPid);assert.equal(report.reactivated,true);assert.equal(report.restartArgsNormalized,true);assert.equal(report.settings.startup.resumeCore,true);const deadline=Date.now()+25_000;for(;;){const listener=net.createServer();try{await new Promise((resolve,reject)=>{listener.once('error',reject);listener.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>listener.close(resolve));break;}catch(e){if(e.code!=='EADDRINUSE')throw e;assert.ok(Date.now()<deadline,'core port did not release after native exit');await delay(50);}}}
-  if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,3);
+  if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,4);
   if(!process.env.EXPECTED_LEGACY){assert.equal(report.draftRetained,true);assert.equal(report.loginIO,true);if(process.platform!=='linux')assert.ok(report.trayAvailable||report.backgroundFallback);}
   if(process.env.EXPECTED_VERSION) assert.equal(report.version,process.env.EXPECTED_VERSION);
   if(process.env.EXPECTED_RUST_TARGET) assert.equal(report.target,process.env.EXPECTED_RUST_TARGET);

@@ -3,7 +3,7 @@ use crate::{
     platform::{self, ProcessGroup},
     settings,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
@@ -15,7 +15,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeSnapshot {
     pub status: String,
@@ -41,6 +41,8 @@ pub struct StartSpec {
     pub version: Option<String>,
 }
 pub struct RuntimeService {
+    network_owned: AtomicBool,
+    network_root: Mutex<Option<PathBuf>>,
     state: Arc<Mutex<RuntimeSnapshot>>,
     stop: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
@@ -78,6 +80,17 @@ impl Process {
     }
     fn terminate(&mut self) -> Result<(), String> {
         if !self.terminated {
+            if self.child.try_wait().map_err(|e| e.to_string())?.is_none()
+                && self.group.request_shutdown().unwrap_or(false)
+            {
+                let graceful = Instant::now() + Duration::from_secs(3);
+                while Instant::now() < graceful {
+                    if self.child.try_wait().map_err(|e| e.to_string())?.is_some() {
+                        break;
+                    }
+                    thread::sleep(Duration::from_millis(20));
+                }
+            }
             self.group.terminate().map_err(|e| e.to_string())?;
             self.terminated = true;
         }
@@ -109,6 +122,8 @@ impl Drop for Process {
 impl Default for RuntimeService {
     fn default() -> Self {
         Self {
+            network_owned: AtomicBool::new(false),
+            network_root: Mutex::new(None),
             state: Arc::new(Mutex::new(Default::default())),
             stop: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
@@ -118,6 +133,12 @@ impl Default for RuntimeService {
     }
 }
 impl RuntimeService {
+    pub fn record_network(&self, root: PathBuf) {
+        *self.network_root.lock().unwrap() = Some(root);
+    }
+    pub fn network_owned(&self, value: bool) {
+        self.network_owned.store(value, Ordering::Release);
+    }
     pub fn clear_error(&self) {
         let mut state = self.state.lock().unwrap();
         state.error = None;
@@ -141,6 +162,7 @@ impl RuntimeService {
     pub fn stopped(&self) -> Result<(), String> {
         let s = self.snapshot();
         if s.pid.is_some()
+            || self.network_owned.load(Ordering::Acquire)
             || s.cleanup_pending
             || ["checking", "starting", "stopping"].contains(&s.status.as_str())
         {
@@ -180,7 +202,12 @@ impl RuntimeService {
                 .current_dir(config.parent().ok_or("配置目录不存在")?);
         }
         let capture = Arc::new(Mutex::new(Vec::new()));
-        let mut process = Process::spawn(&mut command, &self.logs, Some(capture.clone()))?;
+        let command_logs = if action == "format" {
+            Logs::default()
+        } else {
+            self.logs.clone()
+        };
+        let mut process = Process::spawn(&mut command, &command_logs, Some(capture.clone()))?;
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             if cancel.load(Ordering::Acquire) {
@@ -220,6 +247,14 @@ impl RuntimeService {
         self.command(core, Some(config), "check", cancel)
             .map(|_| ())
     }
+    pub fn format_config(
+        &self,
+        core: &Path,
+        config: &Path,
+        cancel: &AtomicBool,
+    ) -> Result<String, String> {
+        self.command(core, Some(config), "format", cancel)
+    }
     pub fn start(&self, spec: &StartSpec, cancel: Arc<AtomicBool>) -> Result<(), String> {
         if self.snapshot().pid.is_some() {
             return Err("sing-box 已在运行".into());
@@ -257,6 +292,17 @@ impl RuntimeService {
                 return Err(e);
             }
         };
+        if let Some(root) = self.network_root.lock().unwrap().as_ref() {
+            if let Err(error) =
+                crate::platform::network::record(root, process.child.id(), &spec.executable)
+            {
+                let _ = process.terminate();
+                let mut state = self.state.lock().unwrap();
+                state.status = "failed".into();
+                state.error = Some(error.clone());
+                return Err(error);
+            }
+        }
         if let Some(worker) = self.worker.lock().unwrap().take() {
             let _ = worker.join();
         }
@@ -327,7 +373,7 @@ impl RuntimeService {
         if self.snapshot().pid.is_some() {
             self.state.lock().unwrap().status = "stopping".into();
             self.stop.store(true, Ordering::Release);
-            let deadline = Instant::now() + Duration::from_secs(7);
+            let deadline = Instant::now() + Duration::from_secs(12);
             while self.snapshot().pid.is_some() {
                 if Instant::now() >= deadline {
                     return Err("sing-box 尚未完成停止，请重试".into());
