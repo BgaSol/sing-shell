@@ -1,0 +1,332 @@
+{
+  "version": "0.5.3",
+  "source": "b3899438f85563f126fec7410f5fa28c370ed740",
+  "run": "https://github.com/BgaSol/sing-shell/actions/runs/45812193563",
+  "passed": true,
+  "scope": "Five disposable native runners plus ordinary-user administrator-authorized TUN on the affected Mac using the final original package",
+  "core": "1.14.4",
+  "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+  "macAcceptance": {
+    "source": "b3899438f85563f126fec7410f5fa28c370ed740",
+    "os": {
+      "version": "26.7.3",
+      "build": "25G342",
+      "arch": "arm64"
+    },
+    "package": {
+      "name": "Sing.Shell_0.5.3_aarch64.app.tar.gz",
+      "sha256": "525050b98f88ad3605f403eb00f89459bcfd88bc18620759fd89bbedb694f5cd"
+    },
+    "executableSha256": "69dbebb76c9d979a4e098a5318fb48a4382c8fd4bf5ad8689f61412abd3e7fa2",
+    "ordinaryUser": true,
+    "userCompletedAdministratorDialog": true,
+    "routing": "Only two dedicated test addresses use the controlled encrypted node; other destinations remain direct",
+    "result": {
+      "target": "aarch64-apple-darwin",
+      "passed": true,
+      "verified": [
+        "production network worker authenticates control channel and independently verifies official core",
+        "typed node and routing become checked private TUN config",
+        "native interface and IPv4/IPv6 routes are confirmed",
+        "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+        "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+        "loopback bypass remains direct",
+        "stop releases actual TUN and terminates authorization worker",
+        "worker diagnostics do not return known node credential",
+        "ordinary installed app uses system administrator authorization, authenticates the root helper and confirms its exit"
+      ],
+      "skipped": [
+        "interactive UAC/polkit approval (other platforms)",
+        "controller/core/helper crash injection on the user Mac; covered on disposable native runners",
+        "suspend and physical network switching"
+      ],
+      "log": ""
+    },
+    "afterDisconnect": {
+      "workerExited": true,
+      "authorizationLauncherExited": true,
+      "coreExited": true,
+      "tunInterfaceAbsent": true,
+      "oldSystemJobAbsent": true,
+      "temporaryControlJobAbsent": true
+    },
+    "initialFailure": {
+      "registeredParentVersion": "0.5.1",
+      "installedVersion": "0.5.2",
+      "launchdExit": "78: EX_CONFIG",
+      "confirmedSystemReason": "OS_REASON_CODESIGNING | Launch Constraint Violation; Unable to get updated LWCR, error 0x16",
+      "sameProgramWithNewTemporaryJob": "authenticated and exited; control experiment only; not shipped",
+      "sameLabelReregistration": "did not reliably recover; discarded"
+    }
+  },
+  "reports": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "basic": {
+        "target": "x86_64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26100",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-amd64.zip",
+          "digest": "sha256:99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-amd64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface Ethernet 3, index 14\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.84s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;167m3913283223\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:50976\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;167m3913283223\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.18.77.1:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;167m3913283223\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m219265547\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:63617\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m219265547\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.18.77.1:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m219265547\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2326378760\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:50978\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2326378760\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2326378760\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;213m1598073029\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:63619\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;213m1598073029\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:50873\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;213m1598073029\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": "\u001b[31mERROR\u001b[0m[0006] [\u001b[38;5;192m1285916848\u001b[0m 1.19s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n"
+      }
+    },
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "basic": {
+        "target": "aarch64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26200",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-arm64.zip",
+          "digest": "sha256:8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-arm64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0001] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0001] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0001] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.10s)\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;231m868811223\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:61970\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;231m868811223\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.18.77.1:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;231m868811223\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2320743399\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:52589\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2320743399\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.18.77.1:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2320743399\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;86m2733243025\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:61972\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;86m2733243025\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;86m2733243025\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;223m3593338575\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:52591\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;223m3593338575\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:61836\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;223m3593338575\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": "\u001b[31mERROR\u001b[0m[0006] [\u001b[38;5;31m4094114319\u001b[0m 1.5s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n\u001b[31mERROR\u001b[0m[0010] [\u001b[38;5;221m322402314\u001b[0m 1.18s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n\u001b[31mERROR\u001b[0m[0015] [\u001b[38;5;198m3202374326\u001b[0m 328ms] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;98m702532178\u001b[0m 3.2s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n"
+      }
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "basic": {
+        "target": "x86_64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-amd64.tar.gz",
+          "digest": "sha256:699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-amd64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.00s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m1392268464\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:53612\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m1392268464\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.18.77.1:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m1392268464\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;112m3967979360\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:43244\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;112m3967979360\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.18.77.1:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;112m3967979360\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m3752840397\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:43612\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m3752840397\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m3752840397\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;130m3430172530\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:45649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;130m3430172530\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:40553\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;130m3430172530\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      }
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "basic": {
+        "target": "aarch64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-arm64.tar.gz",
+          "digest": "sha256:436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-arm64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.00s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m81656054\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:45510\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m81656054\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.18.77.1:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m81656054\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;230m164832216\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:43639\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;230m164832216\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.18.77.1:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;230m164832216\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m1646936949\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:59528\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m1646936949\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m1646936949\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m1672093896\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:50984\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m1672093896\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:38235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m1672093896\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      }
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "basic": {
+        "target": "aarch64-apple-darwin",
+        "platform": "darwin",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "25.6.0",
+        "archive": {
+          "name": "sing-box-1.14.4-darwin-arm64.tar.gz",
+          "digest": "sha256:0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+        },
+        "resources": [],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at utun223\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface en0, index 7\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 192.168.64.1, gateway_mac a6:77:f3:60:79:64\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.02s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m380211746\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:49177\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m380211746\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.18.77.1:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m380211746\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;84m1082838163\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:65452\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;84m1082838163\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.18.77.1:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;84m1082838163\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;111m2206339423\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:49179\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;111m2206339423\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;111m2206339423\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m1801168159\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:60235\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m1801168159\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:49172\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;47m1801168159\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": " assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;51m143699235\u001b[0m 335ms] connection: connection upload closed: close tcp 172.19.0.1:52882->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;38m2548617750\u001b[0m 293ms] connection: connection upload closed: close tcp 172.19.0.1:52930->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;118m2609386854\u001b[0m 337ms] connection: connection upload closed: close tcp 172.19.0.1:52880->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;37m531504876\u001b[0m 295ms] connection: connection upload closed: close tcp 172.19.0.1:52928->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;225m638733574\u001b[0m 340ms] connection: connection upload closed: close tcp 172.19.0.1:52878->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;228m361955075\u001b[0m 298ms] connection: connection upload closed: close tcp 172.19.0.1:52926->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;213m950429637\u001b[0m 342ms] connection: connection upload closed: close tcp 172.19.0.1:52876->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;195m2078300411\u001b[0m 300ms] connection: connection upload closed: close tcp 172.19.0.1:52924->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;137m3122972281\u001b[0m 345ms] connection: connection upload closed: close tcp 172.19.0.1:52874->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;134m297218422\u001b[0m 302ms] connection: connection upload closed: close tcp 172.19.0.1:52922->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;122m2599746410\u001b[0m 346ms] connection: connection upload closed: close tcp 172.19.0.1:52872->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;77m2974206269\u001b[0m 304ms] connection: connection upload closed: close tcp 172.19.0.1:52920->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;71m520385335\u001b[0m 305ms] connection: connection upload closed: close tcp 172.19.0.1:52918->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;229m720140034\u001b[0m 349ms] connection: connection upload closed: close tcp 172.19.0.1:52870->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;229m391027673\u001b[0m 307ms] connection: connection upload closed: close tcp 172.19.0.1:52916->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;122m2628685421\u001b[0m 352ms] connection: connection upload closed: close tcp 172.19.0.1:52868->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;226m3876423173\u001b[0m 199ms] connection: connection upload closed: close tcp 172.19.0.1:53065->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m3552713935\u001b[0m 353ms] connection: connection upload closed: close tcp 172.19.0.1:52866->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;226m149867986\u001b[0m 356ms] connection: connection upload closed: close tcp 172.19.0.1:52864->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;229m1981880578\u001b[0m 200ms] connection: connection upload closed: close tcp 172.19.0.1:53063->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;217m3204738249\u001b[0m 201ms] connection: connection upload closed: close tcp 172.19.0.1:53061->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;31m1265229839\u001b[0m 357ms] connection: connection upload closed: close tcp 172.19.0.1:52862->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;51m1302103331\u001b[0m 358ms] connection: connection upload closed: close tcp 172.19.0.1:52860->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;176m1679052448\u001b[0m 359ms] connection: connection upload closed: close tcp 172.19.0.1:52858->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;194m633479164\u001b[0m 360ms] connection: connection upload closed: close tcp 172.19.0.1:52856->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;179m2771962531\u001b[0m 361ms] connection: connection upload closed: close tcp 172.19.0.1:52854->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;51m2884125219\u001b[0m 362ms] connection: connection upload closed: close tcp 172.19.0.1:52852->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;214m1948784070\u001b[0m 364ms] connection: connection upload closed: close tcp 172.19.0.1:52850->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;219m767853003\u001b[0m 366ms] connection: connection upload closed: close tcp 172.19.0.1:52848->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;155m928303180\u001b[0m 370ms] connection: connection upload closed: close tcp 172.19.0.1:52846->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;195m1283410611\u001b[0m 372ms] connection: connection upload closed: close tcp 172.19.0.1:52844->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;182m3927229094\u001b[0m 373ms] connection: connection upload closed: close tcp 172.19.0.1:52842->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;35m1892051475\u001b[0m 374ms] connection: connection upload closed: close tcp 172.19.0.1:52840->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;37m1017112341\u001b[0m 376ms] connection: connection upload closed: close tcp 172.19.0.1:52838->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;190m1536146606\u001b[0m 377ms] connection: connection upload closed: close tcp 172.19.0.1:52836->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;170m20742042\u001b[0m 379ms] connection: connection upload closed: close tcp 172.19.0.1:52834->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;49m3384471841\u001b[0m 380ms] connection: connection upload closed: close tcp 172.19.0.1:52832->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;65m4048106033\u001b[0m 381ms] connection: connection upload closed: close tcp 172.19.0.1:52830->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;38m1596977430\u001b[0m 381ms] connection: connection upload closed: close tcp 172.19.0.1:52828->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;152m1293605256\u001b[0m 382ms] connection: connection upload closed: close tcp 172.19.0.1:52826->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;115m507548515\u001b[0m 384ms] connection: connection upload closed: close tcp 172.19.0.1:52824->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;102m3510451798\u001b[0m 385ms] connection: connection upload closed: close tcp 172.19.0.1:52822->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;42m3888544794\u001b[0m 386ms] connection: connection upload closed: close tcp 172.19.0.1:52820->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;181m2750934437\u001b[0m 388ms] connection: connection upload closed: close tcp 172.19.0.1:52818->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;84m1546862148\u001b[0m 390ms] connection: connection upload closed: close tcp 172.19.0.1:52816->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;198m331232438\u001b[0m 390ms] connection: connection upload closed: close tcp 172.19.0.1:52814->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m998019551\u001b[0m 391ms] connection: connection upload closed: close tcp 172.19.0.1:52812->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;226m1972101852\u001b[0m 392ms] connection: connection upload closed: close tcp 172.19.0.1:52810->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m937190095\u001b[0m 393ms] connection: connection upload closed: close tcp 172.19.0.1:52808->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;228m2155441876\u001b[0m 394ms] connection: connection upload closed: close tcp 172.19.0.1:52806->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;113m2758154337\u001b[0m 395ms] connection: connection upload closed: close tcp 172.19.0.1:52804->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;221m2448949709\u001b[0m 396ms] connection: connection upload closed: close tcp 172.19.0.1:52802->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;72m1827371320\u001b[0m 397ms] connection: connection upload closed: close tcp 172.19.0.1:52800->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;156m4289330251\u001b[0m 397ms] connection: connection upload closed: close tcp 172.19.0.1:52798->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;83m1724162196\u001b[0m 398ms] connection: connection upload closed: close tcp 172.19.0.1:52796->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;230m1644659713\u001b[0m 399ms] connection: connection upload closed: close tcp 172.19.0.1:52794->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;194m138806524\u001b[0m 400ms] connection: connection upload closed: close tcp 172.19.0.1:52792->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;227m870148307\u001b[0m 401ms] connection: connection upload closed: close tcp 172.19.0.1:52790->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;188m3940902316\u001b[0m 402ms] connection: connection upload closed: close tcp 172.19.0.1:52788->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;209m3048817601\u001b[0m 189ms] connection: connection upload closed: close tcp 172.19.0.1:53085->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;120m418606959\u001b[0m 190ms] connection: connection upload closed: close tcp 172.19.0.1:53083->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;36m3776883988\u001b[0m 191ms] connection: connection upload closed: close tcp 172.19.0.1:53081->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;153m3326172553\u001b[0m 192ms] connection: connection upload closed: close tcp 172.19.0.1:53079->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;194m2042476722\u001b[0m 193ms] connection: connection upload closed: close tcp 172.19.0.1:53077->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;72m1442332472\u001b[0m 194ms] connection: connection upload closed: close tcp 172.19.0.1:53075->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;157m291012493\u001b[0m 195ms] connection: connection upload closed: close tcp 172.19.0.1:53073->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;158m2524612494\u001b[0m 196ms] connection: connection upload closed: close tcp 172.19.0.1:53071->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;216m276701896\u001b[0m 197ms] connection: connection upload closed: close tcp 172.19.0.1:53069->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;35m3883509267\u001b[0m 198ms] connection: connection upload closed: close tcp 172.19.0.1:53067->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;135m443595639\u001b[0m 176ms] connection: connection upload closed: close tcp 172.19.0.1:53101->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;226m1199316188\u001b[0m 179ms] connection: connection upload closed: close tcp 172.19.0.1:53099->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;187m1729558316\u001b[0m 180ms] connection: connection upload closed: close tcp 172.19.0.1:53097->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;217m292385993\u001b[0m 183ms] connection: connection upload closed: close tcp 172.19.0.1:53095->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;153m703285582\u001b[0m 185ms] connection: connection upload closed: close tcp 172.19.0.1:53093->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;80m4078730304\u001b[0m 187ms] connection: connection upload closed: close tcp 172.19.0.1:53091->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;201m257076665\u001b[0m 188ms] connection: connection upload closed: close tcp 172.19.0.1:53089->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;158m3707103049\u001b[0m 189ms] connection: connection upload closed: close tcp 172.19.0.1:53087->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;120m3560140911\u001b[0m 167ms] connection: connection upload closed: close tcp 172.19.0.1:53115->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;219m399000779\u001b[0m 168ms] connection: connection upload closed: close tcp 172.19.0.1:53113->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;62m3378287918\u001b[0m 169ms] connection: connection upload closed: close tcp 172.19.0.1:53111->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;203m2267986363\u001b[0m 170ms] connection: connection upload closed: close tcp 172.19.0.1:53109->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;38m2455267862\u001b[0m 171ms] connection: connection upload closed: close tcp 172.19.0.1:53107->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;121m190767214\u001b[0m 172ms] connection: connection upload closed: close tcp 172.19.0.1:53105->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;49m1579154209\u001b[0m 174ms] connection: connection upload closed: close tcp 172.19.0.1:53103->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;154m678868813\u001b[0m 204ms] connection: connection upload closed: close tcp 172.19.0.1:53059->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;116m3009114468\u001b[0m 156ms] connection: connection upload closed: close tcp 172.19.0.1:53133->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;117m1307361125\u001b[0m 204ms] connection: connection upload closed: close tcp 172.19.0.1:53057->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;212m1167068356\u001b[0m 158ms] connection: connection upload closed: close tcp 172.19.0.1:53131->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;179m307912867\u001b[0m 159ms] connection: connection upload closed: close tcp 172.19.0.1:53129->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;191m237877167\u001b[0m 206ms] connection: connection upload closed: close tcp 172.19.0.1:53055->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;159m3090447247\u001b[0m 207ms] connection: connection upload closed: close tcp 172.19.0.1:53053->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;180m3017736612\u001b[0m 161ms] connection: connection upload closed: close tcp 172.19.0.1:53127->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;228m535129306\u001b[0m 163ms] connection: connection upload closed: close tcp 172.19.0.1:53125->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;98m50634322\u001b[0m 208ms] connection: connection upload closed: close tcp 172.19.0.1:53051->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;208m2886333632\u001b[0m 163ms] connection: connection upload closed: close tcp 172.19.0.1:53123->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;187m236869676\u001b[0m 210ms] connection: connection upload closed: close tcp 172.19.0.1:53049->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;83m2050688835\u001b[0m 164ms] connection: connection upload closed: close tcp 172.19.0.1:53121->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;86m4240423750\u001b[0m 211ms] connection: connection upload closed: close tcp 172.19.0.1:53047->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;192m2061264423\u001b[0m 166ms] connection: connection upload closed: close tcp 172.19.0.1:53119->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;228m338784724\u001b[0m 167ms] connection: connection upload closed: close tcp 172.19.0.1:53117->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;184m1890381736\u001b[0m 142ms] connection: connection upload closed: close tcp 172.19.0.1:53149->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;193m697665713\u001b[0m 144ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;193m697665713\u001b[0m 144ms] connection: connection upload closed: close tcp 172.19.0.1:53147->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;37m1167282453\u001b[0m 146ms] connection: connection upload closed: close tcp 172.19.0.1:53145->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;213m4167471301\u001b[0m 138ms] connection: connection upload closed: close tcp 172.19.0.1:53153->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;136m3269276536\u001b[0m 148ms] connection: connection upload closed: close tcp 172.19.0.1:53143->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;169m405836953\u001b[0m 140ms] connection: connection upload closed: close tcp 172.19.0.1:53151->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;219m757893067\u001b[0m 130ms] connection: connection upload closed: close tcp 172.19.0.1:53159->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;98m2144243538\u001b[0m 154ms] connection: connection upload closed: close tcp 172.19.0.1:53137->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;30m1826213902\u001b[0m 149ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;30m1826213902\u001b[0m 149ms] connection: connection upload closed: close tcp 172.19.0.1:53141->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;132m557205108\u001b[0m 155ms] connection: connection upload closed: close tcp 172.19.0.1:53135->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;50m2461721781\u001b[0m 132ms] connection: connection upload closed: close tcp 172.19.0.1:53157->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;191m1465110191\u001b[0m 125ms] connection: connection upload closed: close tcp 172.19.0.1:53163->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;130m443499378\u001b[0m 136ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;133m2420663925\u001b[0m 127ms] connection: connection upload closed: close tcp 172.19.0.1:53161->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;193m1570418726\u001b[0m 152ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;130m443499378\u001b[0m 136ms] connection: connection upload closed: close tcp 172.19.0.1:53155->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;193m1570418726\u001b[0m 152ms] connection: connection upload closed: close tcp 172.19.0.1:53139->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;117m2920998245\u001b[0m 881ms] connection: connection upload closed: close tcp 172.19.0.1:52074->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;34m3061021714\u001b[0m 856ms] connection: connection upload closed: close tcp 172.19.0.1:52082->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;192m1635298992\u001b[0m 868ms] connection: connection upload closed: close tcp 172.19.0.1:52080->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;101m3983753557\u001b[0m 877ms] connection: connection upload closed: close tcp 172.19.0.1:52078->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;76m4195601468\u001b[0m 879ms] connection: connection upload closed: close tcp 172.19.0.1:52076->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;84m3501205651\u001b[0m 885ms] connection: connection upload closed: close tcp 172.19.0.1:52070->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;229m44593922\u001b[0m 883ms] connection: connection upload closed: close tcp 172.19.0.1:52072->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;44m3941436147\u001b[0m 886ms] connection: connection upload closed: close tcp 172.19.0.1:52068->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;222m2211577097\u001b[0m 888ms] connection: connection upload closed: close tcp 172.19.0.1:52066->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;49m2107600888\u001b[0m 952ms] connection: connection upload closed: close tcp 172.19.0.1:51970->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;189m3710423338\u001b[0m 125ms] connection: connection upload closed: close tcp 172.19.0.1:53165->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;97m4197773137\u001b[0m 122ms] connection: connection upload closed: close tcp 172.19.0.1:53171->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;36m2078971371\u001b[0m 123ms] connection: connection upload closed: close tcp 172.19.0.1:53169->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;84m378390163\u001b[0m 124ms] connection: connection upload closed: close tcp 172.19.0.1:53167->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;138m745165690\u001b[0m 118ms] connection: connection upload closed: close tcp 172.19.0.1:53179->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;148m2723166340\u001b[0m 120ms] connection: connection upload closed: close tcp 172.19.0.1:53177->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;38m3715133165\u001b[0m 121ms] connection: connection upload closed: close tcp 172.19.0.1:53175->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;143m3788582015\u001b[0m 121ms] connection: connection upload closed: close tcp 172.19.0.1:53173->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;221m3685488906\u001b[0m 111ms] connection: connection upload closed: close tcp 172.19.0.1:53189->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;123m732446059\u001b[0m 112ms] connection: connection upload closed: close tcp 172.19.0.1:53187->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;154m2730206602\u001b[0m 114ms] connection: connection upload closed: close tcp 172.19.0.1:53185->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;49m2107600888\u001b[0m 953ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m1181563087\u001b[0m 104ms] connection: connection upload closed: close tcp 172.19.0.1:53199->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;113m261683297\u001b[0m 105ms] connection: connection upload closed: close tcp 172.19.0.1:53197->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;40m2681293295\u001b[0m 107ms] connection: connection upload closed: close tcp 172.19.0.1:53195->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;221m4125774561\u001b[0m 109ms] connection: connection upload closed: close tcp 172.19.0.1:53193->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;120m807082863\u001b[0m 110ms] connection: connection upload closed: close tcp 172.19.0.1:53191->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;79m22550335\u001b[0m 116ms] connection: connection upload closed: close tcp 172.19.0.1:53183->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;30m385330958\u001b[0m 117ms] connection: connection upload closed: close tcp 172.19.0.1:53181->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;100m2528875860\u001b[0m 92ms] connection: connection upload closed: close tcp 172.19.0.1:53215->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;44m1212179484\u001b[0m 95ms] connection: connection upload closed: close tcp 172.19.0.1:53211->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;46m4182206197\u001b[0m 97ms] connection: connection upload closed: close tcp 172.19.0.1:53209->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;180m3672512164\u001b[0m 98ms] connection: connection upload closed: close tcp 172.19.0.1:53207->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;215m3750503623\u001b[0m 100ms] connection: connection upload closed: close tcp 172.19.0.1:53205->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;43m1007395867\u001b[0m 101ms] connection: connection upload closed: close tcp 172.19.0.1:53203->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;97m2522902097\u001b[0m 103ms] connection: connection upload closed: close tcp 172.19.0.1:53201->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m3757235151\u001b[0m 94ms] connection: connection upload closed: close tcp 172.19.0.1:53213->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;132m1226806132\u001b[0m 70ms] connection: connection upload closed: close tcp 172.19.0.1:53237->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;193m890432945\u001b[0m 72ms] connection: connection upload closed: close tcp 172.19.0.1:53235->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;144m945233024\u001b[0m 73ms] connection: connection upload closed: close tcp 172.19.0.1:53233->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;98m4190449746\u001b[0m 74ms] connection: connection upload closed: close tcp 172.19.0.1:53231->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;181m3982292133\u001b[0m 76ms] connection: connection upload closed: close tcp 172.19.0.1:53229->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;220m2493691874\u001b[0m 77ms] connection: connection upload closed: close tcp 172.19.0.1:53227->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;36m3137215979\u001b[0m 80ms] connection: connection upload closed: close tcp 172.19.0.1:53225->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;145m3084319105\u001b[0m 81ms] connection: connection upload closed: close tcp 172.19.0.1:53223->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;165m2587351957\u001b[0m 82ms] connection: connection upload closed: close tcp 172.19.0.1:53221->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;29m392634596\u001b[0m 85ms] connection: connection upload closed: close tcp 172.19.0.1:53219->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;173m1554074525\u001b[0m 91ms] connection: connection upload closed: close tcp 172.19.0.1:53217->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;41m1403706608\u001b[0m 60ms] connection: connection upload closed: close tcp 172.19.0.1:53263->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;221m217819597\u001b[0m 61ms] connection: connection upload closed: close tcp 172.19.0.1:53261->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;157m3128035146\u001b[0m 62ms] connection: connection upload closed: close tcp 172.19.0.1:53259->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;213m1401198277\u001b[0m 63ms] connection: connection upload closed: close tcp 172.19.0.1:53257->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;107m1571204187\u001b[0m 64ms] connection: connection upload closed: close tcp 172.19.0.1:53255->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;223m3393043167\u001b[0m 64ms] connection: connection upload closed: close tcp 172.19.0.1:53253->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;120m812347240\u001b[0m 65ms] connection: connection upload closed: close tcp 172.19.0.1:53251->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;114m3629848418\u001b[0m 66ms] connection: connection upload closed: close tcp 172.19.0.1:53249->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;218m232595914\u001b[0m 66ms] connection: connection upload closed: close tcp 172.19.0.1:53247->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;149m3603105157\u001b[0m 68ms] connection: connection upload closed: close tcp 172.19.0.1:53245->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;39m120355566\u001b[0m 68ms] connection: connection upload closed: close tcp 172.19.0.1:53243->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;37m3651673877\u001b[0m 69ms] connection: connection upload closed: close tcp 172.19.0.1:53241->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;156m154942283\u001b[0m 70ms] connection: connection upload closed: close tcp 172.19.0.1:53239->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;48m90274336\u001b[0m 54ms] connection: connection upload closed: close tcp 172.19.0.1:53271->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;31m922308838\u001b[0m 57ms] connection: connection upload closed: close tcp 172.19.0.1:53269->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;220m277793547\u001b[0m 59ms] connection: connection upload closed: close tcp 172.19.0.1:53267->17.253.253.5:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0035] [\u001b[38;5;97m3843886417\u001b[0m 60ms] connection: connection upload closed: close tcp 172.19.0.1:53265->17.253.253.5:443: shutdown: can't assign requested address\n"
+      }
+    }
+  ]
+}
