@@ -103,11 +103,17 @@ pub fn validate_engine(c: &Candidate) -> Result<(), String> {
 pub fn engine_version(transport: &Transport, version: &str) -> Result<Candidate, String> {
     stable(version)?;
     let client = transport.clone().only_endpoint(None)?;
-    let release: Release = client.json(
-        &format!("https://api.github.com/repos/SagerNet/sing-box/releases/tags/v{version}"),
-        RequestKind::Api,
-        ACCEPT,
-    )?;
+    // The shipped bootstrap version keeps its upstream digest even when GitHub's API is rate limited.
+    let release: Release = if version == "1.14.4" {
+        serde_json::from_str(include_str!("../../resources/core-1.14.4.json"))
+            .map_err(|_| "包内官方核心来源记录无效")?
+    } else {
+        client.json(
+            &format!("https://api.github.com/repos/SagerNet/sing-box/releases/tags/v{version}"),
+            RequestKind::Api,
+            ACCEPT,
+        )?
+    };
     if release.draft || release.prerelease || release.tag_name != format!("v{version}") {
         return Err("核心发行状态不符".into());
     }
@@ -286,5 +292,10 @@ mod tests {
         assert!(engine_asset("../x", crate::TARGET).is_err());
         assert!(digest("abc").is_err());
         assert!(digest(&"a".repeat(64)).is_ok());
+        let client =
+            Transport::new(Default::default(), std::sync::Arc::new(Default::default())).unwrap();
+        let pinned = engine_version(&client, "1.14.4").unwrap();
+        validate_engine(&pinned).unwrap();
+        assert_eq!(pinned.version, "1.14.4");
     }
 }

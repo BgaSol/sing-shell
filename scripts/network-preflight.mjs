@@ -6,6 +6,7 @@ import net from 'node:net';
 import dgram from 'node:dgram';
 import {createHash} from 'node:crypto';
 import {spawn, execFileSync} from 'node:child_process';
+import {echoPair} from './network-echo.mjs';
 
 // Only run in disposable native runners: the routes cover two test addresses, never the default route.
 assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT, '1', 'explicit isolated network preflight required');
@@ -81,12 +82,9 @@ try {
   report.archive = {name, digest: asset.digest};
   report.resources = entries.filter(p => /\.(dll|so|dylib)$/i.test(p));
   assert.ok(command(core, ['version']).includes(version));
-  tcp = net.createServer(socket => socket.pipe(socket));
-  await new Promise(resolve => tcp.listen(0, '127.0.0.1', resolve));
-  const port = tcp.address().port;
-  udp = dgram.createSocket('udp4');
-  udp.on('message', (message, remote) => udp.send(message, remote.port, remote.address));
-  await new Promise(resolve => udp.bind(port, '127.0.0.1', resolve));
+  const echo = await echoPair();
+  tcp = echo.tcp; udp = echo.udp;
+  const port = echo.port;
   const addresses = ['198.18.77.1', 'fdfe:dbca:199::99'];
   const config = {
     log: {level: 'info'},

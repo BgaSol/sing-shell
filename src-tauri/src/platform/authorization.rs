@@ -277,7 +277,6 @@ mod native {
         };
         same_executable(&path)
     }
-    #[cfg(any(target_os = "linux", feature = "test-fixtures"))]
     pub async fn direct_connect(root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
         let _ = root;
         use std::os::unix::fs::DirBuilderExt;
@@ -332,7 +331,6 @@ mod native {
     }
     #[cfg(target_os = "macos")]
     pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
-        #[cfg(feature = "test-fixtures")]
         if elevated() {
             return direct_connect(_root, cancel).await;
         }

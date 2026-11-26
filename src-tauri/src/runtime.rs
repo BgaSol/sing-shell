@@ -42,6 +42,7 @@ pub struct StartSpec {
 }
 pub struct RuntimeService {
     network_owned: AtomicBool,
+    network_root: Mutex<Option<PathBuf>>,
     state: Arc<Mutex<RuntimeSnapshot>>,
     stop: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
@@ -122,6 +123,7 @@ impl Default for RuntimeService {
     fn default() -> Self {
         Self {
             network_owned: AtomicBool::new(false),
+            network_root: Mutex::new(None),
             state: Arc::new(Mutex::new(Default::default())),
             stop: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
@@ -131,6 +133,9 @@ impl Default for RuntimeService {
     }
 }
 impl RuntimeService {
+    pub fn record_network(&self, root: PathBuf) {
+        *self.network_root.lock().unwrap() = Some(root);
+    }
     pub fn network_owned(&self, value: bool) {
         self.network_owned.store(value, Ordering::Release);
     }
@@ -287,6 +292,17 @@ impl RuntimeService {
                 return Err(e);
             }
         };
+        if let Some(root) = self.network_root.lock().unwrap().as_ref() {
+            if let Err(error) =
+                crate::platform::network::record(root, process.child.id(), &spec.executable)
+            {
+                let _ = process.terminate();
+                let mut state = self.state.lock().unwrap();
+                state.status = "failed".into();
+                state.error = Some(error.clone());
+                return Err(error);
+            }
+        }
         if let Some(worker) = self.worker.lock().unwrap().take() {
             let _ = worker.join();
         }

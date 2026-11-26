@@ -9,6 +9,7 @@ on:
       - scripts/macos-service-preflight.mjs
       - scripts/macos-service-preflight.swift
       - scripts/network-integration.mjs
+      - scripts/network-echo.mjs
       - src-tauri/src/**
       - src-tauri/tests/fixtures/network.rs
       - src-tauri/Cargo.toml

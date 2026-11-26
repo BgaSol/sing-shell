@@ -491,6 +491,19 @@ fn main() {
         }
         return;
     }
+    if args.iter().any(|a| a == "--smoke-test")
+        && std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1")
+    {
+        if let Some(index) = args.iter().position(|a| a == "--network-fixture-input") {
+            let file = args.get(index + 1).expect("network fixture input missing");
+            let fixture_args = vec![args[0].clone(), file.clone()];
+            if let Err(error) = sing_shell::session::tunnel::fixture(&fixture_args) {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+            return;
+        }
+    }
     let launch = sing_shell::startup::Launch::parse(&args).expect("启动参数无效");
     let app = tauri::Builder::default()
         .manage(sing_shell::startup::Launch::restart_environment(&args))

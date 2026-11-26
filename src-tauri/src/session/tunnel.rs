@@ -144,17 +144,7 @@ impl Tunnel {
     pub fn snapshot(&self) -> Snapshot {
         self.state.lock().unwrap().clone()
     }
-    pub fn start(
-        &self,
-        input: Connection,
-        core_version: String,
-        cancel: &AtomicBool,
-    ) -> Result<(), String> {
-        input.profile().validate()?;
-        let request = Request::Start {
-            input,
-            core_version,
-        };
+    fn request(&self, request: Request) -> Result<(), String> {
         let mut client = self.client.lock().unwrap();
         if client.as_ref().is_some_and(|c| c.thread.is_finished()) {
             client.take();
@@ -207,7 +197,7 @@ impl Tunnel {
                     let mut s = state.lock().unwrap();
                     s.error = Some(error.clone());
                     s.runtime.error = Some(error);
-                    s.phase = if s.runtime.pid.is_some() {
+                    s.phase = if s.runtime.pid.is_some() || network::require_clear().is_err() {
                         "cleanupRequired"
                     } else {
                         "failed"
@@ -221,7 +211,22 @@ impl Tunnel {
                 thread: worker,
             });
         }
-        drop(client);
+        Ok(())
+    }
+    pub fn start(
+        &self,
+        input: Connection,
+        core_version: String,
+        cancel: &AtomicBool,
+    ) -> Result<(), String> {
+        if self.snapshot().phase == "cleanupRequired" {
+            return Err("网络资源尚未清理，请先停止连接".into());
+        }
+        input.profile().validate()?;
+        self.request(Request::Start {
+            input,
+            core_version,
+        })?;
         let deadline = Instant::now() + Duration::from_secs(180);
         loop {
             let snapshot = self.snapshot();
@@ -243,6 +248,24 @@ impl Tunnel {
         }
     }
     pub fn stop(&self) -> Result<(), String> {
+        {
+            let mut guard = self.client.lock().unwrap();
+            if guard.as_ref().is_some_and(|c| c.thread.is_finished()) {
+                guard.take();
+                if network::require_clear().is_ok() {
+                    *self.state.lock().unwrap() = Snapshot::default();
+                    return Ok(());
+                }
+            }
+            if guard.is_none() && self.snapshot().phase != "cleanupRequired" {
+                return Ok(());
+            }
+        }
+        // A lost controller reconnects only to clean up; it never restarts the old connection.
+        let reconnecting = self.client.lock().unwrap().is_none();
+        if reconnecting {
+            self.request(Request::Stop)?;
+        }
         let mut guard = self.client.lock().unwrap();
         if guard.as_ref().is_some_and(|c| c.thread.is_finished())
             && self.snapshot().runtime.pid.is_none()
@@ -259,14 +282,14 @@ impl Tunnel {
                 Ok(())
             };
         };
-        if self.snapshot().phase == "authorizing" {
+        if !reconnecting && self.snapshot().phase == "authorizing" {
             client.cancel.store(true, Ordering::Release);
         }
         self.state.lock().unwrap().phase = "stopping".into();
-        client
-            .tx
-            .send(Request::Stop)
-            .map_err(|_| "授权进程已断开，请重试清理")?;
+        if client.tx.send(Request::Stop).is_err() {
+            self.state.lock().unwrap().phase = "cleanupRequired".into();
+            return Err("授权进程已断开，请重试清理".into());
+        }
         let deadline = Instant::now() + Duration::from_secs(35);
         loop {
             let snapshot = self.snapshot();
@@ -285,6 +308,7 @@ impl Tunnel {
                 };
             }
             if Instant::now() >= deadline {
+                self.state.lock().unwrap().phase = "cleanupRequired".into();
                 return Err("TUN 尚未完成停止，请重试".into());
             }
             thread::sleep(Duration::from_millis(50));
@@ -430,6 +454,16 @@ impl Worker {
         Ok(())
     }
     fn stop(&mut self) -> Result<(), String> {
+        let result = self.stop_inner();
+        if let Err(error) = &result {
+            let mut state = self.state.lock().unwrap();
+            state.phase = "cleanupRequired".into();
+            state.failure = Some(Failure::Cleanup);
+            state.error = Some(error.clone());
+        }
+        result
+    }
+    fn stop_inner(&mut self) -> Result<(), String> {
         self.cancel.store(true, Ordering::Release);
         if let Some(thread) = self.start.take() {
             let _ = thread.join();
@@ -440,6 +474,7 @@ impl Worker {
         loop {
             let observation = network::observe()?;
             if !observation.interface {
+                network::forget(&self.root)?;
                 *self.state.lock().unwrap() = Snapshot::default();
                 return Ok(());
             }
@@ -540,6 +575,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
         crate::platform::network_worker().map_err(|e| e.to_string())?;
         let root = authorization::prepare_root()?;
         let _lease = crate::instance::Lease::acquire(&root)?;
+        network::recover(&root)?;
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
@@ -570,6 +606,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                 cancel: Arc::new(AtomicBool::new(false)),
                 start: None,
             };
+            worker.runtime.record_network(worker.root.clone());
             let mut greeted = false;
             let result = loop {
                 let request = match tokio::time::timeout(
@@ -624,7 +661,6 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
     })())
 }
 
-#[cfg(feature = "test-fixtures")]
 pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
     if !authorization::elevated() {
         return Err("network fixture needs a disposable privileged runner".into());

@@ -318,6 +318,7 @@ impl SessionService {
         input: Option<tunnel::Connection>,
     ) -> Result<(), String> {
         self.ensure_stopped()?;
+        let allow_core_rollback = input.is_none();
         if input.is_none() {
             if let Err(error) = self.engine.adopt_owned(op) {
                 self.engine.managed.error(error);
@@ -344,7 +345,6 @@ impl SessionService {
             &op.cancel,
         )?;
         self.runtime.clear_error();
-        self.runtime.network_owned(true);
         let expected = if s.managed.trial.is_some() {
             self.store
                 .core(s.core_revision, |settings| {
@@ -355,13 +355,15 @@ impl SessionService {
         } else {
             s.core_revision
         };
+        self.runtime.network_owned(true);
         if let Err(error) = self.tunnel.start(input.clone(), version, &op.cancel) {
             if self.tunnel.snapshot().runtime.pid.is_none()
                 && self.tunnel.snapshot().phase != "cleanupRequired"
             {
                 self.runtime.network_owned(false);
             }
-            if s.managed.trial.is_some()
+            if allow_core_rollback
+                && s.managed.trial.is_some()
                 && self.tunnel.snapshot().failure == Some(tunnel::Failure::CoreStart)
                 && !op.cancel.load(Ordering::Acquire)
                 && !self.gate.closing()
