@@ -71,6 +71,8 @@ try{
     const physical=route.stdout.match(/interface:\s+(\S+)/)?.[1];assert.ok(physical&&!physical.startsWith('utun'));
     serverConfig.outbounds[0].bind_interface=physical;
   }
+  // Unrelated runner traffic must not loop from the proxy server back into the TUN.
+  serverConfig.route.rules.push({action:'reject'});
   serverConfig.inbounds.push({...serverConfig.inbounds[0],tag:'ss-second',listen_port:secondProxyPort});
   const config=path.join(directory,'proxy-server.json');await fs.writeFile(config,JSON.stringify(serverConfig));
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
