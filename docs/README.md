@@ -9,6 +9,8 @@
 - [图标与界面](features/appearance.md)：贝壳标识、多巴胺配色与界面状态
 - [设计规范](../DESIGN.md)：颜色角色、字体、组件与交互状态
 - [架构](architecture.md)：分层、数据、进程与平台边界
+- [平台适配与网络生命周期整改](plans/platform-lifecycle-remediation.md)：资源所有权、统一清理、状态与五原生验收，尚未实施
+- [macOS TUN DNS 设计](plans/macos-tun-dns.md)：临时系统解析器、连接生命周期与验收边界，尚未实现
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
 - [v0.5.3 发行记录](releases/v0.5.3.md)：macOS 按需系统授权与旧服务迁移
