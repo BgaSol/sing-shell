@@ -6,14 +6,14 @@
   "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
   "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
   "verificationAttempt": 2,
-  "release": "https://github.com/BgaSol/sing-shell/releases",
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.5.2",
   "passed": true,
-  "scope": "Automated native/package verification; release remains a draft pending user Mac acceptance",
+  "scope": "Automated native/package verification; user explicitly authorized release with manual macOS acceptance unexecuted",
   "published": false,
-  "readyForLatest": false,
+  "readyForLatest": true,
   "manualAcceptance": {
-    "macUserApprovedSMAppServiceAndTun": "pending",
-    "physicalTrayVisibility": "pending"
+    "macUserApprovedSMAppServiceAndTun": "not executed; maintainer explicitly authorized publication without this manual acceptance",
+    "physicalTrayVisibility": "not executed; recorded as an uncovered release scope"
   },
   "targets": [
     "x86_64-pc-windows-msvc",

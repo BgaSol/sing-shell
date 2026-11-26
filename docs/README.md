@@ -11,9 +11,9 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
-- [v0.5.2 候选验证](releases/v0.5.2.md)：托盘及 TUN 授权整改，五原生/实际包通过，等待用户 Mac 验收
-- [v0.5.2 包验证证据](releases/v0.5.2-verification.json)：固定来源、原包摘要、升级及草稿状态
-- [v0.5.2 网络验证证据](releases/v0.5.2-network-verification.json)：五原生转发与异常清理，用户授权路径另验
+- [v0.5.2 发行记录](releases/v0.5.2.md)：托盘及 TUN 授权整改、五原生/实际包与未覆盖范围
+- [v0.5.2 包验证证据](releases/v0.5.2-verification.json)：固定来源、原包摘要、升级及发布状态
+- [v0.5.2 网络验证证据](releases/v0.5.2-network-verification.json)：五原生转发与异常清理，用户授权交互未执行
 - [v0.5.1 发行记录](releases/v0.5.1.md)：节点分享链接兼容、预览事务与发行验收
 - [v0.5.1 完整验收](releases/v0.5.1-verification.json)：五原生签名包、核心/升级和公开附件核对
 - [v0.5.0 发行记录](releases/v0.5.0.md)：节点、TUN、分流与平台验收边界
@@ -24,7 +24,3 @@
 - [v0.3.0 发行记录](releases/v0.3.0.md)：核心自动安装、更新和本次验收
 - [v0.2.0 发行记录](releases/v0.2.0.md)：独立更新、签名及本次验收
 - [v0.1.0 发行记录](releases/v0.1.0.md)：包来源、原生验收、摘要及限制
-
-[临时整改计划](plans/)统一放在 `plans/`，不代表已实现功能。
-
-- [托盘呈现与 TUN 授权生命周期整改](plans/desktop-network-lifecycle.md)：身份认证、会话收尾、状态投影和原生验收

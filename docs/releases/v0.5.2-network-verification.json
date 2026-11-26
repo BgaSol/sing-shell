@@ -6,7 +6,7 @@
   "scope": "Disposable native runner worker and encrypted forwarding integration; does not assert user-approved macOS SMAppService activation",
   "core": "1.14.4",
   "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
-  "userApprovedMacTun": "not executed; awaiting user Mac acceptance",
+  "userApprovedMacTun": "not executed; maintainer explicitly authorized publication with this limitation recorded",
   "reports": [
     {
       "target": "x86_64-pc-windows-msvc",
