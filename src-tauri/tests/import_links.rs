@@ -84,6 +84,9 @@ fn query_decoding_is_strict_once_and_keeps_form_plus_semantics() {
 #[test]
 fn existing_protocols_keep_credentials_tls_and_transport() {
     use base64::Engine;
+    let legacy_ss =
+        base64::engine::general_purpose::STANDARD.encode("aes-128-gcm:p\tass@example.com:443");
+    assert!(import::link(&format!("ss://{legacy_ss}")).is_err());
     for (link, protocol) in [
         ("ss://YWVzLTEyOC1nY206cDphc3M@[2001:db8::1]:443#ss", "Shadowsocks"),
         ("trojan://p%3Aass@example.com?type=ws&path=%2Fws&host=cdn.example.com", "Trojan"),

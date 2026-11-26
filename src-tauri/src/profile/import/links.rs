@@ -156,9 +156,6 @@ pub fn link(input: &str) -> Result<(String, NodeSpec), String> {
     if input.len() > 16 * 1024 {
         return Err("单条节点链接超过 16 KiB".into());
     }
-    if input.chars().any(char::is_control) {
-        return Err("节点链接包含控制字符".into());
-    }
     if let Some(value) = input.strip_prefix("vmess://") {
         let value: Value =
             serde_json::from_str(&decode_base64(value)?).map_err(|_| "VMess 节点 JSON 无效")?;
@@ -207,6 +204,9 @@ pub fn link(input: &str) -> Result<(String, NodeSpec), String> {
             let (value, fragment) = value.split_once('#').unwrap_or((value, ""));
             input = format!("ss://{}#{}", decode_base64(value)?, fragment);
         }
+    }
+    if input.chars().any(char::is_control) {
+        return Err("节点链接包含控制字符".into());
     }
     let url = reqwest::Url::parse(&input).map_err(|_| "节点链接格式无效")?;
     if !["", "/"].contains(&url.path()) {
