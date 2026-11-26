@@ -5044,5 +5044,135 @@
     },
     "scope": "CurrentUser reinstall then uninstall preserving foreign login entry",
     "reason": "uninstall guard returned 2; same original packages pass on fresh native runner with additional registry/path diagnostics; root cause remains uncertain"
+  },
+  "publicRelease": {
+    "tag": "v0.5.4",
+    "url": "https://github.com/BgaSol/sing-shell/releases/tag/v0.5.4",
+    "publishedAt": "2026-11-26T15:37:31Z",
+    "latestVerified": true,
+    "draft": false,
+    "prerelease": false,
+    "source": "45619db61bddea22a5699a64cd96926f505c62a6",
+    "pullRequest": "https://github.com/BgaSol/sing-shell/pull/5",
+    "mergeCommit": "235597dc5becfbbba0dc2182cf30493c337cdb68",
+    "anonymousDownloadVerification": {
+      "version": "0.5.4",
+      "passed": true,
+      "assets": [
+        {
+          "name": "Sing.Shell_0.5.4_aarch64.app.tar.gz.sig",
+          "size": 428,
+          "digest": "sha256:3568ba15afe0837dd1ab7f29ffa06f411514f1b07b65fa99a5c513a81c721ee0",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_aarch64.app.tar.gz.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "core-update.json",
+          "size": 4261,
+          "digest": "sha256:182e60cd2f6445a2a968e278dbc6496b4321a6fbc2518c5ec4f50b650a732185",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/core-update.json",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_aarch64.AppImage.sig",
+          "size": 444,
+          "digest": "sha256:4c8a5749a618ad2557f854f27842af308c1918a5a0b305d8b66d234643d96b84",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_aarch64.AppImage.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_aarch64.app.tar.gz",
+          "size": 6049782,
+          "digest": "sha256:a4a48e7c374c600cfb16fe5863914447cf2c9544cc9b93cf8fd4ec23052da9da",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_aarch64.app.tar.gz",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_aarch64.dmg",
+          "size": 5919376,
+          "digest": "sha256:f7cce21bcff86775fdc40cd0e4273e06b00e07e7d795cbd10b0b3cba4d977e5b",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_aarch64.dmg",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_amd64.AppImage.sig",
+          "size": 440,
+          "digest": "sha256:3f24881d065c00ed5b2e5e96ce3eaa44bcb14ee4fef7006a7265d585c1120810",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_amd64.AppImage.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_aarch64.AppImage",
+          "size": 82983432,
+          "digest": "sha256:dd4dbfb6861d7ad7a2ea70f5941090f71d2077ed36ff2cb5844192fcae222039",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_aarch64.AppImage",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_amd64.deb.sig",
+          "size": 436,
+          "digest": "sha256:566f8cfd51e2c35b0cbe1093c70a8eb23fa77d774eecdafbcdc2c8673942639f",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_amd64.deb.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_arm64-setup.exe",
+          "size": 3919865,
+          "digest": "sha256:28b7cbb18ce274745cc683a1abff608e69c31659d4e091e3e6df879f6d0b04ab",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_arm64-setup.exe",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_arm64-setup.exe.sig",
+          "size": 444,
+          "digest": "sha256:3b4b88bc3a8b99de5ff79b8862e9ed7837ba8586caa3f649eafd73d0a9a06592",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_arm64-setup.exe.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_amd64.deb",
+          "size": 7164496,
+          "digest": "sha256:56a9ef6e9be04d6179233207469da5dab243a5f9c82c5be03006ee1a215208bc",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_amd64.deb",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_arm64.deb.sig",
+          "size": 436,
+          "digest": "sha256:0296704537b250f3e3ef0d0f9c4b57728754c08e56293066538be595e61da7e2",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_arm64.deb.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_arm64.deb",
+          "size": 6761228,
+          "digest": "sha256:357e84a5ff796b33ffc9e8491f8c0c2710ad460c6f101b24a9b6a739910be096",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_arm64.deb",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_x64-setup.exe.sig",
+          "size": 440,
+          "digest": "sha256:63d74cfa404cdeb6fac3a620fc9d78fd74e5dd2f76ee7af0a21be10ec3d5d7bf",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_x64-setup.exe.sig",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_x64-setup.exe",
+          "size": 4401432,
+          "digest": "sha256:e49c5e5132b1df48986c08a0f80d19c48dc76cf4930c54c8975c1571386b1d54",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_x64-setup.exe",
+          "anonymousHttps": true
+        },
+        {
+          "name": "Sing.Shell_0.5.4_amd64.AppImage",
+          "size": 85297656,
+          "digest": "sha256:618ffed56ad5091bc29973b5d1e477150739ac9b0d3dd74827b6e9a2cf98449b",
+          "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.4/Sing.Shell_0.5.4_amd64.AppImage",
+          "anonymousHttps": true
+        }
+      ],
+      "manifestUnchanged": true
+    }
   }
 }
