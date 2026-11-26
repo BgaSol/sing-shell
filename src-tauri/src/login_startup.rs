@@ -1,11 +1,7 @@
 //! Current-user login startup registration. The operating system is the source of truth.
 
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-
-#[cfg(windows)]
-pub(crate) use platform::installation_scope;
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +24,6 @@ impl Status {
 pub struct Service {
     mutation: Mutex<()>,
     available: bool,
-    stopped: AtomicBool,
 }
 
 impl Service {
@@ -36,7 +31,6 @@ impl Service {
         Self {
             mutation: Mutex::new(()),
             available: !isolated && !cfg!(debug_assertions),
-            stopped: AtomicBool::new(false),
         }
     }
 
@@ -67,9 +61,6 @@ impl Service {
             return Err("开发和隔离验收模式不能修改系统登录项".into());
         }
         let _mutation = self.mutation.lock().unwrap();
-        if self.stopped.load(Ordering::Acquire) {
-            return Err("应用正在退出或重启".into());
-        }
         let result = if enabled {
             platform::installed(&command_path()?).and_then(|_| platform::set(true))
         } else {
@@ -77,11 +68,6 @@ impl Service {
         };
         let state = self.read();
         result.map(|_| state)
-    }
-
-    pub fn settle(&self) {
-        let _mutation = self.mutation.lock().unwrap();
-        self.stopped.store(true, Ordering::Release);
     }
 }
 

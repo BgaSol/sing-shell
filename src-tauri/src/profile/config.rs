@@ -71,7 +71,7 @@ pub fn build(profile: &Profile, root: &Path) -> Result<Generated, String> {
     let value = json!({
         "log":{"level":"info","disabled":false,"timestamp":false},
         "dns":{"servers":[{"type":"local","tag":"local"},{"type":"https","tag":"proxy-dns","server":"1.1.1.1","path":"/dns-query","tls":{"enabled":true,"server_name":"cloudflare-dns.com"},"detour":"proxy"}],"rules":dns_rules,"final":if profile.routing.default_action==super::routing::Action::Direct{"local"}else{"proxy-dns"}},
-        "inbounds":[{"type":"tun","tag":"tun-in","interface_name":if cfg!(target_os="macos"){"utun223"}else{"sing-shell"},"address":["172.19.0.1/30","fdfe:dcba:9876::1/126"],"auto_route":true,"strict_route":true,"stack":"mixed","mtu":1400,"dns_mode":"hijack","dns_address":["172.19.0.2","fdfe:dcba:9876::2"]}],
+        "inbounds":[{"type":"tun","tag":"tun-in","interface_name":super::tun::INTERFACE,"address":super::tun::ADDRESS,"auto_route":true,"strict_route":true,"stack":"mixed","mtu":1400,"dns_mode":"hijack","dns_address":super::tun::DNS}],
         "outbounds":[outbound,{"type":"direct","tag":"direct","domain_resolver":"local"}],
         "route":{"auto_detect_interface":true,"default_domain_resolver":"local","rules":rules,"rule_set":rule_sets,"final":profile.routing.default_action.tag()}
     });

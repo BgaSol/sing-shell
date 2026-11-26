@@ -2,7 +2,7 @@ name: Native TUN Preflight
 on:
   workflow_dispatch:
   push:
-    branches: [main, codex/desktop-network-lifecycle]
+    branches: [main, codex/platform-network-lifecycle]
     paths:
       - .github/workflows/network-preflight.yml
       - scripts/network-preflight.mjs

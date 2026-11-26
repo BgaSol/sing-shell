@@ -6,76 +6,11 @@ const RUN: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 const APPROVED: &str =
     "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
 const VALUE: &str = "com.bgasol.singshell";
-struct Key(HKEY);
-impl Drop for Key {
-    fn drop(&mut self) {
-        unsafe {
-            RegCloseKey(self.0);
-        }
-    }
-}
 fn wide(value: &str) -> Vec<u16> {
     value.encode_utf16().chain(Some(0)).collect()
 }
 
-fn query(hive: HKEY, path: &str, name: &str) -> Result<Option<(u32, Vec<u8>)>, String> {
-    let mut key = ptr::null_mut();
-    let result = unsafe { RegOpenKeyExW(hive, wide(path).as_ptr(), 0, KEY_READ, &mut key) };
-    if result == 2 {
-        return Ok(None);
-    }
-    if result != 0 {
-        return Err(format!("无法读取 Windows 启动设置：错误码 {result}"));
-    }
-    let key = Key(key);
-    let mut kind = 0;
-    let mut bytes = 0;
-    let result = unsafe {
-        RegQueryValueExW(
-            key.0,
-            wide(name).as_ptr(),
-            ptr::null_mut(),
-            &mut kind,
-            ptr::null_mut(),
-            &mut bytes,
-        )
-    };
-    if result == 2 {
-        return Ok(None);
-    }
-    if result != 0 || bytes > 65536 {
-        return Err("Windows 启动设置无法读取或超过长度上限".into());
-    }
-    let mut data = vec![0u8; bytes as usize];
-    let result = unsafe {
-        RegQueryValueExW(
-            key.0,
-            wide(name).as_ptr(),
-            ptr::null_mut(),
-            &mut kind,
-            data.as_mut_ptr(),
-            &mut bytes,
-        )
-    };
-    if result != 0 {
-        return Err(format!("无法确认 Windows 启动设置：错误码 {result}"));
-    }
-    data.truncate(bytes as usize);
-    Ok(Some((kind, data)))
-}
-
-fn string(kind: u32, bytes: &[u8]) -> Result<String, String> {
-    if kind != REG_SZ || !bytes.len().is_multiple_of(2) {
-        return Err("Windows 启动项格式无法识别".into());
-    }
-    let value: Vec<_> = bytes
-        .chunks_exact(2)
-        .map(|b| u16::from_le_bytes([b[0], b[1]]))
-        .take_while(|c| *c != 0)
-        .collect();
-    String::from_utf16(&value).map_err(|_| "Windows 启动项文字无法解析".into())
-}
-
+use crate::platform::windows_registry::{query, string, Key};
 fn command(path: &Path) -> Result<String, String> {
     let path = path.to_str().ok_or("启动路径不是有效 Unicode")?;
     if path.contains(['"', '\0', '\n', '\r']) {
@@ -180,33 +115,7 @@ pub fn set(enabled: bool) -> Result<(), String> {
 }
 
 pub fn installed(executable: &Path) -> Result<(), String> {
-    installation_scope(executable).map(|_| ())
-}
-
-pub(crate) fn installation_scope(executable: &Path) -> Result<&'static str, String> {
-    installation_scope_at(
-        executable,
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Sing Shell",
-    )
-}
-
-fn installation_scope_at(executable: &Path, key: &str) -> Result<&'static str, String> {
-    let current = executable
-        .parent()
-        .and_then(|p| std::fs::canonicalize(p).ok())
-        .ok_or("无法确认正式安装位置")?;
-    for (hive, scope) in [
-        (HKEY_CURRENT_USER, "/CurrentUser"),
-        (HKEY_LOCAL_MACHINE, "/AllUsers"),
-    ] {
-        if let Some((kind, bytes)) = query(hive, key, "InstallLocation")? {
-            let value = string(kind, &bytes)?;
-            if std::fs::canonicalize(value.trim_matches('"')).is_ok_and(|p| p == current) {
-                return Ok(scope);
-            }
-        }
-    }
-    Err("未找到与当前程序位置匹配的 Sing Shell 安装登记，请使用正式安装包重新安装。".into())
+    crate::platform::installation::installation_scope(executable).map(|_| ())
 }
 
 pub(super) fn verify(directory: &Path) -> Result<(), String> {
@@ -276,24 +185,6 @@ pub(super) fn verify_registration(_: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn update_scope_requires_the_registered_executable_location() {
-        let key = format!("Software\\Sing Shell-Test\\Scope-{}", std::process::id());
-        let directory = std::fs::canonicalize(std::env::temp_dir()).unwrap();
-        let executable = directory.join("sing-shell.exe");
-        assert!(installation_scope_at(&executable, &key).is_err());
-        write(
-            &key,
-            "InstallLocation",
-            Some(&format!("\"{}\"", directory.display())),
-        )
-        .unwrap();
-        let scope = installation_scope_at(&executable, &key);
-        let other = installation_scope_at(&std::env::current_exe().unwrap(), &key);
-        unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, wide(&key).as_ptr()) };
-        assert_eq!(scope.unwrap(), "/CurrentUser");
-        assert!(other.is_err());
-    }
     #[test]
     fn system_disabled_is_never_reported_as_enabled() {
         let value = "\"C:\\中文 space\\sing-shell.exe\" --login-start";

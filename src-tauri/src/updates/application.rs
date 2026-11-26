@@ -44,7 +44,7 @@ fn restore_at<R: tauri::Runtime>(
     #[cfg(windows)]
     let builder = if let Some(executable) = executable {
         builder.installer_args([
-            crate::login_startup::installation_scope(executable)?.to_string(),
+            crate::platform::installation::installation_scope(executable)?.to_string(),
             format!(
                 "/D={}",
                 executable.parent().ok_or("缺少安装路径")?.display()

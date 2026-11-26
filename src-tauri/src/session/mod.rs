@@ -70,7 +70,10 @@ fn missing_restore_config(s: &settings::Settings) -> bool {
 impl SessionService {
     pub fn new(engine: Arc<CoreService>, wake: Arc<tokio::sync::Notify>) -> Arc<Self> {
         Arc::new(Self {
-            tunnel: tunnel::Tunnel::new(engine.store.root.clone()),
+            tunnel: tunnel::Tunnel::with_occupation(
+                engine.store.root.clone(),
+                engine.runtime.network_occupation(),
+            ),
             applied: Mutex::new(None),
             store: engine.store.clone(),
             runtime: engine.runtime.clone(),
@@ -107,12 +110,7 @@ impl SessionService {
             let local_error = actual.error;
             actual = tunnel.runtime.clone();
             actual.error = tunnel.error.clone().or(actual.error).or(local_error);
-            actual.status = match tunnel.phase.as_str() {
-                "authorizing" | "preparing" | "starting" => "starting",
-                "cleanupRequired" => "failed",
-                phase => phase,
-            }
-            .into();
+            actual.status = tunnel.phase.runtime_status().into();
             actual.cleanup_pending = tunnel.phase == tunnel::Phase::CleanupRequired;
         }
         let r = &actual;
@@ -150,7 +148,9 @@ impl SessionService {
             restore,
             runtime: r.clone(),
             network: tunnel.network,
-            running_node: applied.as_ref().map(|c| c.node.summary()),
+            running_node: (r.pid.is_some())
+                .then(|| applied.as_ref().map(|c| c.node.summary()))
+                .flatten(),
             pending_changes: r.pid.is_some()
                 && desired.as_ref().map(tunnel::Connection::fingerprint)
                     != applied.as_ref().map(tunnel::Connection::fingerprint),
@@ -193,7 +193,7 @@ impl SessionService {
     pub fn stop_internal(&self) -> Result<(), String> {
         self.invalidate_restore();
         self.tunnel.close()?;
-        self.runtime.network_owned(false);
+        self.applied.lock().unwrap().take();
         self.runtime.stop()?;
         crate::profile::config::remove_generated(&self.store.root)
     }
@@ -359,13 +359,7 @@ impl SessionService {
         } else {
             s.core_revision
         };
-        self.runtime.network_owned(true);
         if let Err(error) = self.tunnel.start(input.clone(), version, &op.cancel) {
-            if self.tunnel.snapshot().runtime.pid.is_none()
-                && self.tunnel.snapshot().phase != tunnel::Phase::CleanupRequired
-            {
-                self.runtime.network_owned(false);
-            }
             if allow_core_rollback
                 && s.managed.trial.is_some()
                 && self.tunnel.snapshot().failure == Some(tunnel::Failure::CoreStart)
@@ -373,7 +367,6 @@ impl SessionService {
                 && !self.gate.closing()
             {
                 self.tunnel.stop()?;
-                self.runtime.network_owned(false);
                 if self.engine.rollback(&error, &op.cancel)? {
                     return self
                         .start_tunnel_owned(op, Some(input))
@@ -452,18 +445,9 @@ impl SessionService {
         if let Err(e) = self.engine.adopt_owned(op) {
             self.engine.managed.error(e);
         }
+        self.engine.validate_pending(&op.cancel)?;
         let s = self.store.snapshot();
-        let generated = s.profile.mode == crate::profile::Mode::Generated;
-        if !generated {
-            self.engine.validate_pending(&op.cancel)?;
-        }
-        let s = self.store.snapshot();
-        let config = if generated {
-            Some(crate::profile::config::build(&s.profile, &self.store.root)?.path)
-        } else {
-            s.config_path.clone()
-        }
-        .ok_or("请先导入有效配置")?;
+        let config = s.config_path.clone().ok_or("请先导入有效配置")?;
         let spec = StartSpec {
             executable: s.selected_path(&self.store.root)?,
             config: config.clone(),
@@ -481,11 +465,9 @@ impl SessionService {
             })?;
         }
         let result = (|| {
-            if !generated {
-                if let Err(e) = self.engine.selected(&op.cancel) {
-                    self.engine.usable.store(false, Ordering::Release);
-                    return Err(e);
-                }
+            if let Err(e) = self.engine.selected(&op.cancel) {
+                self.engine.usable.store(false, Ordering::Release);
+                return Err(e);
             }
             self.runtime.start(&spec, op.cancel.clone())
         })();
@@ -559,7 +541,7 @@ impl SessionService {
             self.gate.wait_runtime(op.id)?;
         }
         let stopped = self.tunnel.close().and_then(|_| {
-            self.runtime.network_owned(false);
+            self.applied.lock().unwrap().take();
             self.runtime.stop()?;
             crate::profile::config::remove_generated(&self.store.root)
         });

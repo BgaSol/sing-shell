@@ -45,6 +45,13 @@ pub enum Phase {
     CleanupRequired,
 }
 impl Phase {
+    pub fn runtime_status(self) -> &'static str {
+        match self {
+            Self::Authorizing | Self::Preparing | Self::Starting => "starting",
+            Self::CleanupRequired => "failed",
+            phase => phase.as_str(),
+        }
+    }
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Stopped => "stopped",
