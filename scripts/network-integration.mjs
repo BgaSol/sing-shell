@@ -9,6 +9,7 @@ import {echoPair} from './network-echo.mjs';
 
 assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT,'1','disposable native runner only');
 const target=process.argv[2],directory=path.resolve('artifacts/network-preflight',target),control=await fs.mkdtemp(path.join(os.tmpdir(),'ss-net-'));
+await fs.mkdir(directory,{recursive:true});
 const suffix=process.platform==='win32'?'.exe':'';
 const executable=process.env.SING_SHELL_NETWORK_EXECUTABLE??path.resolve(`src-tauri/target/release/network-fixture${suffix}`);
 const core=process.env.SING_SHELL_NETWORK_CORE??path.join(directory,`sing-box-1.14.4-${process.platform==='win32'?'windows':process.platform==='darwin'?'darwin':'linux'}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${suffix}`);
