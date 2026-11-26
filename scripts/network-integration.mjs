@@ -40,6 +40,17 @@ function authorizedProcess(parent){
 function macDns() {
   const result=spawnSync('/usr/sbin/scutil',['--dns'],{encoding:'utf8',timeout:5000});assert.equal(result.status,0);return result.stdout;
 }
+async function macDnsReleased() {
+  const started=Date.now(),deadline=started+5000;
+  while(macDns().includes('172.19.0.2')) {
+    if(Date.now()>=deadline) {
+      report.dnsReleaseDiagnostics={effective:macDns(),keys:spawnSync('/usr/sbin/scutil',[],{input:'list State:/Network/Service/sing-shell-.*/DNS\n',encoding:'utf8',timeout:3000}).stdout};
+      assert.fail('temporary system DNS did not converge after worker exit');
+    }
+    await delay(100);
+  }
+  (report.dnsReleaseMs??=[]).push(Date.now()-started);
+}
 function macPreferences() {
   const services=spawnSync('/usr/sbin/networksetup',['-listallnetworkservices'],{encoding:'utf8',timeout:5000});assert.equal(services.status,0);
   return services.stdout.split('\n').slice(1).map(s=>s.trim()).filter(Boolean).map(service=>{
@@ -89,7 +100,7 @@ try{
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
   assert.ok(!JSON.stringify(started).includes(password));report.verified.push('stop releases actual TUN and terminates authorization worker','worker diagnostics do not return known node credential');
   if(process.platform==='darwin') {
-    assert.ok(!macDns().includes('172.19.0.2'),'temporary resolver removed after disconnect');
+    await macDnsReleased();
     assert.deepEqual(macPreferences(),dnsBefore,'persistent service DNS preferences remain unchanged');
     report.verified.push('temporary resolver released and all existing network-service DNS preferences preserved');
   }
@@ -106,7 +117,7 @@ try{
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown');
   await launch();const crashed=authorizedProcess(worker.pid);process.kill(crashed.helper,'SIGKILL');process.kill(crashed.controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
-  if(process.platform==='darwin')assert.ok(!macDns().includes('172.19.0.2'),'configd removes temporary resolver after worker SIGKILL');
+  if(process.platform==='darwin')await macDnsReleased();
   const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.18.77.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');
