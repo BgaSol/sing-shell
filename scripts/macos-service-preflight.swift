@@ -32,6 +32,7 @@ do {
     report["unregistered"] = true
 } catch {
     report["error"] = String(describing: error)
+    report["after"] = service.status.rawValue
     try? service.unregister()
 }
 let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
