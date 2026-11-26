@@ -64,6 +64,7 @@ impl Service {
     }
     pub fn preview(&self, input: &str) -> Result<Preview, String> {
         let _op = self.gate.begin(Kind::Profile)?;
+        let id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
         let settings = self.store.snapshot();
         if self.store.error.is_some() {
             return Err("设置无法读取，请先处理存储错误".into());
@@ -100,7 +101,6 @@ impl Service {
             input
         };
         let preview = import::preview(input, &settings.profile.nodes)?;
-        let id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
         let nodes = preview
             .nodes
             .into_iter()
@@ -110,7 +110,11 @@ impl Service {
                 n
             })
             .collect();
-        *self.pending.lock().unwrap() = Some(Pending {
+        let mut pending = self.pending.lock().unwrap();
+        if self.next.load(Ordering::Acquire) != id || _op.cancel.load(Ordering::Acquire) {
+            return Err("导入预览已取消，请重新预览".into());
+        }
+        *pending = Some(Pending {
             id,
             created: Instant::now(),
             nodes,
@@ -121,6 +125,7 @@ impl Service {
         })
     }
     pub fn cancel(&self) {
+        self.next.fetch_add(1, Ordering::AcqRel);
         self.pending.lock().unwrap().take();
     }
     pub fn commit(&self, id: u64, expected: u64) -> Result<Snapshot, String> {
@@ -195,5 +200,47 @@ impl Service {
             Ok(())
         })?;
         Ok(self.snapshot())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn cancellation_rejects_a_preview_that_finishes_after_cancel() {
+        let root = std::env::temp_dir().join(format!(
+            "sing-shell-cancel-import-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        let store = Arc::new(SettingsStore::open(root.clone()).unwrap());
+        let service = Arc::new(Service::new(
+            store.clone(),
+            Arc::new(Admission::default()),
+            Arc::new(Default::default()),
+        ));
+        let pending = service.pending.lock().unwrap();
+        let preview_service = service.clone();
+        let preview =
+            std::thread::spawn(move || preview_service.preview("trojan://test@example.test:443"));
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while service.next.load(Ordering::Acquire) < 1 {
+            assert!(Instant::now() < deadline);
+            std::thread::yield_now();
+        }
+        let cancel_service = service.clone();
+        let cancel = std::thread::spawn(move || cancel_service.cancel());
+        while service.next.load(Ordering::Acquire) < 2 {
+            assert!(Instant::now() < deadline);
+            std::thread::yield_now();
+        }
+        drop(pending);
+        assert!(preview.join().unwrap().is_err());
+        cancel.join().unwrap();
+        assert!(service.commit(1, 0).is_err());
+        assert!(service.snapshot().profile.nodes.is_empty());
+        drop(service);
+        drop(store);
+        std::fs::remove_dir_all(root).unwrap();
     }
 }
