@@ -58,8 +58,13 @@ jobs:
       - run: npm run scripts:test
       - run: npm run web:build
       - run: npm run test
-      - if: runner.os != 'macOS'
+      - if: runner.os == 'Linux'
         run: npm run build -- --no-bundle -- --locked
+      - if: runner.os == 'Windows'
+        run: npm run build -- --bundles nsis -- --locked
+      - name: Verify Windows installer hooks with the bundled NSIS compiler
+        if: runner.os == 'Windows'
+        run: node --test scripts/windows-installer.test.mjs
       - if: runner.os == 'macOS'
         run: npm run build -- --bundles app -- --locked
       - name: Smoke (Linux)

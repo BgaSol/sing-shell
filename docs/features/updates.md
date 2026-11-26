@@ -38,7 +38,7 @@ Sing Shell 应用更新继续独立处理：自动检查只发现版本，需要
 
 | 安装形式 | 应用更新方式 |
 | --- | --- |
-| Windows NSIS | 官方 updater 验签并交给安装器，权限服从系统 |
+| Windows NSIS | 官方 updater 验签并交给安装器，沿用当前程序的安装范围和位置；系统级更新按需管理员授权 |
 | macOS 已安装 app | 官方 updater 替换可写位置的应用；只读 DMG 应先正常安装 |
 | Linux AppImage | 官方 updater 替换当前可写 AppImage |
 | Linux DEB/非 AppImage | 使用系统安装方式，应用不调用 sudo 或修改系统包库 |

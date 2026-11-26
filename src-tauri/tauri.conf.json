@@ -54,6 +54,7 @@
     },
     "windows": {
       "nsis": {
+        "installMode": "both",
         "installerHooks": "installer-hooks.nsh"
       }
     }

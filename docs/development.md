@@ -50,6 +50,8 @@ cargo test --manifest-path src-tauri/Cargo.toml --locked --test real_core -- --i
 
 startup_restore 覆盖无前端的一次恢复、主动停止/来源选择/关闭恢复开关撤销、启动与诊断并行、失败不重试、迁移备份和字段级持久化、意图保存失败仍停止。instance 单元测试覆盖真实管道/socket 激活和退出拒绝；登录项测试只操作测试注册表或可丢弃文件。
 
+Windows 的 `scripts/windows-installer.test.mjs` 使用 Tauri 下载的 NSIS 编译器实际编译并执行安装 hook 夹具，覆盖旧用户级更新、自定义中文/空格路径、跨范围重复安装拦截、保留数据卸载后的残留路径以及卸载范围校正，只写独立测试注册表。编译器不存在时明确跳过；Check 在 Windows NSIS 打包后执行此回归。系统级实际安装/更新/卸载由 Package 的两种范围验收负责，不能用夹具或构建成功替代。
+
 ## 节点、分流与授权网络验收
 
 profile 回归覆盖 schema 3→4 原字节备份、独立修订、原子导入、票据重放拒绝和快照凭据保护；单元覆盖协议解析、未知字段、网段规范化和固定规则摘要。设置 `SING_SHELL_TEST_CORE` 后执行 `cargo test --manifest-path src-tauri/Cargo.toml --locked --test profile -- --include-ignored`，以官方 1.14.4 检查全部支持协议配置，再运行两个受控加密出口实测域名、CIDR、集合和默认动作。出口探针只替换传输和入口，不重写生成的路由或 SRS；不改变系统网络。

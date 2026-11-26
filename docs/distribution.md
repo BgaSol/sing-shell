@@ -27,7 +27,7 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 
 ## 实际验收
 
-- Windows 安装 NSIS 到隔离目录，启动安装后程序，再由官方 updater 安装更高签名候选，确认实际版本与配置，最后卸载。
+- Windows 分别以 `/AllUsers` 和 `/CurrentUser` 安装 NSIS 到隔离目录（系统级使用 Program Files 下的独立目录），核对 HKLM/HKCU 登记、启动、官方 updater 更高签名候选、实际版本、配置及自启保留，最后卸载。旧用户级基线升级仍保留 HKCU 范围；交互 UAC 和其他管理员凭据需另外人工验收。
 - Linux 验 DEB 包内程序和 AppImage；验证 AppImage 官方更新，并用系统包管理安装/升级 DEB。
 - macOS 挂载 DMG及解包 app 归档；复制到可写位置后经官方 updater 更新，确认版本与配置。
 - 五个平台下载固定官方 sing-box 1.14.4，核对上游摘要，验证 SOCKS5 回环、启停和端口释放，以及生产用例驱动的受管准备/采用、架构/版本/配置检查和篡改拒绝；同源托管集成覆盖首次自动下载、更新、取消、一次回退及恢复。核心仅测试使用，不进入壳包。
@@ -39,6 +39,8 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 发行记录保留组件版本、原包源码、原始 run、Release 链接、实际通过/跳过范围，并将原始摘要报告迁入 `docs/releases/`，不能只依赖 30 天 Artifact。v0.1.0 无 updater，首个签名基线需手动安装，不以旧版手工覆盖作为在线更新验收。
 
 ## 登录项与卸载
+
+Windows 安装器支持所有用户和当前用户，有管理员权限的新安装默认所有用户；普通用户通过管理员凭据安装时应选择所有用户。设置与自启继续属于各自用户。升级固定原范围和路径，不自动迁移；更换范围前先卸载旧安装并保留应用数据，具体行为见[桌面与启动](features/desktop.md)。
 
 Windows 当前用户 Run 登记，保留 StartupApproved 的系统禁用状态。NSIS /UPDATE 保留登记；标准卸载只删除指向当前安装位置的 Sing Shell 值。Linux 登记 XDG autostart，DEB 使用稳定程序位置，AppImage 使用外层 APPIMAGE。macOS 13+ 使用 SMAppService.mainApp，较早系统使用无 KeepAlive 的私有 LaunchAgent；完整 bundle、安装位置与图标均需核对。macOS 新直接依赖仅为已有 Tauri 绑定 objc2 / objc2-foundation，复用其锁定版本。
 

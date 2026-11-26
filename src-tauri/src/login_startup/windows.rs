@@ -180,23 +180,33 @@ pub fn set(enabled: bool) -> Result<(), String> {
 }
 
 pub fn installed(executable: &Path) -> Result<(), String> {
+    installation_scope(executable).map(|_| ())
+}
+
+pub(crate) fn installation_scope(executable: &Path) -> Result<&'static str, String> {
+    installation_scope_at(
+        executable,
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Sing Shell",
+    )
+}
+
+fn installation_scope_at(executable: &Path, key: &str) -> Result<&'static str, String> {
     let current = executable
         .parent()
         .and_then(|p| std::fs::canonicalize(p).ok())
         .ok_or("无法确认正式安装位置")?;
-    for hive in [HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
-        if let Some((kind, bytes)) = query(
-            hive,
-            "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Sing Shell",
-            "InstallLocation",
-        )? {
+    for (hive, scope) in [
+        (HKEY_CURRENT_USER, "/CurrentUser"),
+        (HKEY_LOCAL_MACHINE, "/AllUsers"),
+    ] {
+        if let Some((kind, bytes)) = query(hive, key, "InstallLocation")? {
             let value = string(kind, &bytes)?;
             if std::fs::canonicalize(value.trim_matches('"')).is_ok_and(|p| p == current) {
-                return Ok(());
+                return Ok(scope);
             }
         }
     }
-    Err("请先使用正式安装包安装 Sing Shell，再开启登录启动。".into())
+    Err("未找到与当前程序位置匹配的 Sing Shell 安装登记，请使用正式安装包重新安装。".into())
 }
 
 pub(super) fn verify(directory: &Path) -> Result<(), String> {
@@ -266,6 +276,24 @@ pub(super) fn verify_registration(_: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn update_scope_requires_the_registered_executable_location() {
+        let key = format!("Software\\Sing Shell-Test\\Scope-{}", std::process::id());
+        let directory = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let executable = directory.join("sing-shell.exe");
+        assert!(installation_scope_at(&executable, &key).is_err());
+        write(
+            &key,
+            "InstallLocation",
+            Some(&format!("\"{}\"", directory.display())),
+        )
+        .unwrap();
+        let scope = installation_scope_at(&executable, &key);
+        let other = installation_scope_at(&std::env::current_exe().unwrap(), &key);
+        unsafe { RegDeleteKeyW(HKEY_CURRENT_USER, wide(&key).as_ptr()) };
+        assert_eq!(scope.unwrap(), "/CurrentUser");
+        assert!(other.is_err());
+    }
     #[test]
     fn system_disabled_is_never_reported_as_enabled() {
         let value = "\"C:\\中文 space\\sing-shell.exe\" --login-start";

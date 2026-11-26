@@ -34,19 +34,25 @@ fn restore_at<R: tauri::Runtime>(
             .executable_path(executable)
             .restart_after_install(false);
         #[cfg(windows)]
-        let b = b.installer_args([
-            "/S".to_string(),
-            format!(
-                "/D={}",
-                executable.parent().ok_or("缺少安装路径")?.display()
-            ),
-        ]);
+        let b = b.installer_arg("/S");
         b
     } else {
         builder
     };
     #[cfg(not(feature = "test-fixtures"))]
     let _ = executable;
+    #[cfg(windows)]
+    let builder = if let Some(executable) = executable {
+        builder.installer_args([
+            crate::login_startup::installation_scope(executable)?.to_string(),
+            format!(
+                "/D={}",
+                executable.parent().ok_or("缺少安装路径")?.display()
+            ),
+        ])
+    } else {
+        builder
+    };
     builder
         .build()
         .map_err(|e| e.to_string())?
@@ -134,7 +140,15 @@ pub fn install<R: tauri::Runtime>(
     path: &Path,
 ) -> Result<(), String> {
     verify(app, candidate, path)?;
-    restore(app, candidate)?
+    #[cfg(windows)]
+    let update = restore_at(
+        app,
+        candidate,
+        Some(&std::env::current_exe().map_err(|e| e.to_string())?),
+    )?;
+    #[cfg(not(windows))]
+    let update = restore(app, candidate)?;
+    update
         .install(fs::read(path).map_err(|e| e.to_string())?)
         .map_err(|e| format!("应用更新安装失败：{e}"))
 }
