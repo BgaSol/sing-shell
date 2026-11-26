@@ -139,7 +139,28 @@ try{
     const packageName=execFileSync('dpkg-deb',['-f',file('deb'),'Package'],{encoding:'utf8'}).trim();assert.equal(packageName,'sing-shell');run('sudo',['dpkg','-i',file('deb')]);try{registrationSmoke('/usr/bin/sing-shell');smoke('/usr/bin/sing-shell','DEB system installation');run('sudo',['dpkg','-i',file('deb',candidate,candidateInput)]);smoke('/usr/bin/sing-shell','DEB system upgrade',candidate.version);}finally{run('sudo',['dpkg','--remove',packageName]);}
   }else{
     const mount=path.join(directory,'mounted');run('hdiutil',['attach',file('dmg'),'-nobrowse','-readonly','-mountpoint',mount]);const installed=path.join(directory,'installed/Sing Shell.app');try{smoke(path.join(mount,'Sing Shell.app/Contents/MacOS/sing-shell'),'DMG mounted executable: native architecture, WebView, IPC and exit');run('ditto',[path.join(mount,'Sing Shell.app'),installed]);}finally{run('hdiutil',['detach',mount]);}
-    const extracted=path.join(directory,'app');fs.mkdirSync(extracted);run('tar',['-xzf',file('app'),'-C',extracted]);smoke(path.join(extracted,'Sing Shell.app/Contents/MacOS/sing-shell'),'app archive executable: native architecture, WebView, IPC and exit');const loginBundle=path.join(os.homedir(),'Applications',`Sing Shell CI-${process.pid}.app`);fs.mkdirSync(path.dirname(loginBundle),{recursive:true});assert.ok(!fs.existsSync(loginBundle));run('ditto',[installed,loginBundle]);try{run('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister',['-f',loginBundle]);registrationSmoke(path.join(loginBundle,'Contents/MacOS/sing-shell'));}finally{assert.equal(path.dirname(loginBundle),path.join(os.homedir(),'Applications'));assert.equal(path.basename(loginBundle),`Sing Shell CI-${process.pid}.app`);fs.rmSync(loginBundle,{recursive:true,force:true});}
+    const extracted=path.join(directory,'app');fs.mkdirSync(extracted);run('tar',['-xzf',file('app'),'-C',extracted]);smoke(path.join(extracted,'Sing Shell.app/Contents/MacOS/sing-shell'),'app archive executable: native architecture, WebView, IPC and exit');
+    const loginBundle=path.join(os.homedir(),'Applications',`Sing Shell CI-${process.pid}.app`);
+    fs.mkdirSync(path.dirname(loginBundle),{recursive:true});assert.ok(!fs.existsSync(loginBundle));run('ditto',[installed,loginBundle]);
+    try{
+      run('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister',['-f',loginBundle]);
+      const executable=path.join(loginBundle,'Contents/MacOS/sing-shell');
+      registrationSmoke(executable);
+      const probe=spawnSync(executable,['--smoke-test','--network-authorization'],{encoding:'utf8',timeout:75_000,env:{...process.env,SING_SHELL_NETWORK_PREFLIGHT:'1'}});
+      report.macNetworkAuthorization={exitCode:probe.status,stdout:probe.stdout,stderr:probe.stderr};
+      assert.equal(probe.error,undefined,'authorization probe must exit within its deadline');
+      if(probe.status===0){
+        const result=probe.stdout.trim().split('\n').map(JSON.parse).at(-1);
+        assert.deepEqual(result,{authenticated:true,coreStarted:false,helperExited:true});
+        report.verified.push('actual installed app registers and authenticates its launchd helper as an ordinary user, then confirms helper exit without starting a core');
+      }else{
+        assert.equal(probe.status,1);
+        assert.ok(probe.stderr.includes('请在系统设置 → 通用 → 登录项与扩展中允许 Sing Shell 网络 helper'),'only an explicit system approval requirement may skip actual helper activation');
+        report.skipped.push('actual app SMAppService registration requires interactive approval; launchd authentication not verified on this runner');
+      }
+    }finally{
+      assert.equal(path.dirname(loginBundle),path.join(os.homedir(),'Applications'));assert.equal(path.basename(loginBundle),`Sing Shell CI-${process.pid}.app`);fs.rmSync(loginBundle,{recursive:true,force:true});
+    }
     ruleResources(installed);assert.ok(fs.existsSync(path.join(installed,'Contents/Library/LaunchDaemons/com.bgasol.singshell.network.plist')));networkPackage(path.join(installed,'Contents/MacOS/sing-shell'),'actual macOS app bundle: privileged worker, encrypted IPv4/IPv6 TCP/UDP and TUN cleanup; launchd approval separately scoped');smoke(path.join(installed,'Contents/MacOS/sing-shell'),'running official core survives hide and second-instance activation, then releases its port',version,{SING_SHELL_RUNNING_CORE:official});productionUpgrade(path.join(installed,'Contents/MacOS/sing-shell'));
   }
   validate(input);validate(candidateInput);report.passed=true;
