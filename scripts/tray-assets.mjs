@@ -15,5 +15,6 @@ try {
     const output=path.join(temporary,name);
     execFileSync(process.execPath,['node_modules/@tauri-apps/cli/tauri.js','icon',svg,'--output',output],{stdio:'pipe'});
     fs.copyFileSync(path.join(output,'32x32.png'),`src-tauri/icons/${name}.png`);
+    fs.copyFileSync(path.join(output,'64x64.png'),`src-tauri/icons/${name}@2x.png`);
   }
 } finally { fs.rmSync(temporary,{recursive:true,force:true}); }

@@ -15,7 +15,7 @@ use std::{
 use tokio::io::AsyncReadExt;
 mod protocol;
 mod worker;
-use protocol::{exchange, read, write, Closed, Request};
+use protocol::{exchange, read, write, Closed, Request, DISCONNECT_BUDGET, STOP_BUDGET};
 pub use protocol::{Failure, Phase, Snapshot};
 use worker::Worker;
 
@@ -217,7 +217,7 @@ impl Tunnel {
                     client.cancel.store(true, Ordering::Release);
                     client.disconnect.store(true, Ordering::Release);
                 }
-                self.wait_closed(Duration::from_secs(45))?;
+                self.wait_closed(DISCONNECT_BUDGET)?;
                 return Err("TUN 启动已取消".into());
             }
             if snapshot.phase == Phase::Running && snapshot.network.ready() {
@@ -280,7 +280,7 @@ impl Tunnel {
             self.state.lock().unwrap().phase = Phase::CleanupRequired;
             return Err("授权进程已断开，请重试清理".into());
         }
-        let deadline = Instant::now() + Duration::from_secs(35);
+        let deadline = Instant::now() + STOP_BUDGET;
         loop {
             let snapshot = self.snapshot();
             if snapshot.phase == Phase::Stopped {
@@ -316,7 +316,7 @@ impl Tunnel {
         if let Some(client) = self.client.lock().unwrap().as_ref() {
             client.disconnect.store(true, Ordering::Release);
         }
-        self.wait_closed(Duration::from_secs(45))?;
+        self.wait_closed(DISCONNECT_BUDGET)?;
         let snapshot = self.snapshot();
         if snapshot.phase == Phase::CleanupRequired {
             return Err(snapshot.error.unwrap_or("网络清理尚未完成".into()));

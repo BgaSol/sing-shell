@@ -50,6 +50,8 @@ Windows 当前用户 Run 登记，保留 StartupApproved 的系统禁用状态�
 
 Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统 pkexec/polkit。macOS app 包含 `Contents/Library/LaunchDaemons/com.bgasol.singshell.network.plist`，BundleProgram 指向同一签名程序的受限 daemon 入口，采用 SMAppService 与 socket activation。TUN 仅 macOS 13+；未提供 Developer ID 或公证，允许/激活不能仅凭注册 API 成功声称通过。
 
+macOS GUI 从 Applications 内的完整安装登记网络服务，helper 与 GUI 必须来自同一安装且运行相同构建。升级前先断开、收束 worker，再由官方 updater 替换 bundle。协议不兼容或旧副本身份失败不会自动注销/登记系统服务；系统要求批准时明确显示实际原因。
+
 每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL COPYING 与 NOTICE；下载的核心不进入应用包。
 
 卸载前停止连接并真正退出；macOS 在系统设置关闭网络 helper 后再删除 app。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。

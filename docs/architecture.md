@@ -19,6 +19,10 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 
 前端四页为运行、节点、分流、设置，只呈现脱敏快照、编辑意图，不维护自动更新计时器。profile/service 管理导入票据与节点事务；profile/config 生成能力档固定的配置；rulesets 管理固定来源和不可变规则版本。session/tunnel 管理授权通道和闭合消息，platform/authorization 处理系统提权及身份，platform/network 观察接口路由与残留恢复。不引入框架、数据库或通用守护进程。
 
+`session/tunnel/protocol.rs` 定义闭合业务消息和阶段，`worker.rs` 独占受保护核心准备、运行及清理，tunnel 控制线程独占通道及平台进程所有者。授权握手先由 helper 就绪，再核对对端并双向确认随机会话；macOS 通过 audit token、Security.framework 与运行 CDHash 校验同构建，安装归属检查在平台模块。线程/进程实际结束前不清除所有者；调用超时保留其状态供后续停止。Poll/快照只读，worker 运行循环处理异常退出。
+
+SessionService 每次采样只读取一份对应模式的运行事实，IPC 外层及托盘使用同一份 runtime、阶段和操作许可。托盘使用包含图像状态的完整 Projection，分别更新变化的菜单、图像及提示，不通过文案或 PID 独立推断连接成功。
+
 ## 设置、缓存与恢复
 
 settings schema 4 的 coreSource 区分 managed/external，managed 保存 active/previous/trial/blocked。profile 保存模式、节点、选择、全局分流和规则提交，startup.lastConnection 保存最后成功的固定输入。公开 DTO 排除凭据和 lastConnection。原始 configPath/pendingConfigPath 保留兼容，不上传配置正文。

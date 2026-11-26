@@ -7,6 +7,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+pub(super) const STOP_BUDGET: Duration = Duration::from_secs(55);
+pub(super) const DISCONNECT_BUDGET: Duration = Duration::from_secs(65);
 #[derive(Deserialize, Serialize)]
 #[serde(tag = "command", rename_all = "camelCase", deny_unknown_fields)]
 pub(super) enum Request {
@@ -111,7 +113,7 @@ pub(super) async fn exchange(
     request: &Request,
 ) -> Result<Snapshot, String> {
     let budget = if matches!(request, Request::Stop | Request::Quit) {
-        Duration::from_secs(45)
+        STOP_BUDGET
     } else {
         Duration::from_secs(20)
     };

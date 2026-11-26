@@ -333,10 +333,10 @@ impl Desktop {
 fn icon(state: IconState) -> tauri::image::Image<'static> {
     #[cfg(target_os = "macos")]
     let image = match state {
-        IconState::Idle => tauri::include_image!("icons/tray-template-idle.png"),
-        IconState::Busy => tauri::include_image!("icons/tray-template-busy.png"),
-        IconState::Running => tauri::include_image!("icons/tray-template-running.png"),
-        IconState::Attention => tauri::include_image!("icons/tray-template-attention.png"),
+        IconState::Idle => tauri::include_image!("icons/tray-template-idle@2x.png"),
+        IconState::Busy => tauri::include_image!("icons/tray-template-busy@2x.png"),
+        IconState::Running => tauri::include_image!("icons/tray-template-running@2x.png"),
+        IconState::Attention => tauri::include_image!("icons/tray-template-attention@2x.png"),
     };
     #[cfg(not(target_os = "macos"))]
     let image = match state {
