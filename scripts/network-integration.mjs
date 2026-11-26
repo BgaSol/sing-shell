@@ -46,6 +46,7 @@ try{
   const config=path.join(directory,'proxy-server.json');await fs.writeFile(config,JSON.stringify(serverConfig));
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
   const input={node:{id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultAction:'proxy',customRules:[],siteRules:[{site:'github',action:'direct'}]},coreVersion:'1.14.4',control};
+  if(approvedMac)input.routing={defaultAction:'direct',customRules:['198.18.77.1/32','2001:db8:198::99/128'].map(value=>({kind:'ip',value,action:'proxy'})),siteRules:[]};
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
     for(const file of ['started.json','stopped.json','stop'])await fs.rm(path.join(control,file),{force:true});
