@@ -87,13 +87,17 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
         echoes.push(thread::spawn(move || {
             while !stop.load(Ordering::Acquire) {
                 if let Ok((mut stream, _)) = listener.accept() {
-                    stream
-                        .set_read_timeout(Some(Duration::from_secs(5)))
-                        .unwrap();
-                    let mut bytes = [0; 4];
-                    if stream.read_exact(&mut bytes).is_ok() {
-                        let _ = stream.write_all(&[label]);
-                    }
+                    thread::spawn(move || {
+                        stream
+                            .set_read_timeout(Some(Duration::from_secs(10)))
+                            .unwrap();
+                        let mut bytes = [0; 4];
+                        while stream.read_exact(&mut bytes).is_ok() {
+                            if stream.write_all(&[label]).is_err() {
+                                break;
+                            }
+                        }
+                    });
                 } else {
                     thread::sleep(Duration::from_millis(10));
                 }
@@ -215,7 +219,25 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
         assert_eq!(reply[1], 0, "{host}");
         stream.write_all(b"ping").unwrap();
         let mut marker = [0; 1];
-        stream.read_exact(&mut marker).unwrap();
+        stream.read_exact(&mut marker).unwrap_or_else(|error| {
+            panic!(
+                "{host}: {error}; client: {}; server: {}",
+                client
+                    .logs
+                    .snapshot()
+                    .iter()
+                    .map(|l| l.message.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                server
+                    .logs
+                    .snapshot()
+                    .iter()
+                    .map(|l| l.message.as_str())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            )
+        });
         assert_eq!(marker[0], expected, "wrong exit for {host}");
     };
     for (host, expected) in [

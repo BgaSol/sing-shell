@@ -19,12 +19,19 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFile(name){const deadline=Date.now()+210_000;for(;;){try{return JSON.parse(await fs.readFile(path.join(control,name),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}assert.ok(Date.now()<deadline,`timeout ${name}`);await delay(100);}}
 async function tcpEcho(host,port){await new Promise((resolve,reject)=>{const socket=net.connect({host,port});socket.setTimeout(8000,()=>socket.destroy(Error('TCP tunnel timeout')));socket.on('error',reject);socket.once('connect',()=>socket.write('sing-shell-proxy'));let data='';socket.on('data',chunk=>{data+=chunk;if(data==='sing-shell-proxy'){socket.end();resolve();}});});}
 async function udpEcho(host,port){const socket=dgram.createSocket(net.isIP(host)===6?'udp6':'udp4');try{await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('UDP tunnel timeout')),8000);socket.once('error',e=>{clearTimeout(timer);reject(e);});socket.once('message',message=>{clearTimeout(timer);try{assert.equal(message.toString(),'sing-shell-udp');resolve();}catch(e){reject(e);}});socket.send('sing-shell-udp',port,host);});}finally{socket.close();}}
-function authorizedPid(parent){
+function authorizedProcess(parent){
   const command=process.platform==='win32'?spawnSync('powershell.exe',['-NoProfile','-Command',`@(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match '--network-worker ' -and $_.CommandLine.TrimEnd().EndsWith(' ${parent}') } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`],{encoding:'utf8',windowsHide:true}):spawnSync('/bin/ps',['-axo','pid=,command='],{encoding:'utf8'});
   assert.equal(command.status,0);
-  const matches=process.platform==='win32'?[JSON.parse(command.stdout)].flat():command.stdout.split('\n').filter(line=>line.includes('--network-worker ')&&new RegExp(`\\s${parent}\\s*$`).test(line)).map(line=>Number(line.trim().split(/\s+/)[0]));
+  if(process.platform!=='win32'){
+    const listing=spawnSync('/bin/ps',['-axo','pid=,ppid=,command='],{encoding:'utf8'});assert.equal(listing.status,0);
+    const rows=listing.stdout.split('\n').map(line=>line.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/)).filter(Boolean).map(m=>({pid:Number(m[1]),parent:Number(m[2]),command:m[3]}));
+    const descendants=rows.filter(row=>{let pid=row.parent;for(let depth=0;depth<12&&pid>1;depth++){if(pid===parent)return true;pid=rows.find(p=>p.pid===pid)?.parent??0;}return false;});
+    const helpers=descendants.filter(row=>row.command.includes('--network-worker '));assert.equal(helpers.length,1,'one authorized descendant of the app launcher');
+    const controller=Number(helpers[0].command.trim().split(/\s+/).at(-1));assert.ok(controller===parent||descendants.some(row=>row.pid===controller));return {helper:helpers[0].pid,controller};
+  }
+  const matches=[JSON.parse(command.stdout)].flat();
   assert.equal(matches.length,1,'one authenticated worker owned by the fixture controller');
-  assert.ok(Number.isInteger(matches[0])&&matches[0]>0&&matches[0]!==parent);return matches[0];
+  assert.ok(Number.isInteger(matches[0])&&matches[0]>0&&matches[0]!==parent);return {helper:matches[0],controller:parent};
 }
 let proxy,worker,tcp,udp;
 let logs='';
@@ -56,12 +63,12 @@ try{
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('unexpected official core exit is cleaned without crash reconnection');
-  await launch();worker.kill('SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(12_000);
+  await launch();process.kill(authorizedProcess(worker.pid).controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(12_000);
   const recovered=await launch();assert.equal(recovered.phase,'running');await tcpEcho('198.18.77.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown');
-  await launch();process.kill(authorizedPid(worker.pid),'SIGKILL');worker.kill('SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
+  await launch();const crashed=authorizedProcess(worker.pid);process.kill(crashed.helper,'SIGKILL');process.kill(crashed.controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
   const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.18.77.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');report.passed=true;
