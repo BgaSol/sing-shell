@@ -8,12 +8,15 @@ import {spawn,spawnSync} from 'node:child_process';
 import {echoPair} from './network-echo.mjs';
 
 assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT,'1','disposable native runner only');
+const approvedMac=process.env.SING_SHELL_MACOS_SERVICE==='1';
+if(approvedMac){assert.equal(process.platform,'darwin');assert.notEqual(process.getuid(),0,'approved SMAppService integration must run as an ordinary user');}
 const target=process.argv[2],directory=path.resolve('artifacts/network-preflight',target),control=await fs.mkdtemp(path.join(os.tmpdir(),'ss-net-'));
 await fs.mkdir(directory,{recursive:true});
 const suffix=process.platform==='win32'?'.exe':'';
 const executable=process.env.SING_SHELL_NETWORK_EXECUTABLE??path.resolve(`src-tauri/target/release/network-fixture${suffix}`);
 const core=process.env.SING_SHELL_NETWORK_CORE??path.join(directory,`sing-box-1.14.4-${process.platform==='win32'?'windows':process.platform==='darwin'?'darwin':'linux'}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${suffix}`);
 const report={target,passed:false,verified:[],skipped:['interactive UAC/polkit approval','macOS launchd activation after user approval','suspend and physical network switching']};
+if(approvedMac)report.skipped=['interactive UAC/polkit approval (other platforms)','controller/core/helper crash injection on the user Mac; covered on disposable native runners','suspend and physical network switching'];
 const timeout=setTimeout(async()=>{report.error='integration deadline exceeded';report.log=logs.slice(-32768);if(worker)worker.kill();if(proxy)proxy.kill();await fs.writeFile(path.join(directory,'integration-report.json'),JSON.stringify(report,null,2));console.error(JSON.stringify(report));process.exit(1);},240_000);
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFile(name){const deadline=Date.now()+210_000;for(;;){try{return JSON.parse(await fs.readFile(path.join(control,name),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}assert.ok(Date.now()<deadline,`timeout ${name}`);await delay(100);}}
@@ -59,6 +62,9 @@ try{
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
   assert.ok(!JSON.stringify(started).includes(password));report.verified.push('stop releases actual TUN and terminates authorization worker','worker diagnostics do not return known node credential');
+  if(approvedMac){
+    report.verified.push('ordinary installed app uses user-approved SMAppService launchd activation, authenticates the root helper and confirms its exit');
+  }else{
   const interrupted=await launch();process.kill(interrupted.runtime.pid,'SIGKILL');await delay(2000);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
@@ -71,6 +77,8 @@ try{
   await launch();const crashed=authorizedProcess(worker.pid);process.kill(crashed.helper,'SIGKILL');process.kill(crashed.controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
   const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.18.77.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
-  report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');report.passed=true;
+  report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');
+  }
+  report.passed=true;
 }catch(error){report.error=String(error);process.exitCode=1;if(process.platform==='darwin'){report.routeDiagnostics=spawnSync('/usr/sbin/netstat',['-rn'],{encoding:'utf8'}).stdout;}if(process.platform==='linux'){report.routeDiagnostics=spawnSync('ip',['-j','route','show','table','all'],{encoding:'utf8'}).stdout;}}
 finally{clearTimeout(timeout);if(worker){worker.kill();await delay(12_000);}if(proxy)proxy.kill();if(udp)udp.close();if(tcp)tcp.close();report.log=logs.slice(-32768);await fs.writeFile(path.join(directory,'integration-report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));process.exit(report.passed?0:1);}

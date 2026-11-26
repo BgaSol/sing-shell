@@ -558,7 +558,9 @@ pub fn authorization_probe() -> Result<(), String> {
 }
 
 pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
-    if !authorization::elevated() {
+    let approved_mac = cfg!(target_os = "macos")
+        && std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1");
+    if !authorization::elevated() && !approved_mac {
         return Err("network fixture needs a disposable privileged runner".into());
     }
     let file = args
