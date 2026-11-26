@@ -70,6 +70,7 @@ try{
     const route=spawnSync('/sbin/route',['-n','get','default'],{encoding:'utf8'});assert.equal(route.status,0);
     const physical=route.stdout.match(/interface:\s+(\S+)/)?.[1];assert.ok(physical&&!physical.startsWith('utun'));
     serverConfig.outbounds[0].bind_interface=physical;
+    serverConfig.route.rules.push({ip_cidr:['1.1.1.1/32'],port:[443],action:'route',outbound:'echo'});
   }
   // Unrelated runner traffic must not loop from the proxy server back into the TUN.
   serverConfig.route.rules.push({action:'reject'});
