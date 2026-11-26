@@ -1,0 +1,47 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+import {existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+
+registerHooks({resolve(specifier,context,next){
+  if(specifier.startsWith('.')&&context.parentURL?.includes('/src/')){
+    const url=new URL(specifier+'.ts',context.parentURL);
+    if(existsSync(fileURLToPath(url)))return {url:url.href,shortCircuit:true};
+  }
+  return next(specifier,context);
+}});
+const {core}=await import('../src/core.ts');
+const {createProfiles}=await import('../src/profiles.ts');
+class Element {
+  constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.value='';this.hidden=false;this.disabled=false;this.textContent='';}
+  append(...children){this.children.push(...children);}
+  replaceChildren(...children){this.children=children;}
+  setAttribute(name,value){this[name]=value;}
+  querySelectorAll(){return this.children.flatMap(child=>child instanceof Element?[...(child.tag==='button'&&child.dataset.node?[child]:[]),...child.querySelectorAll()]:[]);}
+}
+test('imported nodes stay selectable and a clean routing form follows node revisions',async()=>{
+  const elements=new Map();
+  globalThis.document={getElementById:id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},createElement:tag=>new Element(tag),createTextNode:text=>text};
+  const element=id=>document.getElementById(id);
+  const state={settings:{profileRevision:0,profile:{mode:'generated',nodes:[],selectedNode:null,ruleCommit:'a'.repeat(40),routing:{defaultAction:'proxy',customRules:[],siteRules:[]}}},runtime:{pid:null},runtimeBusy:false};
+  const node={id:'imported',name:'Test',protocol:'Trojan',server:'example.test',port:443};
+  core.snapshot=async()=>structuredClone(state);
+  core.profilePreview=async()=>({ticket:1,items:[{line:1,node,duplicate:false}]});
+  core.profileCommit=async()=>{state.settings.profile.nodes.push(node);state.settings.profileRevision++;};
+  core.profileSelect=async id=>{state.settings.profile.selectedNode=id;state.settings.profileRevision++;};
+  let savedRevision;
+  core.profileRouting=async(routing,revision)=>{savedRevision=revision;assert.equal(revision,state.settings.profileRevision);state.settings.profile.routing=structuredClone(routing);state.settings.profileRevision++;return {revision:state.settings.profileRevision,...structuredClone(state.settings.profile)};};
+  const profiles=createProfiles();profiles.render(structuredClone(state));
+  const settle=async()=>{await new Promise(setImmediate);await new Promise(setImmediate);};
+  element('node-input').value='trojan://test@example.test:443';element('node-preview').onclick();await settle();
+  element('node-commit').onclick();await settle();
+  let choose=element('node-list').querySelectorAll()[0];
+  assert.equal(choose.disabled,false,'import completion must release the select button');
+  choose.onclick();await settle();assert.equal(state.settings.profile.selectedNode,node.id);
+  profiles.render(structuredClone(state));
+  element('routing-default').value='direct';element('routing-default').onchange();element('save-routing').onclick();await settle();
+  assert.equal(savedRevision,2,'a clean form uses the latest revision after import and selection');
+  assert.equal(state.settings.profile.routing.defaultAction,'direct');
+  assert.match(element('routing-state').textContent,/已保存/);
+});
