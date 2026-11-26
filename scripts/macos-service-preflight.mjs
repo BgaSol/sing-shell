@@ -27,9 +27,18 @@ const result = spawnSync(executable, [marker], {encoding: 'utf8', timeout: 30_00
 fs.writeFileSync(path.join(directory, 'service-report.json'), result.stdout || JSON.stringify({error: String(result.error), stderr: result.stderr}));
 console.log(result.stdout);
 if (result.stderr) console.error(result.stderr);
+const serviceReport = JSON.parse(result.stdout || '{}');
+if (serviceReport.manualApprovalRequired) {
+  console.log('SMAppService registered a pending approval: interactive approval and launchd activation remain unverified.');
+}
+execFileSync('sudo', ['-n', helper, '--helper', marker]);
+const worker = JSON.parse(fs.readFileSync(marker, 'utf8'));
+assert.equal(worker.effectiveUid, 0);
+assert.equal(worker.helperRan, true);
+fs.writeFileSync(path.join(directory, 'service-worker-report.json'), JSON.stringify({passed: true, directElevatedWorker: worker, skipped: serviceReport.manualApprovalRequired ? ['interactive authorization and launchd activation after user approval'] : []}, null, 2));
 const signing = spawnSync('codesign', ['--display', '--verbose=4', bundle], {encoding: 'utf8'});
 console.log(signing.stderr);
 const diagnostics = spawnSync('/usr/bin/log', ['show', '--last', '2m', '--style', 'compact', '--predicate', 'process == "smd" OR process == "backgroundtaskmanagementd"'], {encoding: 'utf8', timeout: 20_000});
 fs.writeFileSync(path.join(directory, 'service-diagnostics.log'), diagnostics.stdout ?? '');
 console.log((diagnostics.stdout ?? '').split('\n').filter(line => /sign|deny|error|permitted|preflight|bundle/i.test(line)).slice(-60).join('\n'));
-assert.equal(result.status, 0, 'SMAppService registration must work with the actual signing configuration');
+assert.equal(result.status, 0, 'SMAppService must enable the service or expose a real requiresApproval state');

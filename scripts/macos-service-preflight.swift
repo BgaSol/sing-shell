@@ -33,8 +33,11 @@ do {
 } catch {
     report["error"] = String(describing: error)
     report["after"] = service.status.rawValue
+    if service.status == .requiresApproval {
+        report["manualApprovalRequired"] = true
+    }
     try? service.unregister()
 }
 let data = try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
 print(String(decoding: data, as: UTF8.self))
-if report["registered"] as? Bool != true { exit(1) }
+if report["registered"] as? Bool != true && report["manualApprovalRequired"] as? Bool != true { exit(1) }
