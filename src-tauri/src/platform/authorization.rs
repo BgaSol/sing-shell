@@ -31,50 +31,63 @@ enum Process {
     Child(std::process::Child),
     #[cfg(target_os = "macos")]
     Mac {
-        token: [u32; 8],
+        token: Option<[u32; 8]>,
         launcher: std::process::Child,
     },
 }
 impl Connection {
-    // Keep the controller thread (and its owner) alive until the helper really exits.
     pub async fn finish(self) -> Result<(), String> {
         let Self {
             channel,
             mut process,
         } = self;
         drop(channel);
-        while let Some(process) = &mut process {
-            let exited = match process {
-                #[cfg(windows)]
-                Process::Windows(handle) => {
-                    use std::os::windows::io::AsRawHandle;
-                    let mut code = 259;
-                    if unsafe {
-                        windows_sys::Win32::System::Threading::GetExitCodeProcess(
-                            handle.as_raw_handle(),
-                            &mut code,
-                        )
-                    } == 0
-                    {
-                        return Err(std::io::Error::last_os_error().to_string());
-                    }
-                    code != 259
-                }
-                #[cfg(unix)]
-                Process::Child(child) => child.try_wait().map_err(|e| e.to_string())?.is_some(),
-                #[cfg(target_os = "macos")]
-                // An unconfirmed exit must retain the owner; callers have their own deadline.
-                Process::Mac { token, launcher } => {
-                    let launcher_exited = launcher.try_wait().map_err(|e| e.to_string())?.is_some();
-                    macos::exited(token).unwrap_or(false) && launcher_exited
-                }
-            };
-            if exited {
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(50)).await;
+        if let Some(process) = &mut process {
+            process.finish().await;
         }
         Ok(())
+    }
+}
+impl Process {
+    fn exited(&mut self) -> Result<bool, String> {
+        match self {
+            #[cfg(windows)]
+            Process::Windows(handle) => {
+                use std::os::windows::io::AsRawHandle;
+                let mut code = 259;
+                if unsafe {
+                    windows_sys::Win32::System::Threading::GetExitCodeProcess(
+                        handle.as_raw_handle(),
+                        &mut code,
+                    )
+                } == 0
+                {
+                    return Err(std::io::Error::last_os_error().to_string());
+                }
+                Ok(code != 259)
+            }
+            #[cfg(unix)]
+            Process::Child(child) => child
+                .try_wait()
+                .map(|exit| exit.is_some())
+                .map_err(|e| e.to_string()),
+            #[cfg(target_os = "macos")]
+            // An unconfirmed exit must retain the owner; callers have their own deadline.
+            Process::Mac { token, launcher } => {
+                let launcher_exited = launcher.try_wait().map_err(|e| e.to_string())?.is_some();
+                Ok(launcher_exited
+                    && match token {
+                        Some(token) => macos::exited(token)?,
+                        None => true,
+                    })
+            }
+        }
+    }
+    async fn finish(&mut self) {
+        // Unknown exit facts retain the same owner; the controller has its own deadline.
+        while !self.exited().unwrap_or(false) {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
     }
 }
 
@@ -113,426 +126,11 @@ fn same_executable(path: &Path) -> Result<(), String> {
 }
 
 #[cfg(windows)]
-mod native {
-    use super::*;
-    use std::os::windows::{
-        ffi::OsStrExt,
-        io::{AsRawHandle, FromRawHandle, OwnedHandle},
-    };
-    use windows_sys::Win32::{
-        Foundation::CloseHandle,
-        Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY},
-        System::{
-            Pipes::{GetNamedPipeClientProcessId, GetNamedPipeServerProcessId},
-            Threading::{
-                GetCurrentProcess, OpenProcess, OpenProcessToken, QueryFullProcessImageNameW,
-                PROCESS_QUERY_LIMITED_INFORMATION,
-            },
-        },
-        UI::{
-            Shell::{ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW},
-            WindowsAndMessaging::SW_HIDE,
-        },
-    };
-    fn process_path(pid: u32, require_elevated: bool) -> Result<PathBuf, String> {
-        unsafe {
-            let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
-            if process.is_null() {
-                return Err(std::io::Error::last_os_error().to_string());
-            }
-            let result = (|| {
-                if require_elevated {
-                    let mut token = std::ptr::null_mut();
-                    if OpenProcessToken(process, TOKEN_QUERY, &mut token) == 0 {
-                        return Err(std::io::Error::last_os_error().to_string());
-                    }
-                    let mut elevation: TOKEN_ELEVATION = std::mem::zeroed();
-                    let mut size = 0;
-                    let ok = GetTokenInformation(
-                        token,
-                        TokenElevation,
-                        (&mut elevation as *mut TOKEN_ELEVATION).cast(),
-                        std::mem::size_of_val(&elevation) as u32,
-                        &mut size,
-                    );
-                    CloseHandle(token);
-                    if ok == 0 || elevation.TokenIsElevated == 0 {
-                        return Err("网络进程没有管理员授权".into());
-                    }
-                }
-                let mut path = vec![0u16; 32768];
-                let mut size = path.len() as u32;
-                if QueryFullProcessImageNameW(process, 0, path.as_mut_ptr(), &mut size) == 0 {
-                    return Err(std::io::Error::last_os_error().to_string());
-                }
-                Ok(PathBuf::from(String::from_utf16_lossy(
-                    &path[..size as usize],
-                )))
-            })();
-            CloseHandle(process);
-            result
-        }
-    }
-    fn wide(s: impl AsRef<std::ffi::OsStr>) -> Vec<u16> {
-        s.as_ref().encode_wide().chain(Some(0)).collect()
-    }
-    pub fn elevated() -> bool {
-        unsafe {
-            let mut token = std::ptr::null_mut();
-            if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
-                return false;
-            }
-            let mut elevation: TOKEN_ELEVATION = std::mem::zeroed();
-            let mut size = 0;
-            let result = GetTokenInformation(
-                token,
-                TokenElevation,
-                (&mut elevation as *mut TOKEN_ELEVATION).cast(),
-                std::mem::size_of_val(&elevation) as u32,
-                &mut size,
-            ) != 0
-                && elevation.TokenIsElevated != 0;
-            CloseHandle(token);
-            result
-        }
-    }
-    pub async fn connect(
-        _root: &Path,
-        cancel: &AtomicBool,
-        progress: &impl Fn(Stage),
-    ) -> Result<Connection, String> {
-        progress(Stage::Registration);
-        let pipe = PathBuf::from(format!("\\\\.\\pipe\\sing-shell-network-{}", nonce()?));
-        let server = crate::instance::network_pipe(&pipe)?;
-        let executable = wide(std::env::current_exe().map_err(|e| e.to_string())?);
-        let parameters = wide(format!(
-            "--network-worker {} {}",
-            pipe.display(),
-            std::process::id()
-        ));
-        let verb = wide(if elevated() { "open" } else { "runas" });
-        let mut info: SHELLEXECUTEINFOW = unsafe { std::mem::zeroed() };
-        info.cbSize = std::mem::size_of_val(&info) as u32;
-        info.fMask = SEE_MASK_NOCLOSEPROCESS;
-        info.lpVerb = verb.as_ptr();
-        info.lpFile = executable.as_ptr();
-        info.lpParameters = parameters.as_ptr();
-        info.nShow = SW_HIDE;
-        if unsafe { ShellExecuteExW(&mut info) } == 0 {
-            return Err(format!(
-                "管理员授权未完成：{}",
-                std::io::Error::last_os_error()
-            ));
-        }
-        let process = if info.hProcess.is_null() {
-            None
-        } else {
-            Some(unsafe { OwnedHandle::from_raw_handle(info.hProcess) })
-        };
-        {
-            let wait = server.connect();
-            tokio::pin!(wait);
-            let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
-            loop {
-                tokio::select! {result=&mut wait=>{result.map_err(|e|e.to_string())?;break;},_ =tokio::time::sleep(Duration::from_millis(100))=>{
-                    if cancel.load(Ordering::Acquire){return Err("网络授权已取消".into());}
-                    if let Some(process) = &process {
-                        let mut code = 259;
-                        if unsafe {windows_sys::Win32::System::Threading::GetExitCodeProcess(process.as_raw_handle(), &mut code)} != 0 && code != 259 {
-                            return Err("网络 helper 已退出，请确认其他连接已停止，再重试授权".into());
-                        }
-                    }
-                    if tokio::time::Instant::now()>=deadline{return Err("网络授权超时，请重试".into());}
-                }}
-            }
-        }
-        let mut pid = 0;
-        progress(Stage::Authentication);
-        let identity =
-            if unsafe { GetNamedPipeClientProcessId(server.as_raw_handle(), &mut pid) } == 0 {
-                Err("无法核对网络进程身份".into())
-            } else {
-                process_path(pid, true).and_then(|path| same_executable(&path))
-            };
-        let mut server = server;
-        let result = if let Err(error) = identity {
-            Err(error)
-        } else {
-            handshake::bounded(
-                cancel,
-                handshake::ACTIVATION,
-                handshake::client(&mut server, |_| {
-                    progress(Stage::Protocol);
-                    Ok(())
-                }),
-            )
-            .await
-        };
-        let connection = Connection {
-            channel: Box::new(server),
-            process: process.map(Process::Windows),
-        };
-        if let Err(error) = result {
-            connection.finish().await?;
-            return Err(error);
-        }
-        Ok(connection)
-    }
-    pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
-        if !elevated() {
-            return Err("网络进程必须由系统授权启动".into());
-        }
-        if !endpoint
-            .to_string_lossy()
-            .starts_with("\\\\.\\pipe\\sing-shell-network-")
-        {
-            return Err("网络管道标识无效".into());
-        }
-        let client = tokio::net::windows::named_pipe::ClientOptions::new()
-            .open(endpoint)
-            .map_err(|e| e.to_string())?;
-        let mut pid = 0;
-        if unsafe { GetNamedPipeServerProcessId(client.as_raw_handle(), &mut pid) } == 0
-            || pid != parent
-        {
-            return Err("网络控制端身份无效".into());
-        }
-        same_executable(&process_path(pid, false)?)?;
-        let mut client = client;
-        handshake::bounded(
-            &AtomicBool::new(false),
-            Duration::from_secs(3),
-            handshake::server(&mut client),
-        )
-        .await?;
-        Ok(Box::new(client))
-    }
-    pub fn protected_root() -> Result<PathBuf, String> {
-        let mut path = vec![0u16; 32768];
-        let result = unsafe {
-            windows_sys::Win32::UI::Shell::SHGetFolderPathW(
-                std::ptr::null_mut(),
-                windows_sys::Win32::UI::Shell::CSIDL_COMMON_APPDATA as i32,
-                std::ptr::null_mut(),
-                0,
-                path.as_mut_ptr(),
-            )
-        };
-        if result < 0 {
-            return Err("无法获取受保护程序数据目录".into());
-        }
-        let length = path
-            .iter()
-            .position(|v| *v == 0)
-            .ok_or("程序数据目录过长")?;
-        Ok(PathBuf::from(String::from_utf16_lossy(&path[..length])).join("Sing Shell Network"))
-    }
-}
+#[path = "authorization/windows.rs"]
+mod native;
 #[cfg(unix)]
-mod native {
-    use super::*;
-    use std::os::unix::fs::MetadataExt;
-    pub fn elevated() -> bool {
-        unsafe { libc::geteuid() == 0 }
-    }
-    fn verify(
-        stream: &tokio::net::UnixStream,
-        expected_pid: Option<u32>,
-        root: bool,
-    ) -> Result<(), String> {
-        let credential = stream.peer_cred().map_err(|e| e.to_string())?;
-        if root && credential.uid() != 0 {
-            return Err("网络进程不属于系统管理员".into());
-        }
-        #[cfg(target_os = "linux")]
-        let pid = credential
-            .pid()
-            .map(|p| p as u32)
-            .ok_or("无法核对网络控制端进程")?;
-        #[cfg(target_os = "macos")]
-        let pid = {
-            use std::os::fd::AsRawFd;
-            let mut pid: libc::pid_t = 0;
-            let mut length = std::mem::size_of_val(&pid) as libc::socklen_t;
-            if unsafe {
-                libc::getsockopt(
-                    stream.as_raw_fd(),
-                    libc::SOL_LOCAL,
-                    libc::LOCAL_PEERPID,
-                    (&mut pid as *mut libc::pid_t).cast(),
-                    &mut length,
-                )
-            } != 0
-            {
-                return Err(std::io::Error::last_os_error().to_string());
-            }
-            pid as u32
-        };
-        if expected_pid.is_some_and(|expected| expected != pid) {
-            return Err("网络控制端进程已改变".into());
-        }
-        #[cfg(target_os = "linux")]
-        let path = std::fs::read_link(format!("/proc/{pid}/exe")).map_err(|e| e.to_string())?;
-        #[cfg(target_os = "macos")]
-        return super::macos::verify(stream, pid, root);
-        #[cfg(target_os = "linux")]
-        same_executable(&path)
-    }
-    pub async fn direct_connect(
-        root: &Path,
-        cancel: &AtomicBool,
-        progress: &impl Fn(Stage),
-    ) -> Result<Connection, String> {
-        progress(Stage::Registration);
-        let _ = root;
-        use std::os::unix::fs::DirBuilderExt;
-        let directory = PathBuf::from("/tmp").join(format!(
-            "ssn-{}-{}",
-            unsafe { libc::geteuid() },
-            &nonce()?[..16]
-        ));
-        std::fs::DirBuilder::new()
-            .mode(0o700)
-            .create(&directory)
-            .map_err(|e| e.to_string())?;
-        let endpoint = directory.join("control.sock");
-        let listener = tokio::net::UnixListener::bind(&endpoint).map_err(|e| e.to_string())?;
-        struct Cleanup(PathBuf);
-        impl Drop for Cleanup {
-            fn drop(&mut self) {
-                let _ = std::fs::remove_file(&self.0);
-                if let Some(parent) = self.0.parent() {
-                    let _ = std::fs::remove_dir(parent);
-                }
-            }
-        }
-        let _cleanup = Cleanup(endpoint.clone());
-        let executable = std::env::current_exe().map_err(|e| e.to_string())?;
-        let mut command = if elevated() {
-            std::process::Command::new(&executable)
-        } else {
-            #[cfg(target_os = "linux")]
-            {
-                let mut command = std::process::Command::new("/usr/bin/pkexec");
-                command.arg(&executable);
-                command
-            }
-            #[cfg(target_os = "macos")]
-            {
-                super::macos::launcher(&executable, &endpoint)
-            }
-        };
-        #[cfg(target_os = "macos")]
-        let apple_script = !elevated();
-        #[cfg(not(target_os = "macos"))]
-        let apple_script = false;
-        if !apple_script {
-            command
-                .arg("--network-worker")
-                .arg(&endpoint)
-                .arg(std::process::id().to_string());
-        }
-        let mut child = command
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .spawn()
-            .map_err(|e| format!("无法请求系统网络授权：{e}"))?;
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
-        let stream = loop {
-            tokio::select! {result=listener.accept()=>{break result.map_err(|e|e.to_string())?.0},_=tokio::time::sleep(Duration::from_millis(100))=>{if cancel.load(Ordering::Acquire){let _=child.kill();let _=child.wait();return Err("网络授权已取消".into());}if child.try_wait().map_err(|e|e.to_string())?.is_some(){return Err("系统未允许网络授权，请重试".into());}if tokio::time::Instant::now()>=deadline{let _=child.kill();let _=child.wait();return Err("网络授权超时，请重试".into());}}}
-        };
-        let mut stream = stream;
-        progress(Stage::Activation);
-        #[cfg(target_os = "macos")]
-        let mut authenticated = false;
-        let result = handshake::bounded(
-            cancel,
-            handshake::ACTIVATION,
-            handshake::client(&mut stream, |s| {
-                progress(Stage::Authentication);
-                verify(s, None, true)?;
-                #[cfg(target_os = "macos")]
-                {
-                    authenticated = true;
-                }
-                progress(Stage::Protocol);
-                Ok(())
-            }),
-        )
-        .await;
-        #[cfg(target_os = "macos")]
-        let process = if authenticated {
-            Process::Mac {
-                token: super::macos::token(&stream)?,
-                launcher: child,
-            }
-        } else {
-            Process::Child(child)
-        };
-        #[cfg(not(target_os = "macos"))]
-        let process = Process::Child(child);
-        let connection = Connection {
-            channel: Box::new(stream),
-            process: Some(process),
-        };
-        if let Err(error) = result {
-            connection.finish().await?;
-            return Err(error);
-        }
-        Ok(connection)
-    }
-    #[cfg(target_os = "linux")]
-    pub async fn connect(
-        root: &Path,
-        cancel: &AtomicBool,
-        progress: &impl Fn(Stage),
-    ) -> Result<Connection, String> {
-        direct_connect(root, cancel, progress).await
-    }
-    #[cfg(target_os = "macos")]
-    pub async fn connect(
-        root: &Path,
-        cancel: &AtomicBool,
-        progress: &impl Fn(Stage),
-    ) -> Result<Connection, String> {
-        if !elevated() {
-            progress(Stage::Registration);
-            super::macos::prepare()?;
-        } else if std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() != Ok("1") {
-            return Err("请以普通用户运行 Sing Shell，TUN 将单独请求系统授权".into());
-        }
-        direct_connect(root, cancel, progress).await
-    }
-    pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
-        if !elevated() {
-            return Err("网络进程必须由系统授权启动".into());
-        }
-        let owner = std::fs::metadata(endpoint.parent().ok_or("网络端点无父目录")?)
-            .map_err(|e| e.to_string())?;
-        if owner.mode() & 0o077 != 0 {
-            return Err("网络端点目录权限无效".into());
-        }
-        let mut stream = tokio::net::UnixStream::connect(endpoint)
-            .await
-            .map_err(|e| e.to_string())?;
-        verify(&stream, Some(parent), false)?;
-        handshake::bounded(
-            &AtomicBool::new(false),
-            Duration::from_secs(3),
-            handshake::server(&mut stream),
-        )
-        .await?;
-        Ok(Box::new(stream))
-    }
-    pub fn protected_root() -> Result<PathBuf, String> {
-        Ok(PathBuf::from(if cfg!(target_os = "macos") {
-            "/Library/Application Support/Sing Shell Network"
-        } else {
-            "/var/lib/sing-shell-network"
-        }))
-    }
-}
+#[path = "authorization/unix.rs"]
+mod native;
 #[cfg(not(test))]
 pub use native::connect;
 pub use native::{elevated, protected_root, worker};
@@ -641,4 +239,43 @@ pub fn prepare_root() -> Result<PathBuf, String> {
     }
     crate::private_files::directory(&root)?;
     Ok(root)
+}
+
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+    #[test]
+    fn exit_wait_retains_owned_process_when_the_caller_times_out() {
+        #[cfg(windows)]
+        let child = std::process::Command::new("cmd")
+            .args(["/C", "ping -n 3 127.0.0.1 > nul"])
+            .spawn()
+            .unwrap();
+        #[cfg(unix)]
+        let child = std::process::Command::new("/bin/sleep")
+            .arg("1")
+            .spawn()
+            .unwrap();
+        #[cfg(windows)]
+        let mut process = {
+            use std::os::windows::io::{FromRawHandle, IntoRawHandle, OwnedHandle};
+            Process::Windows(unsafe { OwnedHandle::from_raw_handle(child.into_raw_handle()) })
+        };
+        #[cfg(unix)]
+        let mut process = Process::Child(child);
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async {
+                assert!(
+                    tokio::time::timeout(Duration::from_millis(10), process.finish())
+                        .await
+                        .is_err()
+                );
+                assert!(!process.exited().unwrap());
+                process.finish().await;
+                assert!(process.exited().unwrap());
+            });
+    }
 }

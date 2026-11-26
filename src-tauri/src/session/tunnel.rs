@@ -137,27 +137,7 @@ impl Tunnel {
                                 let snapshot = exchange(channel, &request).await?;
                                 *state.lock().unwrap() = snapshot;
                                 if quit {
-                                    let closed: Closed = tokio::time::timeout(
-                                        Duration::from_secs(10),
-                                        read(channel),
-                                    )
-                                    .await
-                                    .map_err(|_| "授权进程尚未释放资源")??;
-                                    if !closed.closed {
-                                        return Err("授权进程结束回应无效".into());
-                                    }
-                                    let mut end = [0; 1];
-                                    if tokio::time::timeout(
-                                        Duration::from_secs(10),
-                                        channel.read(&mut end),
-                                    )
-                                    .await
-                                    .map_err(|_| "授权进程尚未释放控制通道")?
-                                    .map_err(|e| e.to_string())?
-                                        != 0
-                                    {
-                                        return Err("授权进程退出回应无效".into());
-                                    }
+                                    confirm_closed(channel).await?;
                                     break;
                                 }
                                 tokio::time::sleep(Duration::from_millis(250)).await;
@@ -521,6 +501,25 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
     })())
 }
 
+async fn confirm_closed(channel: &mut authorization::Channel) -> Result<(), String> {
+    let closed: Closed = tokio::time::timeout(Duration::from_secs(10), read(channel))
+        .await
+        .map_err(|_| "授权进程尚未释放资源")??;
+    if !closed.closed {
+        return Err("授权进程结束回应无效".into());
+    }
+    let mut end = [0; 1];
+    if tokio::time::timeout(Duration::from_secs(10), channel.read(&mut end))
+        .await
+        .map_err(|_| "授权进程尚未释放控制通道")?
+        .map_err(|e| e.to_string())?
+        != 0
+    {
+        return Err("授权进程退出回应无效".into());
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "macos")]
 pub fn authorization_probe() -> Result<(), String> {
     if authorization::elevated() {
@@ -540,22 +539,7 @@ pub fn authorization_probe() -> Result<(), String> {
         if snapshot.runtime.pid.is_some() || snapshot.phase != Phase::Stopped {
             return Err("授权探针未能确认空闲 helper 退出".into());
         }
-        let closed: Closed =
-            tokio::time::timeout(Duration::from_secs(10), read(&mut connection.channel))
-                .await
-                .map_err(|_| "授权探针未收到关闭确认")??;
-        if !closed.closed {
-            return Err("授权探针关闭确认无效".into());
-        }
-        let mut end = [0];
-        if tokio::time::timeout(Duration::from_secs(10), connection.channel.read(&mut end))
-            .await
-            .map_err(|_| "授权探针控制通道未关闭")?
-            .map_err(|e| e.to_string())?
-            != 0
-        {
-            return Err("授权探针控制通道未结束".into());
-        }
+        confirm_closed(&mut connection.channel).await?;
         tokio::time::timeout(Duration::from_secs(20), connection.finish())
             .await
             .map_err(|_| "授权探针未确认 helper 退出")??;
