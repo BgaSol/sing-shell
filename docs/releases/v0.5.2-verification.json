@@ -1,0 +1,4113 @@
+{
+  "version": "0.5.2",
+  "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+  "checkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793402798",
+  "networkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793387050",
+  "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
+  "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
+  "verificationAttempt": 2,
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.5.2",
+  "passed": true,
+  "scope": "Automated native/package verification; user explicitly authorized release with manual macOS acceptance unexecuted",
+  "published": false,
+  "readyForLatest": true,
+  "manualAcceptance": {
+    "macUserApprovedSMAppServiceAndTun": "not executed; maintainer explicitly authorized publication without this manual acceptance",
+    "physicalTrayVisibility": "not executed; recorded as an uncovered release scope"
+  },
+  "targets": [
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "aarch64-apple-darwin"
+  ],
+  "reports": [
+    {
+      "version": "0.5.2",
+      "target": "x86_64-pc-windows-msvc",
+      "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "toolSource": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "run": "45793395495",
+      "verificationRun": "45793395495",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "x64",
+        "release": "10.0.26100"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.2_x64-setup.exe",
+          "role": "nsis",
+          "size": 4407950,
+          "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.1",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.1 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS /AllUsers application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /AllUsers installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /AllUsers update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /AllUsers uninstall preserves another installation login registration",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS /CurrentUser application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /CurrentUser installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /CurrentUser update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /CurrentUser uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-amd64.zip",
+        "sha256": "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe",
+              "role": "nsis",
+              "size": 4407950,
+              "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe",
+              "role": "nsis",
+              "size": 4407950,
+              "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe",
+              "role": "nsis",
+              "size": 4407950,
+              "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe",
+              "role": "nsis",
+              "size": 4407950,
+              "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+            }
+          ]
+        },
+        {
+          "from": "0.5.1",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe",
+              "role": "nsis",
+              "size": 4407950,
+              "sha256": "7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ]
+      },
+      "upgrade": {
+        "from": "0.5.2",
+        "to": "0.5.3",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.3_x64-setup.exe",
+            "role": "nsis",
+            "size": 4409337,
+            "sha256": "a721aa23a255fd38cea643ab70810a77109692f100d837b8fbf455b91445e9a6"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_x64-setup.exe.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "18025a314917339afe038009af407d4dd95d821028338b0f0350dc9065321c79"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\preserved config-0.5.1.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 8640,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-PKrBGZ\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 1256,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-z9gZq0\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 8332,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-g6KIcO\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 5128,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-RyCGnf\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-g7J4HT\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        }
+      ]
+    },
+    {
+      "version": "0.5.2",
+      "target": "aarch64-pc-windows-msvc",
+      "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "toolSource": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "run": "45793395495",
+      "verificationRun": "45793395495",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "arm64",
+        "release": "10.0.26200"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+          "role": "nsis",
+          "size": 3923297,
+          "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.1",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.1 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS /AllUsers application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /AllUsers installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /AllUsers update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /AllUsers uninstall preserves another installation login registration",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS /CurrentUser application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /CurrentUser installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /CurrentUser update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /CurrentUser uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI",
+        "tray host unavailable: visible foreground fallback verified"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-arm64.zip",
+        "sha256": "8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3923297,
+              "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3923297,
+              "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3923297,
+              "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3923297,
+              "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+            }
+          ]
+        },
+        {
+          "from": "0.5.1",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3923297,
+              "sha256": "93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ]
+      },
+      "upgrade": {
+        "from": "0.5.2",
+        "to": "0.5.3",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.3_arm64-setup.exe",
+            "role": "nsis",
+            "size": 3923154,
+            "sha256": "2b08e02678aacc4a514e4fff6a5ad74b673f54de36a87df8cc26b5717c0fa954"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_arm64-setup.exe.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "b94492e6840f65581a21b27a299dcda1874dd87f0196c26fe5dcb0033431d343"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\preserved config-0.5.1.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 9040,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-5OwGPM\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 10276,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-5GaLk1\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 6748,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-froQMy\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 5576,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-qf3zt5\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-7wHbPW\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.2"
+        }
+      ]
+    },
+    {
+      "version": "0.5.2",
+      "target": "x86_64-unknown-linux-gnu",
+      "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "toolSource": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "run": "45793395495",
+      "verificationRun": "45793395495",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-1073-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.2_amd64.deb",
+          "role": "deb",
+          "size": 7125662,
+          "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_amd64.AppImage",
+          "role": "appimage",
+          "size": 85260792,
+          "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.1",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.1 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-amd64.tar.gz",
+        "sha256": "699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb",
+              "role": "deb",
+              "size": 7125662,
+              "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage",
+              "role": "appimage",
+              "size": 85260792,
+              "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb",
+              "role": "deb",
+              "size": 7125662,
+              "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage",
+              "role": "appimage",
+              "size": 85260792,
+              "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb",
+              "role": "deb",
+              "size": 7125662,
+              "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage",
+              "role": "appimage",
+              "size": 85260792,
+              "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb",
+              "role": "deb",
+              "size": 7125662,
+              "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage",
+              "role": "appimage",
+              "size": 85260792,
+              "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+            }
+          ]
+        },
+        {
+          "from": "0.5.1",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb",
+              "role": "deb",
+              "size": 7125662,
+              "sha256": "850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage",
+              "role": "appimage",
+              "size": 85260792,
+              "sha256": "8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ]
+      },
+      "upgrade": {
+        "from": "0.5.2",
+        "to": "0.5.3",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.3_amd64.deb",
+            "role": "deb",
+            "size": 7125686,
+            "sha256": "f56ec9cfff457e182e0bab504e2ebce8b2102d2f571cebee3af1e889e81ee648"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_amd64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "89f5f3bf925695d8ec3103ae3f4c375cd148d3bf0db630b1e836e76a9a9befe6"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_amd64.AppImage",
+            "role": "appimage",
+            "size": 85260792,
+            "sha256": "0886c5aaa092339275db0c8a530bd30876e17e1142719fcf251fd0dfb7e674fc"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_amd64.AppImage.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "c085b7554954468afcc4373ae9f507777a14b16225110910f53e1e564a2826cc"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.3"
+        }
+      ]
+    },
+    {
+      "version": "0.5.2",
+      "target": "aarch64-unknown-linux-gnu",
+      "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "toolSource": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "run": "45793395495",
+      "verificationRun": "45793395495",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "arm64",
+        "release": "6.8.0-1070-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.2_arm64.deb",
+          "role": "deb",
+          "size": 6725544,
+          "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+          "role": "appimage",
+          "size": 82950664,
+          "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.1",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.1 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-arm64.tar.gz",
+        "sha256": "436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb",
+              "role": "deb",
+              "size": 6725544,
+              "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82950664,
+              "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb",
+              "role": "deb",
+              "size": 6725544,
+              "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82950664,
+              "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb",
+              "role": "deb",
+              "size": 6725544,
+              "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82950664,
+              "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb",
+              "role": "deb",
+              "size": 6725544,
+              "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82950664,
+              "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+            }
+          ]
+        },
+        {
+          "from": "0.5.1",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb",
+              "role": "deb",
+              "size": 6725544,
+              "sha256": "bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82950664,
+              "sha256": "b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ]
+      },
+      "upgrade": {
+        "from": "0.5.2",
+        "to": "0.5.3",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.3_arm64.deb",
+            "role": "deb",
+            "size": 6725546,
+            "sha256": "4421dfa2579563b7aea98aaefd5cbca371a94bf88057d72842dcda4fd95c5ada"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_arm64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "f887951ac0f73e5a9292d221313d3682d209e8fe0a9941bc9d5c470395cf8bea"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_aarch64.AppImage",
+            "role": "appimage",
+            "size": 82950664,
+            "sha256": "207e3b52e6ec313ea7c0f03f14bd1805bf943f15fb6d01cd568a9cb57e29f694"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_aarch64.AppImage.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "b288c440cd6a7b34b75825d35eb615d6ede8bbcaadc15dfae62879068fae47fa"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.3"
+        }
+      ]
+    },
+    {
+      "version": "0.5.2",
+      "target": "aarch64-apple-darwin",
+      "source": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "toolSource": "1b76707a0a209796fbb4f50f06bc0ab081987d71",
+      "run": "45793395495",
+      "verificationRun": "45793395495",
+      "nativeHost": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "25.6.0"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.2_aarch64.dmg",
+          "role": "dmg",
+          "size": 5854441,
+          "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+          "role": "app",
+          "size": 5982197,
+          "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+        },
+        {
+          "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+          "role": "signature",
+          "size": 428,
+          "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.1",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.1 upgrades to this release with schema migration and external selection preserved",
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive executable: native architecture, WebView, IPC and exit",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual macOS app bundle: privileged worker, encrypted IPv4/IPv6 TCP/UDP and TUN cleanup; launchd approval separately scoped",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.dmg",
+              "role": "dmg",
+              "size": 5854441,
+              "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5982197,
+              "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.dmg",
+              "role": "dmg",
+              "size": 5854441,
+              "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5982197,
+              "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.dmg",
+              "role": "dmg",
+              "size": 5854441,
+              "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5982197,
+              "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.dmg",
+              "role": "dmg",
+              "size": 5854441,
+              "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5982197,
+              "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+            }
+          ]
+        },
+        {
+          "from": "0.5.1",
+          "to": "0.5.2",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.dmg",
+              "role": "dmg",
+              "size": 5854441,
+              "sha256": "3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5982197,
+              "sha256": "91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+            },
+            {
+              "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ]
+      },
+      "upgrade": {
+        "from": "0.5.2",
+        "to": "0.5.3",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.3_aarch64.dmg",
+            "role": "dmg",
+            "size": 5854410,
+            "sha256": "723a6b1f3d7cbd7292457bdedbc5f31d8186c759e3914c46a4a6e2d2bb58112b"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_aarch64.app.tar.gz",
+            "role": "app",
+            "size": 5982191,
+            "sha256": "eaa592c0d8860cc4b2084571c44dd4a165600ebbd2de1d9f780aaa556693b08b"
+          },
+          {
+            "name": "Sing.Shell_0.5.3_aarch64.app.tar.gz.sig",
+            "role": "signature",
+            "size": 428,
+            "sha256": "abb565559cc7b354d6fa9a058405c6506cddb74d37b6c77f526f655943f7856d"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/preserved config-0.5.1.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": {
+            "before": "NotFound",
+            "bundle": "/Users/runner/Applications/Sing Shell CI-4590.app",
+            "registered": {
+              "enabled": true,
+              "reason": null,
+              "state": "enabled"
+            },
+            "removed": true
+          },
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 9491,
+          "settings": {
+            "configPath": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-smoke-m5KcDW/running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 9769,
+          "settings": {
+            "configPath": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-smoke-wpyrPi/running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-onEeff/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        }
+      ]
+    }
+  ],
+  "retries": [
+    {
+      "attempt": 1,
+      "target": "aarch64-apple-darwin",
+      "failedTest": "official_core_routes_domains_cidrs_sites_and_default_to_expected_exit",
+      "symptom": "local encrypted loopback ended before marker was read; expected route appeared in logs",
+      "attempt2": "same-source and same-package rerun passed without changing assertions or artifacts"
+    }
+  ],
+  "draftAssets": {
+    "verified": true,
+    "count": 16,
+    "method": "all uploaded asset sizes and SHA-256 digests match validated original packages; updater signatures/URLs/digests/size match all five package manifests",
+    "assets": [
+      {
+        "name": "core-update.json",
+        "size": 4326,
+        "digest": "sha256:15d91d588658ab19700194427f80efb93ceb1019f7ae34891a6d46b7f1850a86"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+        "size": 5982197,
+        "digest": "sha256:91540268352c1e9ee0ea4ea17f10edec498695cf6b5df9214128fddcdb17a231"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "digest": "sha256:7a3f20ec117fc86d76e89e24f3cce236ac139d04f9078d4ba11917c042950e98"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+        "size": 82950664,
+        "digest": "sha256:b5b718fd26552da1287548709455f8e9578624f8eba89e01173927c2c61a899f"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+        "size": 444,
+        "digest": "sha256:a77d8144e64bf8e72ae7a2fd5315bbcbe36c247136dba58d7db5d399f42a70eb"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_aarch64.dmg",
+        "size": 5854441,
+        "digest": "sha256:3efee0dab8c9a55e07b9f918afe3004cef8b65b3e0716e29fd02e8c74972fdec"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_amd64.AppImage",
+        "size": 85260792,
+        "digest": "sha256:8b36334549a23bd65567546f0ada67d82d60532b0f0978facd1b22739f6af493"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+        "size": 440,
+        "digest": "sha256:e170efaa5e7e9a14902808573d74c4d1f803ea931db88982c66a5cbc611a9552"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_amd64.deb",
+        "size": 7125662,
+        "digest": "sha256:850169d3fd39132d6453854d3228260d00b1789ba603f1582fe2897ae6a672a1"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+        "size": 436,
+        "digest": "sha256:4668ed65364a5090a9b83209808112497e4f0cd8204e351a5901c5447d1069c6"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+        "size": 3923297,
+        "digest": "sha256:93b0acbe4c9f708cb1ab1f3972c0b984c17d22f285f5dd26c2a44301ac7ef293"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+        "size": 444,
+        "digest": "sha256:89038abdf85f10431c91320e71bcdd41a34c80653b40a22c3d94b723fb596df0"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_arm64.deb",
+        "size": 6725544,
+        "digest": "sha256:bca57fbb22c741f8dc23d2d7070de5950564c4c2c837600c8f781719f6f109da"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+        "size": 436,
+        "digest": "sha256:ba81f0f6f9d50f8dfc60b6d4597bd753113a43142c2ce6e9c8025d287e15bb75"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_x64-setup.exe",
+        "size": 4407950,
+        "digest": "sha256:7b83414a9142ae613d591da1ab341492261900a4d24c1e71f6484bbf7fff53ed"
+      },
+      {
+        "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+        "size": 440,
+        "digest": "sha256:2e44aa0e749859a0eaa269c7f88a3d24a8a68154c9748b10a8a69ffd1e819501"
+      }
+    ]
+  },
+  "localValidation": {
+    "target": "x86_64-pc-windows-msvc",
+    "check": true,
+    "scriptsTests": 13,
+    "defaultRustPassed": 101,
+    "defaultRustIgnored": 4,
+    "officialRealCorePassed": 2,
+    "profileIncludingOfficialPassed": 8,
+    "nsisBuild": true,
+    "smoke": true,
+    "unitTestsCannotRequestSystemElevation": true
+  }
+}
