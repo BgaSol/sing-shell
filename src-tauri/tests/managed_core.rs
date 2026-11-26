@@ -137,20 +137,20 @@ fn restore_waits_for_required_core_and_successful_rollback_records_intent() {
     let d = Directory::new();
     {
         let c = TestCore::open(d.0.join("data")).unwrap();
-        c.core.set_restore(true).unwrap();
+        c.session.set_restore(true).unwrap();
         c.store.resume(true).unwrap();
         let config = d.config(serde_json::json!({}));
         c.import_config(&config).unwrap();
     }
     let c = TestCore::open(d.0.join("data")).unwrap();
-    c.core.restore_tick();
+    c.session.restore_tick();
     assert_eq!(
-        c.core.snapshot().restore,
-        sing_shell::core::Restore::Waiting
+        c.session.snapshot().restore,
+        sing_shell::session::Restore::Waiting
     );
     install(&c, &d, "1.14.3");
-    c.core.restore_tick();
-    wait(|| c.core.snapshot().restore == sing_shell::core::Restore::Finished);
+    c.session.restore_tick();
+    wait(|| c.session.snapshot().restore == sing_shell::session::Restore::Finished);
     assert!(c.runtime.snapshot().pid.is_some());
     assert!(c.store.snapshot().startup.resume_core);
     c.stop().unwrap();
@@ -176,14 +176,14 @@ fn unconfirmed_trial_blocks_restore_even_after_previous_version_is_recovered() {
                 Ok(())
             })
             .unwrap();
-        c.core.set_restore(true).unwrap();
+        c.session.set_restore(true).unwrap();
         c.store.resume(true).unwrap();
     }
     let c = TestCore::open(d.0.join("data")).unwrap();
-    c.core.restore_tick();
+    c.session.restore_tick();
     assert_eq!(
-        c.core.snapshot().restore,
-        sing_shell::core::Restore::Finished
+        c.session.snapshot().restore,
+        sing_shell::session::Restore::Finished
     );
     assert!(c.runtime.snapshot().pid.is_none());
     assert_eq!(c.store.snapshot().managed.active.unwrap().version, "1.14.3");
@@ -534,14 +534,14 @@ fn background_tick_without_frontend_discovers_downloads_and_adopts_official_shap
 }
 #[test]
 fn cancellation_during_initial_start_does_not_attempt_previous() {
-    use sing_shell::core::Action;
+    use sing_shell::session::Action;
     let d = Directory::new();
     let core = TestCore::open(d.0.join("data")).unwrap();
     baseline(&core, &d);
     install(&core, &d, "1.14.4");
-    core.core.action(Action::Start).unwrap();
+    core.session.action(Action::Start).unwrap();
     wait(|| core.runtime.snapshot().pid.is_some());
-    core.core.action(Action::Stop).unwrap();
+    core.session.action(Action::Stop).unwrap();
     wait(|| !core.core.gate.runtime_busy() && core.runtime.snapshot().pid.is_none());
     let s = core.store.snapshot();
     assert_eq!(s.managed.active.unwrap().version, "1.14.4");
@@ -554,7 +554,7 @@ fn cancelled_ready_is_not_applied_on_start_or_tick() {
     let core = TestCore::open(d.0.join("data")).unwrap();
     baseline(&core, &d);
     prepare(&core, &d, "1.14.4", Origin::Automatic);
-    core.core.cancel();
+    core.session.cancel_core();
     core.core.try_adopt().unwrap();
     core.start().unwrap();
     assert_eq!(core.runtime.snapshot().version.as_deref(), Some("1.14.3"));
@@ -609,7 +609,9 @@ fn failed_start_confirmation_never_leaves_an_unrecorded_proxy_running() {
     install(&core, &d, "1.14.3");
     let config = d.config(serde_json::json!({}));
     core.import_config(&config).unwrap();
-    core.core.action(sing_shell::core::Action::Start).unwrap();
+    core.session
+        .action(sing_shell::session::Action::Start)
+        .unwrap();
     wait(|| core.runtime.snapshot().pid.is_some());
     fs::create_dir(core.store.root.join("settings.json.tmp")).unwrap();
     wait(|| !core.core.gate.runtime_busy());

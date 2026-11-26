@@ -1,8 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use sing_shell::{
     app::{Application, Kind, Receipt},
-    core::{Action, Maintenance},
+    core::Maintenance,
     lifecycle,
+    session::Action,
     settings::UpdatePreferences,
     updates::{network, Component},
 };
@@ -61,7 +62,7 @@ fn run_smoke(native: tauri::AppHandle, application: App, restore: bool) {
 }
 fn smoke_failure(handle: &tauri::AppHandle, app: &App, error: impl ToString) {
     let message = error.to_string();
-    let value = serde_json::json!({"error":message,"desktop":app.desktop.snapshot(handle,app),"runtime":app.runtime.snapshot(),"core":app.core.snapshot()});
+    let value = serde_json::json!({"error":message,"desktop":app.desktop.snapshot(handle,app),"runtime":app.runtime.snapshot(),"core":app.session.snapshot()});
     let _ = std::fs::write(
         handle.state::<Smoke>().directory.join("smoke-error.json"),
         value.to_string(),
@@ -226,18 +227,18 @@ fn set_restore_core(
     app: State<App>,
 ) -> Result<sing_shell::settings::Settings, String> {
     let _operation = app.gate.begin(Kind::Preferences)?;
-    app.core.set_restore(enabled)
+    app.session.set_restore(enabled)
 }
 #[tauri::command]
 fn core_snapshot(app: State<App>) -> serde_json::Value {
     let settings = app.store.snapshot();
     let runtime = app.runtime.snapshot();
-    let core = app.core.snapshot_for(&settings, &runtime);
+    let core = app.session.snapshot_for(&settings, &runtime);
     serde_json::json!({"settings":settings,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.runtime.logs.snapshot(),"storageError":app.store.error,"closing":app.gate.closing()})
 }
 #[tauri::command]
 fn core_action(action: Action, app: State<App>) -> Result<Receipt, String> {
-    app.core.action(action)
+    app.session.action(action)
 }
 #[tauri::command]
 fn core_maintenance(action: Maintenance, app: State<App>) -> Result<Receipt, String> {
@@ -245,12 +246,12 @@ fn core_maintenance(action: Maintenance, app: State<App>) -> Result<Receipt, Str
 }
 #[tauri::command]
 fn cancel_core_maintenance(app: State<App>) {
-    app.core.cancel();
+    app.session.cancel_core();
 }
 #[tauri::command]
 async fn use_managed_core(app: State<'_, App>) -> Result<Receipt, String> {
-    let core = app.core.clone();
-    tauri::async_runtime::spawn_blocking(move || core.use_managed())
+    let session = app.session.clone();
+    tauri::async_runtime::spawn_blocking(move || session.use_managed())
         .await
         .map_err(|e| e.to_string())?
 }
@@ -296,9 +297,9 @@ fn choose_file(kind: String, handle: tauri::AppHandle, app: State<App>) -> Resul
                     .map_err(|e| e.to_string())
                     .and_then(|path| {
                         if kind == "core" {
-                            app.core.select(&path)
+                            app.session.select_core(&path)
                         } else {
-                            app.core.import(&path)
+                            app.session.import_config(&path)
                         }
                     });
                 if let Err(error) = result {

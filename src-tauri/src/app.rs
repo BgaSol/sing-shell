@@ -12,6 +12,7 @@ pub struct Application {
     pub store: Arc<crate::settings::SettingsStore>,
     pub runtime: Arc<crate::runtime::RuntimeService>,
     pub core: Arc<crate::core::CoreService>,
+    pub session: Arc<crate::session::SessionService>,
     pub wake: Arc<tokio::sync::Notify>,
     pub updates: Arc<crate::updates::service::UpdateService>,
     pub gate: Arc<Admission>,
@@ -42,14 +43,16 @@ impl Application {
             gate.clone(),
             wake.clone(),
         );
+        let session = crate::session::SessionService::new(core.clone(), wake.clone());
         let updates = crate::updates::service::UpdateService::new(
             store.clone(),
-            runtime.clone(),
+            runtime.logs.clone(),
             gate.clone(),
             version,
         );
         Self {
             core,
+            session,
             wake,
             store,
             runtime,
@@ -73,11 +76,11 @@ impl Application {
         };
         let app = self.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            if let Err(e) = app.core.initialize() {
+            if let Err(e) = app.session.initialize() {
                 app.runtime.report(e);
             }
             if (automatic || restore) && !app.gate.closing() {
-                app.core.restore_tick();
+                app.session.restore_tick();
             }
             app.updates.initialize(&handle);
             drop(bootstrap);
@@ -95,7 +98,7 @@ impl Application {
                     };
                     if !app.gate.closing() {
                         app.core.tick();
-                        app.core.restore_tick();
+                        app.session.restore_tick();
                     }
                     if !app.gate.closing() && tokio::time::Instant::now() >= app_check_after {
                         app.updates.tick();

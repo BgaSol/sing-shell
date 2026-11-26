@@ -12,3 +12,5 @@ pub mod desktop;
 pub mod instance;
 pub mod login_startup;
 pub mod startup;
+
+pub mod session;

@@ -1,7 +1,7 @@
 use crate::{
     app::Application,
-    core::{Action, Restore},
     lifecycle::{self, Target},
+    session::{Action, Restore},
 };
 use serde::Serialize;
 use std::sync::{
@@ -130,8 +130,8 @@ impl Desktop {
                     "quit" => lifecycle::request(app.inner().clone(), handle.clone(), Target::Quit),
                     "settings" => app.desktop.navigate(handle, "updates"),
                     "core" => {
-                        let s = app.core.snapshot();
-                        app.core
+                        let s = app.session.snapshot();
+                        app.session
                             .action(if s.can_stop {
                                 Action::Stop
                             } else {
@@ -174,10 +174,10 @@ impl Desktop {
     }
     pub fn refresh(&self, app: &Application) -> Result<(), String> {
         let r = app.runtime.snapshot();
-        let c = app.core.snapshot_for(&app.store.snapshot(), &r);
+        let c = app.session.snapshot_for(&app.store.snapshot(), &r);
         let issue = r.error.is_some()
-            || c.config_error.is_some()
-            || c.maintenance.error.is_some()
+            || c.core.config_error.is_some()
+            || c.core.maintenance.error.is_some()
             || app.store.error.is_some();
         let status = if r.status == "stopping" {
             "正在停止"

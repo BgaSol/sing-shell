@@ -4,16 +4,17 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 
 ## 职责与链路
 
-`页面 → Tauri IPC → CoreService / UpdateService → 接纳与持久化 → 进程或平台安装器`。
+`页面/托盘/启动恢复 → SessionService → CoreService / RuntimeService → 核心进程`；应用更新由 UpdateService 准备，经统一退出协调器交接安装器。
 
 - `main.rs` 只装配命令、文件框和原生窗口事件；文件框回调返回后才接纳选择，系统文件框不占核心变更票据。
 - `app.rs` 组合服务并拥有一次启动的后台唤醒循环。应用和核心分别到期判断，不因一项网络操作等待另一项。
-- `core/mod.rs` 的 CoreService 是来源、配置、受管选择、启停、采用和回退的唯一用例入口；它消费准备结果，不把采用交给下载回调。
+- `session/mod.rs` 的 SessionService 统一用户启停、内部停止、启动确认与恢复意图；页面、托盘、启动恢复及退出协调器使用同一入口。
+- `core/mod.rs` 的 CoreService 管理来源、原始配置校验、受管选择、采用与版本回退；SessionService 在固定启动用例中调用其资产操作，不反向引用会话。
 - `core/managed.rs` 的 ManagedCore 拥有候选、下载准备、核心维护周期和缓存，不自行改当前选择或运行代理。
 - `core/package.rs` 核对/解包核心文件和受管路径，提供可取消的散列与清理，不读取当前配置或决定来源。
 - `runtime.rs` 拥有临时校验进程、运行 Child、日志 reader、启动观察和真实退出结果；使用固定 StartSpec，不保存用户设置。supervisor 独占运行 Child，启动调用等待其有界结果。
 - `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform.rs` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
-- `updates/service.rs` 只负责应用检查、下载和准备；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
+- `updates/service.rs` 只负责应用检查、下载和准备，仅持有 Logs，不拥有核心运行服务；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
 - `lifecycle.rs` 封闭接纳、取消维护、等待所有者、停止核心，再处理退出或应用安装；不采用核心版本。
 
 前端只呈现快照、编辑偏好和发起意图，不维护自动更新计时器。仍只有运行与设置两页，不引入框架、数据库、插件协议或升级守护进程。
@@ -46,6 +47,6 @@ SettingsStore 持有 instance::Lease；读取和迁移设置前完成独占与�
 
 desktop.rs 管理单窗口、托盘、模态保护与待导航，不管理 Child。startup.rs 归一化启动来源和重启环境。login_startup 读取/修改系统当前用户登记，不在设置复制 enabled。开发/隔离验收禁止修改真实登录项。
 
-CoreService 在同一启动用例完成启动观察、可选一次回退和成功提交。startup.restoreCoreOnLaunch 为用户开关，resumeCore 为成功运行意图；主动停止撤销，内部停止和异常退出不改写。一次恢复请求可等待必需核心，失败/取消后消费，不形成守护循环。Stop 有独立票据并等待原启动所有者回收资源，意图代次拒绝迟到成功提交。
+SessionService 在同一启动用例完成启动观察、可选一次核心回退和成功提交。startup.restoreCoreOnLaunch 为用户开关，resumeCore 为成功运行意图；主动停止撤销，内部停止和异常退出不改写。一次恢复请求可等待必需核心，失败/取消后消费，不形成守护循环。Stop 有独立票据并等待原启动所有者回收资源，意图代次拒绝迟到成功提交。
 
 lifecycle.rs 使用 Quit / InstallAndRestart，先向当前前端文档发出带 ID 的预检，再封闭 Admission，等待 bootstrap、核心、网络和登录项操作，验包、内部停止核心，最后交给安装器。安装器直接终止进程前已经完成必要清理。
