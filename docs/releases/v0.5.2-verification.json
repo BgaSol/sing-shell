@@ -6,7 +6,7 @@
   "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
   "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45793395495",
   "verificationAttempt": 2,
-  "release": "https://github.com/BgaSol/sing-shell/releases/tag/untagged-439af7376627ee02d099",
+  "release": "https://github.com/BgaSol/sing-shell/releases",
   "passed": true,
   "scope": "Automated native/package verification; release remains a draft pending user Mac acceptance",
   "published": false,
