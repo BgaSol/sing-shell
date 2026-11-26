@@ -304,6 +304,9 @@ impl Tunnel {
         }
     }
     pub fn close(&self) -> Result<(), String> {
+        if self.client.lock().unwrap().is_none() && self.status().phase == Phase::Stopped {
+            return Ok(());
+        }
         let already_closing = self
             .client
             .lock()

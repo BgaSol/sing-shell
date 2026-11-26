@@ -238,21 +238,27 @@ mod native {
             }
         }
         let mut pid = 0;
-        if unsafe { GetNamedPipeClientProcessId(server.as_raw_handle(), &mut pid) } == 0 {
-            return Err("无法核对网络进程身份".into());
-        }
         progress(Stage::Authentication);
-        same_executable(&process_path(pid, true)?)?;
+        let identity =
+            if unsafe { GetNamedPipeClientProcessId(server.as_raw_handle(), &mut pid) } == 0 {
+                Err("无法核对网络进程身份".into())
+            } else {
+                process_path(pid, true).and_then(|path| same_executable(&path))
+            };
         let mut server = server;
-        let result = handshake::bounded(
-            cancel,
-            handshake::ACTIVATION,
-            handshake::client(&mut server, |_| {
-                progress(Stage::Protocol);
-                Ok(())
-            }),
-        )
-        .await;
+        let result = if let Err(error) = identity {
+            Err(error)
+        } else {
+            handshake::bounded(
+                cancel,
+                handshake::ACTIVATION,
+                handshake::client(&mut server, |_| {
+                    progress(Stage::Protocol);
+                    Ok(())
+                }),
+            )
+            .await
+        };
         let connection = Connection {
             channel: Box::new(server),
             process: process.map(Process::Windows),
