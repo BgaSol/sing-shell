@@ -1,3 +1,5 @@
+mod adoption;
+pub use adoption::Adoption;
 pub mod managed;
 pub mod package;
 use crate::{
@@ -48,6 +50,8 @@ pub struct CoreService {
     takeover: Mutex<Option<u64>>,
     fetch_origin: Mutex<Option<Origin>>,
     pub(crate) restore_safe: AtomicBool,
+    #[cfg(feature = "test-fixtures")]
+    pub adoption_hook: Mutex<Option<Arc<dyn Fn(&str) + Send + Sync>>>,
 }
 impl CoreService {
     fn config_for(&self, s: &settings::Settings) -> Result<Option<std::path::PathBuf>, String> {
@@ -84,6 +88,8 @@ impl CoreService {
             takeover: Mutex::new(None),
             fetch_origin: Mutex::new(None),
             restore_safe: AtomicBool::new(true),
+            #[cfg(feature = "test-fixtures")]
+            adoption_hook: Mutex::new(None),
         })
     }
     pub fn generation(&self) -> u64 {
@@ -96,7 +102,11 @@ impl CoreService {
             usable: self.usable.load(Ordering::Acquire),
             notice: self.notice.lock().unwrap().clone(),
             config_error: self.config_error.lock().unwrap().clone(),
-            can_retry: !self.gate.closing() && !self.gate.core_fetching(),
+            can_retry: self.initialized.load(Ordering::Acquire)
+                && self.store.error().is_none()
+                && !self.gate.closing()
+                && !self.gate.core_fetching()
+                && !self.gate.runtime_busy(),
         }
     }
     pub(crate) fn notify(&self, message: impl Into<String>) {
@@ -113,8 +123,19 @@ impl CoreService {
             self.initialized.store(true, Ordering::Release);
             return Err(error.clone());
         }
-        let cancel = _op.cancel.clone();
+        let result = self.recover_local(&_op.cancel);
+        self.initialized.store(true, Ordering::Release);
+        result
+    }
+    fn recover_local(&self, cancel: &AtomicBool) -> Result<(), String> {
         let mut s = self.store.snapshot();
+        if let Err(e) = self
+            .managed
+            .initialize(self.generation.load(Ordering::Acquire), &cancel)
+        {
+            self.managed.fail(managed::FailureKind::Cache, e);
+        }
+
         if s.managed() && s.managed.trial == Some(Trial::Starting) {
             self.restore_safe.store(false, Ordering::Release);
             if let Some(previous) = s
@@ -176,20 +197,27 @@ impl CoreService {
                 Ordering::Release,
             );
         }
-        if let Err(e) = self
-            .managed
-            .initialize(self.generation.load(Ordering::Acquire), &cancel)
-        {
-            self.managed.error(e);
-        }
         if self.store.snapshot().managed()
             && !self.usable.load(Ordering::Acquire)
             && self.managed.ready().is_none()
         {
             self.managed.update(|v| v.next_check_at = 0);
         }
-        self.initialized.store(true, Ordering::Release);
         Ok(())
+    }
+    pub(crate) fn reset_owned(&self, op: &Operation) {
+        self.generation.fetch_add(1, Ordering::AcqRel);
+        *self.takeover.lock().unwrap() = None;
+        *self.fetch_origin.lock().unwrap() = None;
+        *self.notice.lock().unwrap() = None;
+        *self.config_error.lock().unwrap() = None;
+        self.usable.store(false, Ordering::Release);
+        self.restore_safe.store(false, Ordering::Release);
+        self.managed.suppressed.store(false, Ordering::Release);
+        if let Err(error) = self.recover_local(&op.cancel) {
+            self.managed.error(error);
+        }
+        self.initialized.store(true, Ordering::Release);
     }
     pub fn verify(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
         package::verify(&self.store.root, &self.runtime, reference, cancel)
@@ -339,7 +367,7 @@ impl CoreService {
             }
             Ok(())
         })?;
-        self.managed.clear_ready();
+        self.managed.consume_ready();
         self.usable.store(true, Ordering::Release);
         Ok(true)
     }
@@ -359,15 +387,14 @@ impl CoreService {
     }
     pub fn use_managed(self: &Arc<Self>) -> Result<Receipt, String> {
         let op = self.gate.begin(Kind::Selection)?;
+        let files = self.gate.begin(Kind::CoreFetch)?;
         self.runtime.stopped()?;
         let gen = self.generation.fetch_add(1, Ordering::AcqRel) + 1;
-        self.gate.cancel_core();
         *self.takeover.lock().unwrap() = Some(gen);
         if let Some(mut p) = self.managed.ready() {
             p.generation = gen;
             p.origin = Origin::Manual;
-            settings::write_json(&self.managed.cache().join("prepared.json"), &p)?;
-            *self.managed.prepared.lock().unwrap() = Some(p);
+            self.managed.save_prepared(p)?;
         }
         self.managed.suppressed.store(false, Ordering::Release);
         let receipt = op.receipt();
@@ -390,6 +417,7 @@ impl CoreService {
                 self.usable.store(true, Ordering::Release);
             }
         }
+        drop(files);
         drop(op);
         self.wake.notify_one();
         Ok(receipt)
@@ -398,19 +426,16 @@ impl CoreService {
         if !self.initialized.load(Ordering::Acquire) {
             return Err("核心服务正在初始化".into());
         }
-        if self.store.error().is_some() {
-            return Err(self.store.error().clone().unwrap());
+        if let Some(error) = self.store.error() {
+            return Err(error);
         }
         let s = self.store.snapshot();
         let takeover = *self.takeover.lock().unwrap();
         if !s.managed() && takeover.is_none() {
             return Err("外部核心由用户手动管理".into());
         }
-        let gen = self.generation.load(Ordering::Acquire);
-        if manual.is_some() {
-            self.managed.suppressed.store(false, Ordering::Release);
-        }
-        if self.managed.suppressed.load(Ordering::Acquire) {
+        let checking = manual == Some(Maintenance::Check);
+        if self.managed.suppressed.load(Ordering::Acquire) && manual.is_none() {
             return Err("自动维护已暂停，请明确重试".into());
         }
         let required = takeover.is_some()
@@ -426,37 +451,75 @@ impl CoreService {
             return Err("核心维护未到期".into());
         }
         let op = self.gate.begin(Kind::CoreFetch)?;
-        let receipt = op.receipt();
-        if let Some(mut prepared) = self
-            .managed
-            .ready()
-            .filter(|_| manual.is_some() || s.managed.blocked.is_none())
-        {
-            if manual.is_some() {
-                prepared.origin = Origin::Manual;
-                prepared.generation = gen;
-                settings::write_json(&self.managed.cache().join("prepared.json"), &prepared)?;
-                *self.managed.prepared.lock().unwrap() = Some(prepared);
-            }
-            drop(op);
-            let service = self.clone();
-            tauri::async_runtime::spawn_blocking(move || {
-                if let Err(e) = service.try_adopt() {
-                    service.managed.error(e);
-                }
-            });
-            return Ok(receipt);
+        if manual.is_some() && !checking {
+            self.managed.suppressed.store(false, Ordering::Release);
         }
-        *self.fetch_origin.lock().unwrap() = Some(if manual.is_some() || takeover.is_some() {
-            Origin::Manual
-        } else if required {
-            Origin::Required
-        } else {
-            Origin::Automatic
-        });
+        let receipt = op.receipt();
+        let generation = self.generation();
         let service = self.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            service.fetch(&op, manual, required, gen);
+            if checking {
+                service.check_updates(&op, required);
+                return;
+            }
+            *service.fetch_origin.lock().unwrap() =
+                Some(if manual.is_some() || takeover.is_some() {
+                    Origin::Manual
+                } else if required {
+                    Origin::Required
+                } else {
+                    Origin::Automatic
+                });
+            let result = (|| -> Result<(), String> {
+                if manual.is_some() {
+                    service.managed.update(|s| s.phase = Phase::Preparing);
+                    if service.managed.ready().is_none()
+                        && service.managed.cache().join("prepared.json").exists()
+                    {
+                        if let Err(e) = service.managed.initialize(generation, &op.cancel) {
+                            package::cancelled(&op.cancel)?;
+                            service.managed.clear_ready()?;
+                            service.managed.warn(format!("无效核心缓存将重新准备：{e}"));
+                        }
+                    }
+                    if let Some(mut p) = service.managed.ready() {
+                        service
+                            .managed
+                            .update(|s| s.candidate = p.reference.source.clone());
+                        if let Err(e) = service.managed.restore_program(&mut p, &op.cancel) {
+                            package::cancelled(&op.cancel)?;
+                            service.managed.clear_ready()?;
+                            service
+                                .managed
+                                .warn(format!("核心准备材料不可用，将重新获取：{e}"));
+                        }
+                        package::cancelled(&op.cancel)?;
+                        if generation != service.generation() {
+                            return Err("核心来源已改变".into());
+                        }
+                        if service.managed.ready().is_some() {
+                            service.managed.save_prepared(p)?;
+                        }
+                    }
+                    service.managed.resume(generation)?;
+                }
+                package::cancelled(&op.cancel)?;
+                if generation != service.generation() {
+                    return Err("核心来源已改变".into());
+                }
+                if service.managed.ready().is_none() {
+                    service.fetch(&op, manual, required, generation);
+                }
+                Ok(())
+            })();
+            if let Err(error) = result {
+                if op.cancel.load(Ordering::Acquire) {
+                    service.managed.update(|s| s.phase = Phase::Paused);
+                } else {
+                    service.managed.suppressed.store(true, Ordering::Release);
+                    service.managed.fail(managed::FailureKind::Local, error);
+                }
+            }
             *service.fetch_origin.lock().unwrap() = None;
             drop(op);
             if let Err(e) = service.try_adopt() {
@@ -465,6 +528,76 @@ impl CoreService {
             service.wake.notify_one();
         });
         Ok(receipt)
+    }
+    fn discover_candidate(
+        &self,
+        t: &crate::updates::network::Transport,
+        required: bool,
+    ) -> Result<Option<release::Candidate>, FetchError> {
+        let s = self.store.snapshot();
+        if required {
+            if let Some(r) = s.managed.active.as_ref() {
+                let c = release::engine_version(t, &r.version).map_err(FetchError::Network)?;
+                if r.source.as_ref().is_some_and(|old| !same_asset(old, &c)) {
+                    return Err(FetchError::Conflict(
+                        "已选版本的官方资产发生变化，请明确处理".into(),
+                    ));
+                }
+                return Ok(Some(c));
+            }
+            if s.profile.mode == crate::profile::Mode::Generated {
+                return release::engine_version(t, "1.14.4")
+                    .map(Some)
+                    .map_err(FetchError::Network);
+            }
+        }
+        release::discover(
+            t,
+            Component::Engine,
+            s.managed
+                .active
+                .as_ref()
+                .map(|r| r.version.as_str())
+                .unwrap_or("0.0.0"),
+        )
+        .map_err(FetchError::Network)
+    }
+    fn check_updates(self: &Arc<Self>, op: &Operation, required: bool) {
+        let before = self.managed.snapshot();
+        self.managed.update(|s| s.phase = Phase::Checking);
+        let result = self
+            .managed
+            .transport(op)
+            .map_err(FetchError::Network)
+            .and_then(|t| self.discover_candidate(&t, required));
+        self.managed.checked(crate::logs::now(), result.is_err());
+        self.managed.update(|s| {
+            s.phase = if before.error.is_some() {
+                before.phase
+            } else if self.managed.ready().is_some() {
+                Phase::Ready
+            } else {
+                Phase::Idle
+            }
+        });
+        match result {
+            Ok(candidate) => self.managed.update(|s| s.candidate = candidate),
+            Err(_) if op.cancel.load(Ordering::Acquire) => {
+                self.managed.update(|s| s.phase = Phase::Paused)
+            }
+            Err(e) if before.error.is_some() => {
+                self.managed.warn(format!("检查核心失败：{}", e.message()))
+            }
+            Err(e) => {
+                let kind = if matches!(e, FetchError::Conflict(_)) {
+                    managed::FailureKind::Conflict
+                } else {
+                    managed::FailureKind::Network
+                };
+                self.managed.fail(kind, e.message());
+            }
+        }
+        self.managed.persist();
     }
     fn fetch(&self, op: &Operation, manual: Option<Maintenance>, required: bool, generation: u64) {
         self.managed.update(|v| {
@@ -493,28 +626,22 @@ impl CoreService {
                 }
             }
             let t = self.managed.transport(op).map_err(FetchError::Network)?;
-            let candidate = if required && s.managed.active.is_some() {
-                let r = s.managed.active.as_ref().unwrap();
-                let c = release::engine_version(&t, &r.version).map_err(FetchError::Network)?;
-                if r.source.as_ref().is_some_and(|old| !same_asset(old, &c)) {
-                    return Err(FetchError::Package(
-                        "已选版本的官方资产发生变化，请明确处理".into(),
-                    ));
+            let candidate = if manual == Some(Maintenance::Retry) && s.managed.active.is_none() {
+                if let Some(cached) = self.managed.snapshot().candidate {
+                    release::validate_engine(&cached).map_err(FetchError::Package)?;
+                    let fresh = release::engine_version(&t, &cached.version)
+                        .map_err(FetchError::Network)?;
+                    if !same_asset(&cached, &fresh) {
+                        return Err(FetchError::Conflict(
+                            "准备版本的官方资产发生变化，请明确处理".into(),
+                        ));
+                    }
+                    Some(fresh)
+                } else {
+                    self.discover_candidate(&t, required)?
                 }
-                Some(c)
-            } else if required && s.profile.mode == crate::profile::Mode::Generated {
-                Some(release::engine_version(&t, "1.14.4").map_err(FetchError::Network)?)
             } else {
-                release::discover(
-                    &t,
-                    Component::Engine,
-                    s.managed
-                        .active
-                        .as_ref()
-                        .map(|r| r.version.as_str())
-                        .unwrap_or("0.0.0"),
-                )
-                .map_err(FetchError::Network)?
+                self.discover_candidate(&t, required)?
             };
             let Some(c) = candidate else {
                 self.managed.update(|v| {
@@ -524,13 +651,6 @@ impl CoreService {
                 return Ok(());
             };
             chosen = Some(c.clone());
-            if manual == Some(Maintenance::Check) {
-                self.managed.update(|v| {
-                    v.candidate = Some(c);
-                    v.phase = Phase::Idle;
-                });
-                return Ok(());
-            }
             if manual.is_none()
                 && s.managed
                     .blocked
@@ -547,8 +667,16 @@ impl CoreService {
             } else {
                 Origin::Automatic
             };
-            self.managed
-                .prepare_with(&t, c, origin, generation, &op.cancel)?;
+            let archive = self.managed.cache().join("package.bin");
+            if package::hash_cancel(&archive, &op.cancel).is_ok_and(|h| h == c.sha256)
+                && fs::metadata(&archive).is_ok_and(|m| m.len() == c.size)
+            {
+                self.managed
+                    .stage_archive(&c, &archive, origin, generation, &op.cancel)?;
+            } else {
+                self.managed
+                    .prepare_with(&t, c, origin, generation, &op.cancel)?;
+            }
             Ok(())
         })();
         self.managed.checked(
@@ -558,10 +686,14 @@ impl CoreService {
         match result {
             Ok(()) => {}
             Err(FetchError::Cancelled) => self.managed.update(|s| s.phase = Phase::Paused),
-            Err(FetchError::Network(e)) => self.managed.error(e),
+            Err(FetchError::Network(e)) => self.managed.fail(managed::FailureKind::Network, e),
             Err(FetchError::Local(e)) => {
                 self.managed.suppressed.store(true, Ordering::Release);
-                self.managed.error(e);
+                self.managed.fail(managed::FailureKind::Local, e);
+            }
+            Err(FetchError::Conflict(e)) => {
+                self.managed.suppressed.store(true, Ordering::Release);
+                self.managed.fail(managed::FailureKind::Conflict, e);
             }
             Err(FetchError::Package(e)) => {
                 if let Some(candidate) = chosen {
@@ -579,13 +711,16 @@ impl CoreService {
                         }
                     }
                 }
-                self.managed.error(e);
+                self.managed.fail(managed::FailureKind::Package, e);
             }
         }
         self.managed.persist();
     }
     pub fn tick(self: &Arc<Self>) {
         if !self.initialized.load(Ordering::Acquire) || self.gate.closing() {
+            return;
+        }
+        if self.managed.suppressed.load(Ordering::Acquire) {
             return;
         }
         if self.managed.ready().is_some() {
@@ -604,152 +739,6 @@ impl CoreService {
             return;
         }
         let _ = self.maintain(None);
-    }
-    pub fn try_adopt(&self) -> Result<(), String> {
-        if self.gate.core_fetching() || self.gate.runtime_busy() || self.gate.closing() {
-            return Ok(());
-        }
-        let op = self.gate.begin(Kind::Selection)?;
-        let was_usable = self.usable.load(Ordering::Acquire);
-        let result = self.adopt_owned(&op);
-        drop(op);
-        if !was_usable && self.usable.load(Ordering::Acquire) {
-            self.wake.notify_one();
-        }
-        result
-    }
-    pub(crate) fn adopt_owned(&self, op: &Operation) -> Result<(), String> {
-        let Ok(_files) = self.gate.begin(Kind::CoreFetch) else {
-            return Ok(());
-        };
-        let Some(p) = self.managed.ready() else {
-            return Ok(());
-        };
-        let s = self.store.snapshot();
-        if p.generation != self.generation.load(Ordering::Acquire) || self.gate.closing() {
-            return Ok(());
-        }
-        let takeover = *self.takeover.lock().unwrap() == Some(p.generation);
-        if !s.managed() && !takeover {
-            return Ok(());
-        }
-        if self.managed.suppressed.load(Ordering::Acquire) {
-            return Ok(());
-        }
-        if p.origin == Origin::Automatic && !s.update_preferences.automatic_core {
-            self.managed.update(|v| v.phase = Phase::Paused);
-            return Ok(());
-        }
-        if s.managed
-            .blocked
-            .as_ref()
-            .is_some_and(|b| same_asset(&b.candidate, p.reference.source.as_ref().unwrap()))
-            && p.origin != Origin::Manual
-        {
-            return Ok(());
-        }
-        if self.runtime.stopped().is_err() {
-            return Ok(());
-        }
-        if let Some(active) = &s.managed.active {
-            if active.version == p.reference.version && self.verify(active, &op.cancel).is_ok() {
-                self.managed.clear_ready();
-                return Ok(());
-            }
-            if s.managed.trial.is_some() && self.usable.load(Ordering::Acquire) {
-                return Ok(());
-            }
-            if settings::stable(&p.reference.version)? < settings::stable(&active.version)? {
-                self.managed.clear_ready();
-                return Ok(());
-            }
-        }
-        let installed = settings::managed_path(&self.store.root, &p.reference)?;
-        let staged = package::staged_path(&self.store.root, &p.reference)?;
-        let program = if staged.exists() { &staged } else { &installed };
-        package::owned(&self.store.root, program)?;
-        package::verify_path(&self.runtime, &p.reference, program, &op.cancel)?;
-        if s.profile.mode == crate::profile::Mode::Generated
-            && crate::profile::tun::require_version(&p.reference.version).is_err()
-        {
-            self.block(
-                &p,
-                FailureStage::Compatibility,
-                "此核心版本尚未验证受控 TUN，保留现有版本".into(),
-            )?;
-            return Err("此核心版本尚未验证受控 TUN，保留现有版本".into());
-        }
-        let config = self.config_for(&s)?;
-        let mut config_hash = None;
-        if s.managed.active.is_some() || !s.managed() {
-            if let Some(config) = &config {
-                let hash = package::hash_cancel(config, &op.cancel)?;
-                if let Err(error) = self.runtime.validate(program, config, &op.cancel) {
-                    self.block(&p, FailureStage::Compatibility, error.clone())?;
-                    return Err(format!("新版暂不兼容当前配置，保留原核心：{error}"));
-                }
-                if package::hash_cancel(config, &op.cancel)? != hash {
-                    return Err("配置文件已改变，请重新校验".into());
-                }
-                config_hash = Some(hash);
-            }
-        }
-        package::cancelled(&op.cancel)?;
-        let previous = s
-            .managed
-            .active
-            .clone()
-            .filter(|r| self.verify(r, &op.cancel).is_ok());
-        // Only a stopped, invalid same-version file may be replaced by authenticated staging.
-        if staged.exists() {
-            if installed.exists() {
-                let old = s.managed.active.as_ref().ok_or("已有版本目录内容不一致")?;
-                if old.version != p.reference.version || self.verify(old, &op.cancel).is_ok() {
-                    if package::hash(&installed)? != p.reference.hash.clone().unwrap() {
-                        return Err("已有版本目录内容不一致".into());
-                    }
-                    fs::remove_file(&staged).map_err(|e| e.to_string())?;
-                } else {
-                    fs::rename(&staged, &installed).map_err(|e| e.to_string())?;
-                }
-            } else {
-                fs::rename(&staged, &installed).map_err(|e| e.to_string())?;
-            }
-        }
-        if let (Some(config), Some(hash)) = (&config, config_hash) {
-            if package::hash_cancel(config, &op.cancel)? != hash {
-                return Err("配置文件已改变，请重新校验".into());
-            }
-        }
-        self.store.core(s.core_revision, |v| {
-            if self.gate.closing()
-                || op.cancel.load(Ordering::Acquire)
-                || p.generation != self.generation.load(Ordering::Acquire)
-            {
-                return Err("采用已取消".into());
-            }
-            if !v.managed() && !takeover {
-                return Err("核心来源已改变".into());
-            }
-            if p.origin == Origin::Automatic && !v.update_preferences.automatic_core {
-                return Err("自动采用已关闭".into());
-            }
-            v.core_source = CoreSource::Managed;
-            v.managed.previous = previous;
-            v.managed.active = Some(p.reference.clone());
-            v.managed.trial = Some(Trial::AwaitingStart);
-            v.managed.blocked = None;
-            Ok(())
-        })?;
-        *self.takeover.lock().unwrap() = None;
-        self.usable.store(true, Ordering::Release);
-        self.managed.clear_ready();
-        self.notify(format!("sing-box {} 已就绪", p.reference.version));
-        if let Err(e) = self.validate_pending(&op.cancel) {
-            *self.config_error.lock().unwrap() = Some(e);
-        }
-        self.cleanup(&op.cancel);
-        Ok(())
     }
     fn block(&self, p: &Prepared, stage: FailureStage, error: String) -> Result<(), String> {
         let s = self.store.snapshot();

@@ -10,6 +10,30 @@ use std::{
     path::{Component, Path},
     sync::atomic::{AtomicBool, Ordering},
 };
+#[derive(Debug)]
+pub enum PrepareError {
+    Invalid(String),
+    Local(String),
+    Cancelled,
+}
+impl From<std::io::Error> for PrepareError {
+    fn from(e: std::io::Error) -> Self {
+        Self::Local(e.to_string())
+    }
+}
+impl From<String> for PrepareError {
+    fn from(e: String) -> Self {
+        Self::Invalid(e)
+    }
+}
+impl From<PrepareError> for String {
+    fn from(e: PrepareError) -> String {
+        match e {
+            PrepareError::Invalid(e) | PrepareError::Local(e) => e,
+            PrepareError::Cancelled => "操作已取消".into(),
+        }
+    }
+}
 pub fn cancelled(cancel: &AtomicBool) -> Result<(), String> {
     if cancel.load(Ordering::Acquire) {
         Err("操作已取消".into())
@@ -80,63 +104,72 @@ fn save(
     input: &mut impl Read,
     size: u64,
     cancel: &AtomicBool,
-) -> Result<(), String> {
+) -> Result<(), PrepareError> {
     if size > 256 * 1024 * 1024 {
-        return Err("核心展开文件过大".into());
+        return Err(PrepareError::Invalid("核心展开文件过大".into()));
     }
-    let mut file = File::create(output).map_err(|e| e.to_string())?;
+    let mut file = File::create(output).map_err(PrepareError::from)?;
     let mut count = 0u64;
     let mut buffer = [0; 65536];
     loop {
-        cancelled(cancel)?;
-        let n = input.read(&mut buffer).map_err(|e| e.to_string())?;
+        cancelled(cancel).map_err(|_| PrepareError::Cancelled)?;
+        let n = input
+            .read(&mut buffer)
+            .map_err(|e| PrepareError::Invalid(e.to_string()))?;
         if n == 0 {
             break;
         }
         count += n as u64;
         if count > size {
-            return Err("核心解包超过声明大小".into());
+            return Err(PrepareError::Invalid("核心解包超过声明大小".into()));
         }
-        file.write_all(&buffer[..n]).map_err(|e| e.to_string())?;
+        file.write_all(&buffer[..n]).map_err(PrepareError::from)?;
     }
     if count != size {
-        return Err("核心解包大小不符".into());
+        return Err(PrepareError::Invalid("核心解包大小不符".into()));
     }
     file.flush()
         .and_then(|_| file.sync_all())
-        .map_err(|e| e.to_string())
+        .map_err(PrepareError::from)
 }
 pub fn unpack(
     archive: &Path,
     output: &Path,
     windows: bool,
     cancel: &AtomicBool,
-) -> Result<(), String> {
+) -> Result<(), PrepareError> {
     let expected = if windows { "sing-box.exe" } else { "sing-box" };
     let mut found = false;
     let mut total = 0u64;
     if windows {
-        let mut zip = zip::ZipArchive::new(File::open(archive).map_err(|e| e.to_string())?)
-            .map_err(|e| e.to_string())?;
+        let mut zip = zip::ZipArchive::new(File::open(archive)?)
+            .map_err(|e| PrepareError::Invalid(e.to_string()))?;
         if zip.len() > 128 {
-            return Err("归档条目过多".into());
+            return Err(PrepareError::Invalid("归档条目过多".into()));
         }
         for i in 0..zip.len() {
-            cancelled(cancel)?;
-            let mut item = zip.by_index(i).map_err(|e| e.to_string())?;
-            let name = item.name().map_err(|e| e.to_string())?.into_owned();
+            cancelled(cancel).map_err(|_| PrepareError::Cancelled)?;
+            let mut item = zip
+                .by_index(i)
+                .map_err(|e| PrepareError::Invalid(e.to_string()))?;
+            let name = item
+                .name()
+                .map_err(|e| PrepareError::Invalid(e.to_string()))?
+                .into_owned();
             let path = Path::new(&name);
             safe(path)?;
             if item.unix_mode().is_some_and(|m| m & 0o170000 == 0o120000) {
-                return Err("核心归档不能包含链接".into());
+                return Err(PrepareError::Invalid("核心归档不能包含链接".into()));
             }
-            total = total.checked_add(item.size()).ok_or("归档过大")?;
+            total = total
+                .checked_add(item.size())
+                .ok_or_else(|| PrepareError::Invalid("归档过大".into()))?;
             if total > 1024 * 1024 * 1024 {
-                return Err("归档展开总量过大".into());
+                return Err(PrepareError::Invalid("归档展开总量过大".into()));
             }
             if path.file_name().is_some_and(|v| v == expected) {
                 if found || item.is_dir() {
-                    return Err("核心入口重复或无效".into());
+                    return Err(PrepareError::Invalid("核心入口重复或无效".into()));
                 }
                 let size = item.size();
                 save(output, &mut item, size, cancel)?;
@@ -144,26 +177,35 @@ pub fn unpack(
             }
         }
     } else {
-        let gzip = flate2::read::GzDecoder::new(File::open(archive).map_err(|e| e.to_string())?);
+        let gzip = flate2::read::GzDecoder::new(File::open(archive).map_err(PrepareError::from)?);
         let mut tar = tar::Archive::new(gzip);
-        for (index, item) in tar.entries().map_err(|e| e.to_string())?.enumerate() {
-            cancelled(cancel)?;
+        for (index, item) in tar
+            .entries()
+            .map_err(|e| PrepareError::Invalid(e.to_string()))?
+            .enumerate()
+        {
+            cancelled(cancel).map_err(|_| PrepareError::Cancelled)?;
             if index >= 128 {
-                return Err("归档条目过多".into());
+                return Err(PrepareError::Invalid("归档条目过多".into()));
             }
-            let mut item = item.map_err(|e| e.to_string())?;
-            let path = item.path().map_err(|e| e.to_string())?.into_owned();
+            let mut item = item.map_err(|e| PrepareError::Invalid(e.to_string()))?;
+            let path = item
+                .path()
+                .map_err(|e| PrepareError::Invalid(e.to_string()))?
+                .into_owned();
             safe(&path)?;
             if !item.header().entry_type().is_file() && !item.header().entry_type().is_dir() {
-                return Err("核心归档含链接或特殊文件".into());
+                return Err(PrepareError::Invalid("核心归档含链接或特殊文件".into()));
             }
-            total = total.checked_add(item.size()).ok_or("归档过大")?;
+            total = total
+                .checked_add(item.size())
+                .ok_or_else(|| PrepareError::Invalid("归档过大".into()))?;
             if total > 1024 * 1024 * 1024 {
-                return Err("归档展开总量过大".into());
+                return Err(PrepareError::Invalid("归档展开总量过大".into()));
             }
             if path.file_name().is_some_and(|v| v == expected) {
                 if found || !item.header().entry_type().is_file() {
-                    return Err("核心入口重复或无效".into());
+                    return Err(PrepareError::Invalid("核心入口重复或无效".into()));
                 }
                 let size = item.size();
                 save(output, &mut item, size, cancel)?;
@@ -172,13 +214,13 @@ pub fn unpack(
         }
     }
     if !found {
-        return Err("归档缺少 sing-box 程序".into());
+        return Err(PrepareError::Invalid("归档缺少 sing-box 程序".into()));
     }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         fs::set_permissions(output, fs::Permissions::from_mode(0o700))
-            .map_err(|e| e.to_string())?;
+            .map_err(PrepareError::from)?;
     }
     Ok(())
 }
@@ -192,7 +234,14 @@ pub fn owned(root: &Path, path: &Path) -> Result<(), String> {
         }
         current.push(part);
         if let Ok(m) = fs::symlink_metadata(&current) {
-            if m.file_type().is_symlink() {
+            #[cfg(windows)]
+            let reparse = {
+                use std::os::windows::fs::MetadataExt;
+                m.file_attributes() & 0x400 != 0 // FILE_ATTRIBUTE_REPARSE_POINT includes junctions.
+            };
+            #[cfg(not(windows))]
+            let reparse = false;
+            if m.file_type().is_symlink() || reparse {
                 return Err("受管路径不能包含链接".into());
             }
         }
@@ -205,12 +254,12 @@ pub fn prepare(
     candidate: &Candidate,
     archive: &Path,
     cancel: &AtomicBool,
-) -> Result<ManagedRef, String> {
+) -> Result<ManagedRef, PrepareError> {
     crate::updates::release::validate_engine(candidate)?;
-    if hash_cancel(archive, cancel)? != candidate.sha256
-        || fs::metadata(archive).map_err(|e| e.to_string())?.len() != candidate.size
+    if hash_cancel(archive, cancel).map_err(PrepareError::Local)? != candidate.sha256
+        || fs::metadata(archive).map_err(PrepareError::from)?.len() != candidate.size
     {
-        return Err("核心归档摘要或大小不符".into());
+        return Err(PrepareError::Invalid("核心归档摘要或大小不符".into()));
     }
     let mut reference = ManagedRef {
         version: candidate.version.clone(),
@@ -220,16 +269,16 @@ pub fn prepare(
     };
     let path = settings::managed_path(root, &reference)?;
     owned(root, &path)?;
-    fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
+    fs::create_dir_all(path.parent().unwrap()).map_err(PrepareError::from)?;
     let staging = path.with_extension("part");
     owned(root, &staging)?;
     let result = (|| {
         unpack(archive, &staging, cfg!(windows), cancel)?;
         verify_binary(&staging, crate::TARGET)?;
         if runtime.probe(&staging, cancel)? != reference.version {
-            return Err("核心版本与候选不符".into());
+            return Err(PrepareError::Invalid("核心版本与候选不符".into()));
         }
-        reference.hash = Some(hash_cancel(&staging, cancel)?);
+        reference.hash = Some(hash_cancel(&staging, cancel).map_err(PrepareError::Local)?);
         reference.source = Some(candidate.clone());
         // Keep replacement separate: the coordinator alone knows whether this version is running.
         Ok(reference)

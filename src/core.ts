@@ -186,6 +186,9 @@ export interface CoreState {
     network: { endpoint: string; attempt: number; error: string | null } | null;
     lastCheckedAt: number;
     nextCheckAt: number;
+    failureKind: "network" | "package" | "cache" | "local" | "compatibility" | "conflict" | null;
+    warning: string | null;
+    preparedVersion: string | null;
   };
   initialized: boolean;
   usable: boolean;

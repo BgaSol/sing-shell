@@ -194,6 +194,17 @@ impl SessionService {
         self.ensure_stopped()?;
         self.engine.select(path)
     }
+    pub fn reset_settings(&self) -> Result<std::path::PathBuf, String> {
+        let op = self.gate.begin(Kind::Selection)?;
+        let _files = self.gate.begin(Kind::CoreFetch)?;
+        self.ensure_stopped()?;
+        let backup = self.store.backup_reset()?;
+        self.invalidate_restore();
+        self.runtime.clear_error();
+        self.engine.reset_owned(&op);
+        self.wake.notify_one();
+        Ok(backup)
+    }
     pub fn import_config(&self, path: &Path) -> Result<(), String> {
         self.invalidate_restore();
         self.ensure_stopped()?;

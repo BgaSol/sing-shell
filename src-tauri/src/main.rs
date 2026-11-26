@@ -51,6 +51,15 @@ fn run_smoke(native: tauri::AppHandle, application: App, restore: bool) {
             }
             tokio::time::sleep(std::time::Duration::from_millis(50)).await;
         }
+        if std::env::var("SING_SHELL_CORE_RECOVERY_TEST").as_deref() == Ok("1") {
+            let app = application.clone();
+            let result =
+                tauri::async_runtime::spawn_blocking(move || smoke_core_recovery(&app)).await;
+            if let Err(error) = result.map_err(|e| e.to_string()).and_then(|v| v) {
+                smoke_failure(&native, &application, error);
+                return;
+            }
+        }
         tokio::time::sleep(std::time::Duration::from_millis(800)).await;
         let queued = native.clone();
         let _ = queued.run_on_main_thread(move || {
@@ -59,6 +68,56 @@ fn run_smoke(native: tauri::AppHandle, application: App, restore: bool) {
             }
         });
     });
+}
+// Only run_smoke calls this against its explicitly isolated data directory.
+fn smoke_core_recovery(app: &App) -> Result<(), String> {
+    let backup = if app.store.error().is_some() {
+        Some(app.session.reset_settings()?)
+    } else {
+        None
+    };
+    app.core.maintain(Some(Maintenance::Retry))?;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(50);
+    loop {
+        let s = app.core.snapshot();
+        if !app.gate.core_fetching() && !app.gate.runtime_busy() {
+            if s.usable && app.store.snapshot().managed.active.is_some() {
+                break;
+            }
+            if let Some(error) = s.maintenance.error {
+                return Err(error);
+            }
+        }
+        if std::time::Instant::now() >= deadline {
+            return Err("隔离核心恢复超时".into());
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    if app.runtime.snapshot().pid.is_some() {
+        return Err("初始化不应自动运行核心".into());
+    }
+    app.session
+        .import_config(&app.store.root.join("recovery-config.json"))?;
+    app.session.start()?;
+    let runtime = app.runtime.snapshot();
+    app.session.stop()?;
+    let settings = app.store.snapshot();
+    let reference = settings
+        .managed
+        .active
+        .as_ref()
+        .ok_or("恢复未提交核心选择")?;
+    let program = sing_shell::settings::managed_path(&app.store.root, reference)?;
+    let backup_hash = backup
+        .as_ref()
+        .map(|p| sing_shell::core::package::hash(p))
+        .transpose()?;
+    let result = serde_json::json!({"backup":backup,"backupHash":backup_hash,"version":reference.version,"programHash":sing_shell::core::package::hash(&program)?,"startedPid":runtime.pid,"runningVersion":runtime.version,"stopped":app.runtime.snapshot().pid.is_none(),"automaticConnection":false});
+    std::fs::write(
+        app.store.root.join("core-recovery-result.json"),
+        result.to_string(),
+    )
+    .map_err(|e| e.to_string())
 }
 fn smoke_failure(handle: &tauri::AppHandle, app: &App, error: impl ToString) {
     let message = error.to_string();
@@ -335,15 +394,13 @@ fn rule_preference(
     Ok(())
 }
 #[tauri::command]
-fn settings_reset(app: State<App>) -> Result<String, String> {
-    app.session.ensure_stopped()?;
-    if app.gate.runtime_busy() {
-        return Err("请等待当前操作结束".into());
-    }
-    let backup = app.store.backup_reset()?;
-    app.runtime.clear_error();
-    app.wake.notify_one();
-    Ok(backup.display().to_string())
+async fn settings_reset(app: State<'_, App>) -> Result<String, String> {
+    let session = app.session.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        session.reset_settings().map(|p| p.display().to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 #[tauri::command]
 fn routing_validate(
