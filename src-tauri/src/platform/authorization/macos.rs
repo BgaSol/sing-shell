@@ -28,7 +28,7 @@ pub fn already_allowed() -> bool {
 }
 pub fn ensure_registered() -> Result<(), String> {
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
-    crate::login_startup::installed(&executable)?;
+    crate::platform::macos_bundle::bundle(&executable, true)?;
     let bundle = executable
         .parent()
         .and_then(std::path::Path::parent)

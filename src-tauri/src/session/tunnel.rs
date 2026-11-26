@@ -16,7 +16,7 @@ use tokio::io::AsyncReadExt;
 mod protocol;
 mod worker;
 use protocol::{exchange, read, write, Closed, Request};
-pub use protocol::{Failure, Snapshot};
+pub use protocol::{Failure, Phase, Snapshot};
 use worker::Worker;
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -85,7 +85,7 @@ impl Tunnel {
             let _ = client.take().unwrap().thread.join();
         }
         if let Some(client) = client.as_ref() {
-            self.state.lock().unwrap().phase = "preparing".into();
+            self.state.lock().unwrap().phase = Phase::Preparing;
             client.tx.send(request).map_err(|_| "授权进程已断开")?;
         } else {
             let (tx, rx) = mpsc::channel();
@@ -97,7 +97,7 @@ impl Tunnel {
             let disconnect = Arc::new(AtomicBool::new(false));
             let actor_disconnect = disconnect.clone();
             *state.lock().unwrap() = Snapshot {
-                phase: "authorizing".into(),
+                phase: Phase::Authorizing,
                 ..Default::default()
             };
             let worker = thread::spawn(move || {
@@ -157,6 +157,12 @@ impl Tunnel {
                             Ok::<_, String>(())
                         }
                         .await;
+                        if let Err(error) = &result {
+                            let mut snapshot = state.lock().unwrap();
+                            snapshot.phase = Phase::CleanupRequired;
+                            snapshot.error =
+                                Some(format!("控制通道已结束，正在等待 helper 清理：{error}"));
+                        }
                         let finished = connection.finish().await;
                         result.and(finished)
                     })
@@ -166,11 +172,10 @@ impl Tunnel {
                     s.error = Some(error.clone());
                     s.runtime.error = Some(error);
                     s.phase = if s.runtime.pid.is_some() || network::require_clear().is_err() {
-                        "cleanupRequired"
+                        Phase::CleanupRequired
                     } else {
-                        "failed"
-                    }
-                    .into();
+                        Phase::Failed
+                    };
                 }
             });
             *client = Some(Client {
@@ -188,7 +193,7 @@ impl Tunnel {
         core_version: String,
         cancel: &AtomicBool,
     ) -> Result<(), String> {
-        if self.snapshot().phase == "cleanupRequired" {
+        if self.snapshot().phase == Phase::CleanupRequired {
             return Err("网络资源尚未清理，请先停止连接".into());
         }
         input.profile().validate()?;
@@ -199,14 +204,18 @@ impl Tunnel {
         let deadline = Instant::now() + Duration::from_secs(180);
         loop {
             let snapshot = self.snapshot();
-            if snapshot.phase == "running" && snapshot.network.ready() {
+            if snapshot.phase == Phase::Running && snapshot.network.ready() {
                 return Ok(());
             }
             if matches!(snapshot.phase.as_str(), "failed" | "cleanupRequired") {
                 return Err(snapshot.error.unwrap_or("TUN 启动失败".into()));
             }
             if cancel.load(Ordering::Acquire) {
-                self.stop()?;
+                if let Some(client) = self.client.lock().unwrap().as_ref() {
+                    client.cancel.store(true, Ordering::Release);
+                    client.disconnect.store(true, Ordering::Release);
+                }
+                self.wait_closed(Duration::from_secs(45))?;
                 return Err("TUN 启动已取消".into());
             }
             if Instant::now() >= deadline {
@@ -226,7 +235,7 @@ impl Tunnel {
                     return Ok(());
                 }
             }
-            if guard.is_none() && self.snapshot().phase != "cleanupRequired" {
+            if guard.is_none() && self.snapshot().phase != Phase::CleanupRequired {
                 return Ok(());
             }
         }
@@ -238,7 +247,7 @@ impl Tunnel {
         let guard = self.client.lock().unwrap();
         if guard.as_ref().is_some_and(|c| c.thread.is_finished())
             && self.snapshot().runtime.pid.is_none()
-            && self.snapshot().phase != "cleanupRequired"
+            && self.snapshot().phase != Phase::CleanupRequired
         {
             drop(guard);
             self.reap();
@@ -246,7 +255,7 @@ impl Tunnel {
             return Ok(());
         }
         let Some(client) = guard.as_ref() else {
-            return if self.snapshot().phase == "cleanupRequired" {
+            return if self.snapshot().phase == Phase::CleanupRequired {
                 Err("授权控制端已断开；请重新连接授权进程完成清理".into())
             } else {
                 Ok(())
@@ -255,21 +264,21 @@ impl Tunnel {
         let tx = client.tx.clone();
         let cancel = client.cancel.clone();
         drop(guard);
-        if !reconnecting && self.snapshot().phase == "authorizing" {
+        if !reconnecting && self.snapshot().phase == Phase::Authorizing {
             cancel.store(true, Ordering::Release);
         }
-        self.state.lock().unwrap().phase = "stopping".into();
+        self.state.lock().unwrap().phase = Phase::Stopping;
         if tx.send(Request::Stop).is_err() {
-            self.state.lock().unwrap().phase = "cleanupRequired".into();
+            self.state.lock().unwrap().phase = Phase::CleanupRequired;
             return Err("授权进程已断开，请重试清理".into());
         }
         let deadline = Instant::now() + Duration::from_secs(35);
         loop {
             let snapshot = self.snapshot();
-            if snapshot.phase == "stopped" {
+            if snapshot.phase == Phase::Stopped {
                 return Ok(());
             }
-            if snapshot.phase == "cleanupRequired" {
+            if snapshot.phase == Phase::CleanupRequired {
                 return Err(snapshot.error.unwrap_or("网络资源尚未清理".into()));
             }
             if self.reap() {
@@ -280,7 +289,7 @@ impl Tunnel {
                 };
             }
             if Instant::now() >= deadline {
-                self.state.lock().unwrap().phase = "cleanupRequired".into();
+                self.state.lock().unwrap().phase = Phase::CleanupRequired;
                 return Err("TUN 尚未完成停止，请重试".into());
             }
             thread::sleep(Duration::from_millis(50));
@@ -301,7 +310,7 @@ impl Tunnel {
         }
         self.wait_closed(Duration::from_secs(45))?;
         let snapshot = self.snapshot();
-        if snapshot.phase == "cleanupRequired" {
+        if snapshot.phase == Phase::CleanupRequired {
             return Err(snapshot.error.unwrap_or("网络清理尚未完成".into()));
         }
         network::require_clear()
@@ -363,15 +372,15 @@ mod tests {
             root: std::env::temp_dir(),
             runtime: Arc::new(Default::default()),
             state: Arc::new(Mutex::new(Snapshot {
-                phase: "running".into(),
+                phase: Phase::Running,
                 ..Default::default()
             })),
             cancel: Arc::new(AtomicBool::new(false)),
             start: None,
         };
-        assert_eq!(worker.snapshot().phase, "running");
+        assert_eq!(worker.snapshot().phase, Phase::Running);
         assert!(!worker.cancel.load(Ordering::Acquire));
-        assert_eq!(worker.state.lock().unwrap().phase, "running");
+        assert_eq!(worker.state.lock().unwrap().phase, Phase::Running);
     }
 }
 
@@ -466,16 +475,30 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                 if let Err(error) = outcome {
                     let mut state = worker.state.lock().unwrap();
                     state.error = Some(error);
-                    if worker.runtime.snapshot().pid.is_none() && state.phase != "cleanupRequired" {
-                        state.phase = "failed".into();
+                    if worker.runtime.snapshot().pid.is_none()
+                        && state.phase != Phase::CleanupRequired
+                    {
+                        state.phase = Phase::Failed;
                     }
                 }
-                if let Err(error) = write(&mut channel, &worker.snapshot()).await {
+                if let Err(error) = tokio::time::timeout(
+                    Duration::from_secs(10),
+                    write(&mut channel, &worker.snapshot()),
+                )
+                .await
+                .map_err(|_| "网络控制端未读取状态".to_string())
+                .and_then(|r| r)
+                {
                     break Err(error);
                 }
-                if quit && worker.snapshot().phase == "stopped" {
+                if quit && worker.snapshot().phase == Phase::Stopped {
                     drop(lease);
-                    write(&mut channel, &Closed { closed: true }).await?;
+                    tokio::time::timeout(
+                        Duration::from_secs(10),
+                        write(&mut channel, &Closed { closed: true }),
+                    )
+                    .await
+                    .map_err(|_| "网络控制端未读取结束结果")??;
                     return Ok(());
                 }
             };

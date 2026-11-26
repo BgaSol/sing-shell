@@ -1,4 +1,4 @@
-use super::{Connection, Failure, Snapshot};
+use super::{Connection, Failure, Phase, Snapshot};
 use crate::{
     platform::network,
     runtime::{RuntimeService, StartSpec},
@@ -39,12 +39,14 @@ impl Worker {
         snapshot
     }
     pub(super) fn observe_exit(&mut self) {
-        if self.state.lock().unwrap().phase == "running" && self.runtime.snapshot().pid.is_none() {
+        if self.state.lock().unwrap().phase == Phase::Running
+            && self.runtime.snapshot().pid.is_none()
+        {
             let error = self.runtime.snapshot().error;
             let result = self.stop();
             if result.is_ok() {
                 let mut state = self.state.lock().unwrap();
-                state.phase = "failed".into();
+                state.phase = Phase::Failed;
                 state.error = error.or_else(|| Some("核心已退出，请手动重新连接".into()));
             }
         }
@@ -65,7 +67,7 @@ impl Worker {
         let runtime = self.runtime.clone();
         let root = self.root.clone();
         *state.lock().unwrap() = Snapshot {
-            phase: "preparing".into(),
+            phase: Phase::Preparing,
             ..Default::default()
         };
         self.start = Some(thread::spawn(move || {
@@ -77,7 +79,7 @@ impl Worker {
                 let core = trusted_core(&root, &version, &runtime, &cancel)?;
                 crate::platform::network::require_clear()?;
                 let config = crate::profile::config::build(&input.profile(), &root)?;
-                state.lock().unwrap().phase = "starting".into();
+                state.lock().unwrap().phase = Phase::Starting;
                 state.lock().unwrap().failure = Some(Failure::CoreStart);
                 runtime.start(
                     &StartSpec {
@@ -95,7 +97,7 @@ impl Worker {
                     if observation.ready() {
                         let mut s = state.lock().unwrap();
                         s.network = observation;
-                        s.phase = "running".into();
+                        s.phase = Phase::Running;
                         s.failure = None;
                         break;
                     }
@@ -120,13 +122,12 @@ impl Worker {
                 let clear = network::require_clear();
                 let mut s = state.lock().unwrap();
                 s.phase = if stopped.is_ok() && clear.is_ok() {
-                    "failed"
+                    Phase::Failed
                 } else {
-                    "cleanupRequired"
-                }
-                .into();
+                    Phase::CleanupRequired
+                };
                 s.error = Some(error);
-                if s.phase == "cleanupRequired" {
+                if s.phase == Phase::CleanupRequired {
                     s.failure = Some(Failure::Cleanup);
                 } else if s.failure.is_none() {
                     s.failure = Some(Failure::Preparation);
@@ -140,7 +141,7 @@ impl Worker {
         let result = self.stop_inner();
         if let Err(error) = &result {
             let mut state = self.state.lock().unwrap();
-            state.phase = "cleanupRequired".into();
+            state.phase = Phase::CleanupRequired;
             state.failure = Some(Failure::Cleanup);
             state.error = Some(error.clone());
         }
@@ -158,7 +159,7 @@ impl Worker {
         if let Some(thread) = self.start.take() {
             let _ = thread.join();
         }
-        self.state.lock().unwrap().phase = "stopping".into();
+        self.state.lock().unwrap().phase = Phase::Stopping;
         self.runtime.stop()?;
         network::recover(&self.root)?;
         let deadline = Instant::now() + Duration::from_secs(5);
@@ -172,7 +173,7 @@ impl Worker {
             }
             if Instant::now() >= deadline {
                 let mut s = self.state.lock().unwrap();
-                s.phase = "cleanupRequired".into();
+                s.phase = Phase::CleanupRequired;
                 s.network = observation;
                 return Err("TUN 接口仍未释放；不能启动第二套网络会话".into());
             }

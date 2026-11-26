@@ -23,10 +23,37 @@ pub(super) enum Request {
 pub struct Snapshot {
     pub runtime: RuntimeSnapshot,
     pub network: network::Observation,
-    pub phase: String,
+    pub phase: Phase,
     pub error: Option<String>,
     pub logs: Vec<Log>,
     pub failure: Option<Failure>,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Phase {
+    #[default]
+    Stopped,
+    Authorizing,
+    Preparing,
+    Starting,
+    Running,
+    Stopping,
+    Failed,
+    CleanupRequired,
+}
+impl Phase {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Stopped => "stopped",
+            Self::Authorizing => "authorizing",
+            Self::Preparing => "preparing",
+            Self::Starting => "starting",
+            Self::Running => "running",
+            Self::Stopping => "stopping",
+            Self::Failed => "failed",
+            Self::CleanupRequired => "cleanupRequired",
+        }
+    }
 }
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -41,7 +68,7 @@ impl Default for Snapshot {
         Self {
             runtime: Default::default(),
             network: Default::default(),
-            phase: "stopped".into(),
+            phase: Phase::Stopped,
             error: None,
             logs: vec![],
             failure: None,
@@ -81,7 +108,12 @@ pub(super) async fn exchange(
     channel: &mut authorization::Channel,
     request: &Request,
 ) -> Result<Snapshot, String> {
-    tokio::time::timeout(Duration::from_secs(20), async {
+    let budget = if matches!(request, Request::Stop | Request::Quit) {
+        Duration::from_secs(45)
+    } else {
+        Duration::from_secs(20)
+    };
+    tokio::time::timeout(budget, async {
         write(channel, request).await?;
         read(channel).await
     })
