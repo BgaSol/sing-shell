@@ -32,9 +32,9 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 - macOS 挂载 DMG及解包 app 归档；复制到可写位置后经官方 updater 更新，确认版本与配置。
 - 五个平台下载固定官方 sing-box 1.14.4，核对上游摘要，验证 SOCKS5 回环、启停和端口释放，以及生产用例驱动的受管准备/采用、架构/版本/配置检查和篡改拒绝；同源托管集成覆盖首次自动下载、更新、取消、一次回退及恢复。核心仅测试使用，不进入壳包。
 
-实际包同时验证已发布签名 v0.2.0 → 本版的原生 updater 和 schema 1/2→3 迁移，并验证本版→隔离高版本候选；旧版外部选择和关闭的核心更新偏好必须保留。
+实际包验证已发布签名 v0.2.0 / v0.3.0 / v0.4.0 → 本版的原生 updater 和旧 schema→4 迁移，并验证本版→隔离高版本候选；外部选择和关闭的核心更新偏好必须保留。
 
-夹具由 test-fixtures 限定，不发行，生产不提供测试源、公钥或任意安装路径入口。smoke 禁止生产调度，核对实际应用版本、目标、前端及 IPC；新包能启动不等于升级已通过。
+测试源、测试公钥及升级夹具由 test-fixtures 限定、不发行。生产包的隔离 smoke 入口只在显式参数/环境和已提权条件下执行同一网络 worker，不接受任意管理员核心或配置路径。普通 smoke 禁止生产调度，核对实际版本、目标、前端及 IPC；新包能启动不等于升级已通过。
 
 发行记录保留组件版本、原包源码、原始 run、Release 链接、实际通过/跳过范围，并将原始摘要报告迁入 `docs/releases/`，不能只依赖 30 天 Artifact。v0.1.0 无 updater，首个签名基线需手动安装，不以旧版手工覆盖作为在线更新验收。
 
@@ -43,3 +43,11 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 Windows 当前用户 Run 登记，保留 StartupApproved 的系统禁用状态。NSIS /UPDATE 保留登记；标准卸载只删除指向当前安装位置的 Sing Shell 值。Linux 登记 XDG autostart，DEB 使用稳定程序位置，AppImage 使用外层 APPIMAGE。macOS 13+ 使用 SMAppService.mainApp，较早系统使用无 KeepAlive 的私有 LaunchAgent；完整 bundle、安装位置与图标均需核对。macOS 新直接依赖仅为已有 Tauri 绑定 objc2 / objc2-foundation，复用其锁定版本。
 
 移动程序后需重新登记。macOS/AppImage 直接删除没有可靠卸载回调，删除前请先关闭登录自启。真实注销/登录及系统审批不能由包启动、模拟参数或状态快照替代。
+
+## TUN 资源与授权边界
+
+Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统 pkexec/polkit。macOS app 包含 `Contents/Library/LaunchDaemons/com.bgasol.singshell.network.plist`，BundleProgram 指向同一签名程序的受限 daemon 入口，采用 SMAppService 与 socket activation。TUN 仅 macOS 13+；未提供 Developer ID 或公证，允许/激活不能仅凭注册 API 成功声称通过。
+
+每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL COPYING 与 NOTICE；下载的核心不进入应用包。
+
+卸载前停止连接并真正退出；macOS 在系统设置关闭网络 helper 后再删除 app。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。

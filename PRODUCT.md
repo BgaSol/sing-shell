@@ -28,7 +28,7 @@ Windows x86_64/ARM64、Linux x86_64/ARM64、macOS Apple Silicon。macOS 受控 T
 
 ## Evidence on Hand
 
-产品需求和已批准的实施范围见 docs/plans/nodes-tun-routing.md；现有正式功能以 docs/features/ 为准。计划中的功能不能被呈现为已经验收。
+产品行为见 docs/features/nodes.md、routing.md 和 core.md；实际平台验证及跳过范围以 docs/releases/ 的对应发行记录为准。
 
 ## Product Principles
 

@@ -1,6 +1,8 @@
 # 文档
 
 - [首次使用](usage.md)
+- [节点管理](features/nodes.md)：协议支持、预览提交、选择与数据保护
+- [分流](features/routing.md)：域名/IP/站点优先级、DNS 与规则更新
 - [核心与配置](features/core.md)：导入、校验、启停、日志及失败处理
 - [桌面与启动](features/desktop.md)：托盘、窗口、登录自启、核心恢复与退出
 - [软件更新](features/updates.md)：自动检查、下载网络、签名安装和受管核心
@@ -9,6 +11,7 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [v0.5.0 发行记录](releases/v0.5.0.md)：节点、TUN、分流与平台验收边界
 - [v0.4.0 发行记录](releases/v0.4.0.md)：托盘、登录自启、核心恢复及本次验收
 - [v0.4.0 验证证据](releases/v0.4.0-verification.json)：固定来源、原生目标、包摘要和跳过范围
 - [v0.3.0 发行记录](releases/v0.3.0.md)：核心自动安装、更新和本次验收
