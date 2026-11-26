@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/network-preflight.yml
       - scripts/network-preflight.mjs
+      - scripts/macos-service-preflight.mjs
+      - scripts/macos-service-preflight.swift
 permissions:
   contents: read
 concurrency:
@@ -41,6 +43,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SING_SHELL_NETWORK_PREFLIGHT: '1'
         run: node scripts/network-preflight.mjs ${{ matrix.target }}
+      - name: macOS native helper registration
+        if: runner.os == 'macOS'
+        env:
+          SING_SHELL_NETWORK_PREFLIGHT: '1'
+        run: node scripts/macos-service-preflight.mjs
       - name: Native privileged TUN preflight (Unix)
         if: runner.os != 'Windows'
         env:

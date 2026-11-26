@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync, spawnSync} from 'node:child_process';
+
+assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT, '1');
+assert.equal(process.platform, 'darwin');
+const directory = path.resolve('artifacts/network-preflight/aarch64-apple-darwin');
+fs.mkdirSync(directory, {recursive: true});
+const bundle = '/Applications/Sing Shell Network Preflight.app';
+assert.equal(fs.existsSync(bundle), false, 'refuse to overwrite an existing application');
+const contents = path.join(bundle, 'Contents');
+fs.mkdirSync(path.join(contents, 'MacOS'), {recursive: true});
+fs.mkdirSync(path.join(contents, 'Library/LaunchDaemons'), {recursive: true});
+const executable = path.join(contents, 'MacOS/network-service-probe');
+const marker = path.join(directory, 'service-worker.json');
+const plist = value => `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0">${value}</plist>`;
+fs.writeFileSync(path.join(contents, 'Info.plist'), plist('<dict><key>CFBundleIdentifier</key><string>com.bgasol.singshell.preflight</string><key>CFBundleExecutable</key><string>network-service-probe</string><key>CFBundleName</key><string>Sing Shell Network Preflight</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string></dict>'));
+fs.writeFileSync(path.join(contents, 'Library/LaunchDaemons/com.bgasol.singshell.preflight.plist'), plist(`<dict><key>Label</key><string>com.bgasol.singshell.preflight</string><key>BundleProgram</key><string>Contents/MacOS/network-service-probe</string><key>ProgramArguments</key><array><string>network-service-probe</string><string>--helper</string><string>${marker}</string></array><key>RunAtLoad</key><true/></dict>`));
+execFileSync('swiftc', ['scripts/macos-service-preflight.swift', '-o', executable]);
+execFileSync('codesign', ['--force', '--sign', '-', bundle]);
+const result = spawnSync(executable, [marker], {encoding: 'utf8', timeout: 30_000});
+fs.writeFileSync(path.join(directory, 'service-report.json'), result.stdout || JSON.stringify({error: String(result.error), stderr: result.stderr}));
+console.log(result.stdout);
+if (result.stderr) console.error(result.stderr);
+assert.equal(result.status, 0, 'SMAppService registration must work with the actual signing configuration');
