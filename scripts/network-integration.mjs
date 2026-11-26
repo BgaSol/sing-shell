@@ -3,11 +3,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import net from 'node:net';
 import dgram from 'node:dgram';
+import os from 'node:os';
 import {spawn} from 'node:child_process';
 
 assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT,'1','disposable native runner only');
-const target=process.argv[2],directory=path.resolve('artifacts/network-preflight',target),control=path.join(directory,'integration-control');
-await fs.mkdir(control,{recursive:true});
+const target=process.argv[2],directory=path.resolve('artifacts/network-preflight',target),control=await fs.mkdtemp(path.join(os.tmpdir(),'ss-net-'));
 const suffix=process.platform==='win32'?'.exe':'';
 const executable=path.resolve(`src-tauri/target/release/network-fixture${suffix}`);
 const core=path.join(directory,`sing-box-1.14.4-${process.platform==='win32'?'windows':process.platform==='darwin'?'darwin':'linux'}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${suffix}`);

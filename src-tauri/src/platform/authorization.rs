@@ -279,14 +279,26 @@ mod native {
     }
     #[cfg(any(target_os = "linux", feature = "test-fixtures"))]
     pub async fn direct_connect(root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
-        let directory = root.join("network-control");
-        crate::private_files::directory(&directory)?;
-        let endpoint = directory.join(format!("{}.sock", nonce()?));
+        let _ = root;
+        use std::os::unix::fs::DirBuilderExt;
+        let directory = PathBuf::from("/tmp").join(format!(
+            "ssn-{}-{}",
+            unsafe { libc::geteuid() },
+            &nonce()?[..16]
+        ));
+        std::fs::DirBuilder::new()
+            .mode(0o700)
+            .create(&directory)
+            .map_err(|e| e.to_string())?;
+        let endpoint = directory.join("control.sock");
         let listener = tokio::net::UnixListener::bind(&endpoint).map_err(|e| e.to_string())?;
         struct Cleanup(PathBuf);
         impl Drop for Cleanup {
             fn drop(&mut self) {
                 let _ = std::fs::remove_file(&self.0);
+                if let Some(parent) = self.0.parent() {
+                    let _ = std::fs::remove_dir(parent);
+                }
             }
         }
         let _cleanup = Cleanup(endpoint.clone());
@@ -387,6 +399,16 @@ mod native {
 #[cfg(target_os = "macos")]
 pub use native::daemon;
 pub use native::{connect, elevated, protected_root, worker};
+pub fn can_resume() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        macos::already_allowed()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        false
+    }
+}
 pub fn prepare_root() -> Result<PathBuf, String> {
     let root = protected_root()?;
     if let Some(parent) = root.parent() {
@@ -493,6 +515,18 @@ mod macos {
     #[link(name = "ServiceManagement", kind = "framework")]
     extern "C" {}
     pub const SOCKET: &str = "/var/run/com.bgasol.singshell.network.sock";
+    pub fn already_allowed() -> bool {
+        autoreleasepool(|_| {
+            let Some(class) = AnyClass::get(c"SMAppService") else {
+                return false;
+            };
+            let name = NSString::from_str("com.bgasol.singshell.network.plist");
+            let service: Retained<AnyObject> =
+                unsafe { msg_send![class,daemonServiceWithPlistName:&*name] };
+            let status: usize = unsafe { msg_send![&*service, status] };
+            status == 1
+        })
+    }
     pub fn ensure_registered() -> Result<(), String> {
         autoreleasepool(|_| {
             let class = AnyClass::get(c"SMAppService")

@@ -568,7 +568,10 @@ impl SessionService {
         let s = self.store.snapshot();
         let fail = if !s.startup.restore_core_on_launch || !s.startup.resume_core {
             Some("自动恢复已取消".into())
-        } else if s.profile.mode == crate::profile::Mode::Generated {
+        } else if s.profile.mode == crate::profile::Mode::Generated
+            && (!crate::platform::authorization::can_resume()
+                || s.startup.last_connection.is_none())
+        {
             Some("TUN 自动恢复需要手动确认系统授权，请点击启动；不会在后台反复请求权限".into())
         } else if s.config_path.is_none() && s.pending_config_path.is_none() {
             Some("自动恢复失败：请先导入配置".into())
@@ -601,7 +604,13 @@ impl SessionService {
         drop(i);
         let core = self.clone();
         tauri::async_runtime::spawn_blocking(move || {
-            if let Err(e) = core.start_owned(&op) {
+            let s = core.store.snapshot();
+            let result = if s.profile.mode == crate::profile::Mode::Generated {
+                core.start_tunnel_owned(&op, s.startup.last_connection)
+            } else {
+                core.start_owned(&op)
+            };
+            if let Err(e) = result {
                 core.runtime.report(format!("自动恢复失败：{e}"));
             }
             let mut i = core.intent.lock().unwrap();

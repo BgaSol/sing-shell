@@ -41,7 +41,7 @@
           <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
           <button id="choose-config" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-import"/></svg>导入配置</button>
         </div>
-        <p class="hint">配置会保留在原位置。启动前自动校验；关闭窗口后核心继续运行，退出应用才会停止。</p>
+        <p id="runtime-hint" class="hint">启动前自动校验；关闭窗口后继续运行，退出应用才会停止并释放网络。</p>
         <div class="actions">
           <button id="start" class="primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg>启动 sing-box</button>
           <button id="stop" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-stop"/></svg>停止</button>
