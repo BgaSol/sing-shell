@@ -63,6 +63,15 @@ pub struct Snapshot {
     pub phase: String,
     pub error: Option<String>,
     pub logs: Vec<Log>,
+    pub failure: Option<Failure>,
+}
+#[derive(Clone, Copy, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Failure {
+    Preparation,
+    CoreStart,
+    Network,
+    Cleanup,
 }
 impl Default for Snapshot {
     fn default() -> Self {
@@ -72,6 +81,7 @@ impl Default for Snapshot {
             phase: "stopped".into(),
             error: None,
             logs: vec![],
+            failure: None,
         }
     }
 }
@@ -361,6 +371,7 @@ impl Worker {
                 crate::platform::network::require_clear()?;
                 let config = crate::profile::config::build(&input.profile(), &root)?;
                 state.lock().unwrap().phase = "starting".into();
+                state.lock().unwrap().failure = Some(Failure::CoreStart);
                 runtime.start(
                     &StartSpec {
                         executable: core,
@@ -369,6 +380,7 @@ impl Worker {
                     },
                     cancel.clone(),
                 )?;
+                state.lock().unwrap().failure = Some(Failure::Network);
                 let deadline = Instant::now() + Duration::from_secs(12);
                 loop {
                     crate::core::package::cancelled(&cancel)?;
@@ -377,6 +389,7 @@ impl Worker {
                         let mut s = state.lock().unwrap();
                         s.network = observation;
                         s.phase = "running".into();
+                        s.failure = None;
                         break;
                     }
                     if runtime.snapshot().pid.is_none() {
@@ -400,6 +413,11 @@ impl Worker {
                 }
                 .into();
                 s.error = Some(error);
+                if s.phase == "cleanupRequired" {
+                    s.failure = Some(Failure::Cleanup);
+                } else if s.failure.is_none() {
+                    s.failure = Some(Failure::Preparation);
+                }
                 s.network = network::observe().unwrap_or_default();
             }
         }));

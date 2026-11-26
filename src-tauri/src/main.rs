@@ -464,6 +464,10 @@ fn request_exit(handle: tauri::AppHandle, app: State<App>) -> Result<(), String>
     lifecycle::request(app.inner().clone(), handle, lifecycle::Target::Quit)
 }
 #[tauri::command]
+fn open_network_settings() -> Result<(), String> {
+    sing_shell::session::open_network_settings()
+}
+#[tauri::command]
 fn open_update_release(component: Component, handle: tauri::AppHandle) -> Result<(), String> {
     let repository = if component == Component::App {
         "BgaSol/sing-shell"
@@ -611,6 +615,7 @@ fn main() {
             builtin_mirrors,
             request_restart,
             request_exit,
+            open_network_settings,
             set_update_draft_dirty,
             open_update_release,
             profile_import_preview,

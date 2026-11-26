@@ -50,6 +50,17 @@ pub struct CoreService {
     pub(crate) restore_safe: AtomicBool,
 }
 impl CoreService {
+    fn config_for(&self, s: &settings::Settings) -> Result<Option<std::path::PathBuf>, String> {
+        if s.profile.mode == crate::profile::Mode::Generated {
+            if s.profile.selected().is_none() {
+                Ok(None)
+            } else {
+                crate::profile::config::build(&s.profile, &self.store.root).map(|c| Some(c.path))
+            }
+        } else {
+            Ok(s.config_path.clone())
+        }
+    }
     pub fn new(
         store: Arc<SettingsStore>,
         runtime: Arc<RuntimeService>,
@@ -182,7 +193,7 @@ impl CoreService {
     }
     fn compatible(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
         self.verify(reference, cancel)?;
-        if let Some(config) = self.store.snapshot().config_path {
+        if let Some(config) = self.config_for(&self.store.snapshot())? {
             self.runtime.validate(
                 &settings::managed_path(&self.store.root, reference)?,
                 &config,
@@ -303,7 +314,7 @@ impl CoreService {
             return Ok(false);
         };
         self.verify(&previous, cancel)?;
-        if let Some(config) = &s.config_path {
+        if let Some(config) = self.config_for(&s)?.as_ref() {
             self.runtime.validate(
                 &settings::managed_path(&self.store.root, &previous)?,
                 config,
@@ -360,7 +371,7 @@ impl CoreService {
         let s = self.store.snapshot();
         if let Some(reference) = &s.managed.active {
             if self.verify(reference, &op.cancel).is_ok() {
-                if let Some(config) = &s.config_path {
+                if let Some(config) = self.config_for(&s)?.as_ref() {
                     self.runtime.validate(
                         &settings::managed_path(&self.store.root, reference)?,
                         config,
@@ -653,7 +664,19 @@ impl CoreService {
         let program = if staged.exists() { &staged } else { &installed };
         package::owned(&self.store.root, program)?;
         package::verify_path(&self.runtime, &p.reference, program, &op.cancel)?;
-        let config = s.config_path.clone();
+        if s.profile.mode == crate::profile::Mode::Generated
+            && s.profile.selected().is_some()
+            && (settings::stable(&p.reference.version)? < semver::Version::new(1, 14, 4)
+                || settings::stable(&p.reference.version)? >= semver::Version::new(1, 15, 0))
+        {
+            self.block(
+                &p,
+                FailureStage::Compatibility,
+                "此核心版本尚未验证受控 TUN，保留现有版本".into(),
+            )?;
+            return Err("此核心版本尚未验证受控 TUN，保留现有版本".into());
+        }
+        let config = self.config_for(&s)?;
         let mut config_hash = None;
         if s.managed.active.is_some() || !s.managed() {
             if let Some(config) = &config {

@@ -78,6 +78,7 @@
         <section aria-labelledby="startup-title">
           <h2 id="startup-title"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg>启动与窗口</h2>
           <label for="profile-mode">运行方式</label><select id="profile-mode"><option value="generated">节点与 TUN（推荐）</option><option value="externalConfig">原始 sing-box 配置</option></select><p class="hint">切换前需要停止连接。原始配置的网络行为由配置文件决定。</p>
+          <button id="network-permission" type="button" hidden>打开 macOS 网络 helper 授权设置</button>
           <label><input id="login-startup" type="checkbox" disabled aria-describedby="login-status" /> 登录后自动启动应用</label>
           <p id="login-status" role="status">正在读取系统登录项…</p>
           <label><input id="restore-core" type="checkbox" disabled aria-describedby="restore-hint" /> 应用启动时恢复核心运行状态</label>

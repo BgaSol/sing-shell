@@ -6,6 +6,9 @@ use crate::{
     settings::{self, SettingsStore, Trial},
 };
 pub mod tunnel;
+pub fn open_network_settings() -> Result<(), String> {
+    crate::platform::authorization::open_settings()
+}
 use serde::{Deserialize, Serialize};
 use std::{
     path::Path,
@@ -315,6 +318,11 @@ impl SessionService {
         input: Option<tunnel::Connection>,
     ) -> Result<(), String> {
         self.ensure_stopped()?;
+        if input.is_none() {
+            if let Err(error) = self.engine.adopt_owned(op) {
+                self.engine.managed.error(error);
+            }
+        }
         let epoch = self.intent.lock().unwrap().epoch;
         let s = self.store.snapshot();
         if !s.managed() {
@@ -337,11 +345,43 @@ impl SessionService {
         )?;
         self.runtime.clear_error();
         self.runtime.network_owned(true);
+        let expected = if s.managed.trial.is_some() {
+            self.store
+                .core(s.core_revision, |settings| {
+                    settings.managed.trial = Some(Trial::Starting);
+                    Ok(())
+                })?
+                .core_revision
+        } else {
+            s.core_revision
+        };
         if let Err(error) = self.tunnel.start(input.clone(), version, &op.cancel) {
             if self.tunnel.snapshot().runtime.pid.is_none()
                 && self.tunnel.snapshot().phase != "cleanupRequired"
             {
                 self.runtime.network_owned(false);
+            }
+            if s.managed.trial.is_some()
+                && self.tunnel.snapshot().failure == Some(tunnel::Failure::CoreStart)
+                && !op.cancel.load(Ordering::Acquire)
+                && !self.gate.closing()
+            {
+                self.tunnel.stop()?;
+                self.runtime.network_owned(false);
+                if self.engine.rollback(&error, &op.cancel)? {
+                    return self
+                        .start_tunnel_owned(op, Some(input))
+                        .map_err(|previous| {
+                            format!("新核心失败：{error}；上一核心失败：{previous}")
+                        });
+                }
+            }
+            if s.managed.trial.is_some() && self.tunnel.snapshot().runtime.pid.is_none() {
+                let current = self.store.snapshot();
+                let _ = self.store.core(current.core_revision, |settings| {
+                    settings.managed.trial = Some(Trial::AwaitingStart);
+                    Ok(())
+                });
             }
             return Err(error);
         }
@@ -351,9 +391,7 @@ impl SessionService {
             self.tunnel.stop()?;
             return Err("TUN 启动已取消".into());
         }
-        let result = self
-            .store
-            .confirm_connection(s.core_revision, Some(input.clone()));
+        let result = self.store.confirm_connection(expected, Some(input.clone()));
         drop(intent);
         if let Err(error) = result {
             let cleanup = self.tunnel.stop();

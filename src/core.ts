@@ -45,4 +45,5 @@ export const core = {
   profileRouting:(routing:Routing,expectedRevision:number)=>invoke<ProfileSnapshot>('profile_set_routing',{routing,expectedRevision}),
   profileMode:(mode:Profile['mode'],expectedRevision:number)=>invoke<ProfileSnapshot>('profile_mode',{mode,expectedRevision}),
   profileUpdateRules:(expectedRevision:number)=>invoke<ProfileSnapshot>('profile_update_rules',{expectedRevision}),
+  networkSettings:()=>invoke('open_network_settings'),
 };

@@ -409,6 +409,16 @@ pub fn can_resume() -> bool {
         false
     }
 }
+pub fn open_settings() -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        macos::open_settings()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Err("请在连接时完成系统网络授权；Linux 需要 polkit 授权代理".into())
+    }
+}
 pub fn prepare_root() -> Result<PathBuf, String> {
     let root = protected_root()?;
     if let Some(parent) = root.parent() {
@@ -515,6 +525,13 @@ mod macos {
     #[link(name = "ServiceManagement", kind = "framework")]
     extern "C" {}
     pub const SOCKET: &str = "/var/run/com.bgasol.singshell.network.sock";
+    pub fn open_settings() -> Result<(), String> {
+        let class = AnyClass::get(c"SMAppService").ok_or("当前系统不支持此授权设置")?;
+        unsafe {
+            let _: () = msg_send![class, openSystemSettingsLoginItems];
+        }
+        Ok(())
+    }
     pub fn already_allowed() -> bool {
         autoreleasepool(|_| {
             let Some(class) = AnyClass::get(c"SMAppService") else {

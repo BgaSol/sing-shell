@@ -104,7 +104,7 @@ try {
   child.stdout.on('data', bytes => { output = (output + bytes).slice(-65536); });
   child.stderr.on('data', bytes => { output = (output + bytes).slice(-65536); });
   child.on('error', e => { output += String(e); });
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 60_000;
   while (!interfacePresent()) {
     assert.ok(child.exitCode === null, `core exited before TUN became ready: ${output}`);
     assert.ok(Date.now() < deadline, `TUN interface timeout: ${output}`);

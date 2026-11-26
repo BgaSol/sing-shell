@@ -83,3 +83,62 @@ fn official_core_checks_every_supported_protocol_and_site_assets() {
     }
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn imports_are_atomic_replay_safe_and_public_settings_hide_credentials() {
+    let root = directory();
+    let store =
+        std::sync::Arc::new(sing_shell::settings::SettingsStore::open(root.clone()).unwrap());
+    let gate = std::sync::Arc::new(sing_shell::app::Admission::default());
+    let runtime = std::sync::Arc::new(sing_shell::runtime::RuntimeService::default());
+    let service = profile::service::Service::new(store.clone(), gate.clone(), runtime);
+    let preview = service
+        .preview("trojan://private-test-password@example.com:443#first")
+        .unwrap();
+    service.commit(preview.ticket, 0).unwrap();
+    assert!(service.commit(preview.ticket, 1).is_err());
+    let first = service.snapshot();
+    assert_eq!(first.profile.nodes.len(), 1);
+    let id = first.profile.nodes[0].id.clone();
+    let second = service
+        .preview("trojan://another-password@example.com:443#second")
+        .unwrap();
+    assert!(service.commit(second.ticket, 0).is_err());
+    service.commit(second.ticket, 1).unwrap();
+    let second = service.snapshot();
+    assert_ne!(id, second.profile.nodes[1].id);
+    assert!(service.select("missing".into(), 2).is_err());
+    assert_eq!(store.snapshot().profile_revision, 2);
+    assert!(!store
+        .snapshot()
+        .public()
+        .to_string()
+        .contains("private-test-password"));
+    assert!(!serde_json::to_string(&second)
+        .unwrap()
+        .contains("another-password"));
+    service.select(id, 2).unwrap();
+    store
+        .confirm_connection(
+            0,
+            Some(sing_shell::session::tunnel::Connection {
+                node: store.snapshot().profile.selected().unwrap().clone(),
+                routing: Default::default(),
+                rule_commit: sing_shell::rulesets::bundled_commit(),
+            }),
+        )
+        .unwrap();
+    assert!(!store
+        .snapshot()
+        .public()
+        .to_string()
+        .contains("private-test-password"));
+    service
+        .delete(first.profile.nodes[0].id.clone(), 3)
+        .unwrap();
+    assert!(!store.snapshot().startup.resume_core);
+    assert!(store.snapshot().startup.last_connection.is_none());
+    drop(service);
+    drop(store);
+    fs::remove_dir_all(root).unwrap();
+}
