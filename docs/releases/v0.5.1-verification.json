@@ -1,0 +1,3220 @@
+{
+  "version": "0.5.1",
+  "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+  "checkRun": "https://github.com/BgaSol/sing-shell/actions/runs/45774384755",
+  "mainCheckRun": "https://github.com/BgaSol/sing-shell/actions/runs/45775207398",
+  "packageRun": "https://github.com/BgaSol/sing-shell/actions/runs/45774387070",
+  "verificationRun": "https://github.com/BgaSol/sing-shell/actions/runs/45774387070",
+  "release": "https://github.com/BgaSol/sing-shell/releases/tag/v0.5.1",
+  "passed": true,
+  "targets": [
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "aarch64-apple-darwin"
+  ],
+  "reports": [
+    {
+      "version": "0.5.1",
+      "target": "x86_64-pc-windows-msvc",
+      "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "toolSource": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "run": "45774387070",
+      "verificationRun": "45774387070",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "x64",
+        "release": "10.0.26100"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.1_x64-setup.exe",
+          "role": "nsis",
+          "size": 4385970,
+          "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS installed application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS update preserves login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-amd64.zip",
+        "sha256": "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4385970,
+              "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4385970,
+              "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4385970,
+              "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4385970,
+              "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ],
+        "log": "\u001b[31mERROR\u001b[0m[0007] [\u001b[38;5;104m892537432\u001b[0m 1.38s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n\u001b[31mERROR\u001b[0m[0010] [\u001b[38;5;133m4110058357\u001b[0m 1.34s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n"
+      },
+      "upgrade": {
+        "from": "0.5.1",
+        "to": "0.5.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.2_x64-setup.exe",
+            "role": "nsis",
+            "size": 4382945,
+            "sha256": "73198a265e905a384313add53a56163eeb58edb0765350749ffd0012cf09f8d1"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_x64-setup.exe.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "b6eb3cc39a3899e6067fe345fb01a7a7cc130e08388643316edfbd37a0d5a80e"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 8184,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-eI7cx3\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 9344,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-D9Fz26\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-CDm4GI\\sing-box-1.14.4-windows-amd64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-pc-windows-msvc",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        }
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "target": "aarch64-pc-windows-msvc",
+      "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "toolSource": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "run": "45774387070",
+      "verificationRun": "45774387070",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "arm64",
+        "release": "10.0.26200"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+          "role": "nsis",
+          "size": 3896977,
+          "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual NSIS installed application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS update preserves login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI",
+        "tray host unavailable: visible foreground fallback verified"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-arm64.zip",
+        "sha256": "8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3896977,
+              "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3896977,
+              "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3896977,
+              "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 3896977,
+              "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ],
+        "log": "\u001b[31mERROR\u001b[0m[0010] [\u001b[38;5;100m949272148\u001b[0m 1.61s] connection: open connection to 1.1.1.1:443 using outbound/direct[echo]: dial tcp 1.1.1.1:443: connectex: An established connection was aborted by the software in your host machine.\n"
+      },
+      "upgrade": {
+        "from": "0.5.1",
+        "to": "0.5.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.2_arm64-setup.exe",
+            "role": "nsis",
+            "size": 3895530,
+            "sha256": "1953bbc196dc04de12c7271f2e272c383d21b1bf443b067fe6d2ed7ea1fd656a"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_arm64-setup.exe.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "78e9e56d7d0680d346131479b7eba856dd376957956a13b95664c2bd08bf525a"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 5612,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-sG5w4a\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": true,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 2776,
+          "settings": {
+            "configPath": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-smoke-NorrEp\\running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\sing-shell-package-gTvNF6\\sing-box-1.14.4-windows-arm64\\sing-box.exe"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-pc-windows-msvc",
+          "trayAvailable": false,
+          "version": "0.5.1"
+        }
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "target": "x86_64-unknown-linux-gnu",
+      "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "toolSource": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "run": "45774387070",
+      "verificationRun": "45774387070",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-1073-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.1_amd64.deb",
+          "role": "deb",
+          "size": 7110572,
+          "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_amd64.AppImage",
+          "role": "appimage",
+          "size": 85248504,
+          "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-amd64.tar.gz",
+        "sha256": "699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb",
+              "role": "deb",
+              "size": 7110572,
+              "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85248504,
+              "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb",
+              "role": "deb",
+              "size": 7110572,
+              "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85248504,
+              "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb",
+              "role": "deb",
+              "size": 7110572,
+              "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85248504,
+              "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb",
+              "role": "deb",
+              "size": 7110572,
+              "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85248504,
+              "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.5.1",
+        "to": "0.5.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.2_amd64.deb",
+            "role": "deb",
+            "size": 7110580,
+            "sha256": "33a65095ea8e795b4d4013ad6c5ec58656307c5bc23aa4a274f7486f7cc8a394"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_amd64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "db563a7e7ef2fefd973ca8d5cb8dfcdc9e05eec9e7436de1d17f2af1a56938b1"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_amd64.AppImage",
+            "role": "appimage",
+            "size": 85248504,
+            "sha256": "d3c99129ff460789cda12c95f9f1e75b66930b647e1543673a0b669115938674"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_amd64.AppImage.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "3724ecdae5a8a16eb40a5a9c4f2a14c6436cc8a339193ceae346dc41bcfd9049"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "x86_64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        }
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "target": "aarch64-unknown-linux-gnu",
+      "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "toolSource": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "run": "45774387070",
+      "verificationRun": "45774387070",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "arm64",
+        "release": "6.8.0-1070-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.1_arm64.deb",
+          "role": "deb",
+          "size": 6720582,
+          "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+          "role": "appimage",
+          "size": 82946568,
+          "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-arm64.tar.gz",
+        "sha256": "436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb",
+              "role": "deb",
+              "size": 6720582,
+              "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82946568,
+              "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb",
+              "role": "deb",
+              "size": 6720582,
+              "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82946568,
+              "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb",
+              "role": "deb",
+              "size": 6720582,
+              "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82946568,
+              "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb",
+              "role": "deb",
+              "size": 6720582,
+              "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 82946568,
+              "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.5.1",
+        "to": "0.5.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.2_arm64.deb",
+            "role": "deb",
+            "size": 6720590,
+            "sha256": "f7bd7dce39dc998f6a7f78092a71c7cacbeffaf984536e0f6a614bd00c96a3b7"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_arm64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "7d80a9e385f746ae5148f245c72a9947c0528cced9ce9b38310a5297886f9c3a"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_aarch64.AppImage",
+            "role": "appimage",
+            "size": 82946568,
+            "sha256": "e91b5c9d6625aead31ce7d6f25f957db97d99efa9e396f962c46bac49630e2d5"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_aarch64.AppImage.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "00d668e76a5d9e57f5038d5c558fb8fa42b2ccd71ba9078b1d60e7694fe5945c"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-unknown-linux-gnu",
+          "trayAvailable": true,
+          "version": "0.5.2"
+        }
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "target": "aarch64-apple-darwin",
+      "source": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "toolSource": "259ecce53f94c92f35b4d3e5e82b5eb082cbfc8f",
+      "run": "45774387070",
+      "verificationRun": "45774387070",
+      "nativeHost": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "25.6.0"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.5.1_aarch64.dmg",
+          "role": "dmg",
+          "size": 5825413,
+          "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+          "role": "app",
+          "size": 5941837,
+          "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51"
+        },
+        {
+          "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+          "role": "signature",
+          "size": 428,
+          "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.2.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.3.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.4.0 upgrades to this release with schema migration and external selection preserved",
+        "signed baseline starts with migrated legacy settings",
+        "existing VLESS credentials, TLS, transport, selection and routing preserved from 0.5.0",
+        "official updater installs the higher signed candidate; actual version and user settings confirmed",
+        "published signed v0.5.0 upgrades to this release with schema migration and external selection preserved",
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive executable: native architecture, WebView, IPC and exit",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "installed resources include checked SRS, editable rule sources and complete upstream GPL notices",
+        "actual macOS app bundle: privileged worker, encrypted IPv4/IPv6 TCP/UDP and TUN cleanup; launchd approval separately scoped",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS launchd activation after user approval",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      },
+      "previousUpgrades": [
+        {
+          "from": "0.2.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 5825413,
+              "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5941837,
+              "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37"
+            }
+          ]
+        },
+        {
+          "from": "0.3.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 5825413,
+              "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5941837,
+              "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37"
+            }
+          ]
+        },
+        {
+          "from": "0.4.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 5825413,
+              "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5941837,
+              "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37"
+            }
+          ]
+        },
+        {
+          "from": "0.5.0",
+          "to": "0.5.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "settingsPreserved": true,
+          "nodePreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 5825413,
+              "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 5941837,
+              "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51"
+            },
+            {
+              "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS launchd activation after user approval",
+          "suspend and physical network switching"
+        ],
+        "log": "sed: close tcp 172.19.0.1:55404->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;190m818450350\u001b[0m 317ms] connection: connection upload closed: close tcp 172.19.0.1:55401->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;135m1279308407\u001b[0m 318ms] connection: connection upload closed: close tcp 172.19.0.1:55400->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;30m1421055502\u001b[0m 319ms] connection: connection upload closed: close tcp 172.19.0.1:55397->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m3356754691\u001b[0m 320ms] connection: connection upload closed: close tcp 172.19.0.1:55396->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;155m3526386315\u001b[0m 373ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;137m2604228729\u001b[0m 322ms] connection: connection upload closed: close tcp 172.19.0.1:55393->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;77m2535519037\u001b[0m 322ms] connection: connection upload closed: close tcp 172.19.0.1:55392->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;229m2241365205\u001b[0m 323ms] connection: connection upload closed: close tcp 172.19.0.1:55389->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;154m90247757\u001b[0m 324ms] connection: connection upload closed: close tcp 172.19.0.1:55387->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;139m661623675\u001b[0m 327ms] connection: connection upload closed: close tcp 172.19.0.1:55385->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;120m1715274344\u001b[0m 327ms] connection: connection upload closed: close tcp 172.19.0.1:55384->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;132m693579636\u001b[0m 332ms] connection: connection upload closed: close tcp 172.19.0.1:55381->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;177m297112225\u001b[0m 333ms] connection: connection upload closed: close tcp 172.19.0.1:55380->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;158m1580518217\u001b[0m 334ms] connection: connection upload closed: close tcp 172.19.0.1:55377->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;178m2603032738\u001b[0m 335ms] connection: connection upload closed: close tcp 172.19.0.1:55375->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;32m1462577936\u001b[0m 343ms] connection: connection upload closed: close tcp 172.19.0.1:55357->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;224m865154512\u001b[0m 337ms] connection: connection upload closed: close tcp 172.19.0.1:55371->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;210m353627842\u001b[0m 338ms] connection: connection upload closed: close tcp 172.19.0.1:55369->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;144m3061827712\u001b[0m 339ms] connection: connection upload closed: close tcp 172.19.0.1:55367->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;51m202281908\u001b[0m 340ms] connection: connection upload closed: close tcp 172.19.0.1:55365->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;44m1339224348\u001b[0m 341ms] connection: connection upload closed: close tcp 172.19.0.1:55364->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;35m1440476947\u001b[0m 342ms] connection: connection upload closed: close tcp 172.19.0.1:55361->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;227m3306572804\u001b[0m 342ms] connection: connection upload closed: close tcp 172.19.0.1:55360->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;109m3733548637\u001b[0m 336ms] connection: connection upload closed: close tcp 172.19.0.1:55373->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;41m1167361305\u001b[0m 344ms] connection: connection upload closed: close tcp 172.19.0.1:55355->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;104m2801615448\u001b[0m 346ms] connection: connection upload closed: close tcp 172.19.0.1:55352->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;189m3930005677\u001b[0m 346ms] connection: connection upload closed: close tcp 172.19.0.1:55353->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;31m3194754319\u001b[0m 349ms] connection: connection upload closed: close tcp 172.19.0.1:55349->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;203m4136997051\u001b[0m 349ms] connection: connection upload closed: close tcp 172.19.0.1:55348->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;122m3084155757\u001b[0m 355ms] connection: connection upload closed: close tcp 172.19.0.1:55345->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;77m2653163581\u001b[0m 354ms] connection: connection upload closed: close tcp 172.19.0.1:55344->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;199m1157859767\u001b[0m 357ms] connection: connection upload closed: close tcp 172.19.0.1:55341->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;211m80780739\u001b[0m 357ms] connection: connection upload closed: close tcp 172.19.0.1:55340->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;189m739040941\u001b[0m 359ms] connection: connection upload closed: close tcp 172.19.0.1:55337->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;84m600053060\u001b[0m 360ms] connection: connection upload closed: close tcp 172.19.0.1:55336->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;50m2843638306\u001b[0m 364ms] connection: connection upload closed: close tcp 172.19.0.1:55332->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;137m53182329\u001b[0m 364ms] connection: connection upload closed: close tcp 172.19.0.1:55333->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;32m3288011239\u001b[0m 367ms] connection: connection upload closed: close tcp 172.19.0.1:55328->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;146m1152837762\u001b[0m 367ms] connection: connection upload closed: close tcp 172.19.0.1:55329->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;224m559561936\u001b[0m 368ms] connection: connection upload closed: close tcp 172.19.0.1:55325->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;118m2176577137\u001b[0m 197ms] connection: connection upload closed: close tcp 172.19.0.1:55574->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;132m3758963316\u001b[0m 197ms] connection: connection upload closed: close tcp 172.19.0.1:55573->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;118m2260392806\u001b[0m 67ms] connection: connection upload closed: close tcp 172.19.0.1:55702->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;225m2039469265\u001b[0m 71ms] connection: connection upload closed: close tcp 172.19.0.1:55699->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;231m416166912\u001b[0m 205ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;222m1766783438\u001b[0m 44ms] connection: connection upload closed: close tcp 172.19.0.1:55722->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;105m4182460505\u001b[0m 71ms] connection: connection upload closed: close tcp 172.19.0.1:55700->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;203m628995515\u001b[0m 83ms] connection: connection upload closed: close tcp 172.19.0.1:55696->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;32m3896296208\u001b[0m 85ms] connection: connection upload closed: close tcp 172.19.0.1:55691->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;85m3789960338\u001b[0m 85ms] connection: connection upload closed: close tcp 172.19.0.1:55692->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;141m454439293\u001b[0m 86ms] connection: connection upload closed: close tcp 172.19.0.1:55688->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m818510083\u001b[0m 87ms] connection: connection upload closed: close tcp 172.19.0.1:55687->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;35m2301987091\u001b[0m 89ms] connection: connection upload closed: close tcp 172.19.0.1:55683->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;213m2961654981\u001b[0m 89ms] connection: connection upload closed: close tcp 172.19.0.1:55684->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;195m1400367355\u001b[0m 92ms] connection: connection upload closed: close tcp 172.19.0.1:55680->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;80m1253694528\u001b[0m 92ms] connection: connection upload closed: close tcp 172.19.0.1:55679->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;38m4109484566\u001b[0m 96ms] connection: connection upload closed: close tcp 172.19.0.1:55676->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;119m3776671600\u001b[0m 96ms] connection: connection upload closed: close tcp 172.19.0.1:55675->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;185m305302697\u001b[0m 104ms] connection: connection upload closed: close tcp 172.19.0.1:55671->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;230m3605976022\u001b[0m 104ms] connection: connection upload closed: close tcp 172.19.0.1:55672->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m626181332\u001b[0m 107ms] connection: connection upload closed: close tcp 172.19.0.1:55667->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;177m3277300129\u001b[0m 107ms] connection: connection upload closed: close tcp 172.19.0.1:55668->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;226m117004764\u001b[0m 108ms] connection: connection upload closed: close tcp 172.19.0.1:55664->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;209m1769753537\u001b[0m 109ms] connection: connection upload closed: close tcp 172.19.0.1:55663->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;210m1695550146\u001b[0m 113ms] connection: connection upload closed: close tcp 172.19.0.1:55660->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;155m1121418060\u001b[0m 113ms] connection: connection upload closed: close tcp 172.19.0.1:55659->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;226m460140805\u001b[0m 115ms] connection: connection upload closed: close tcp 172.19.0.1:55655->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;101m785343573\u001b[0m 116ms] connection: connection upload closed: close tcp 172.19.0.1:55656->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;222m3937819616\u001b[0m 118ms] connection: connection upload closed: close tcp 172.19.0.1:55652->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;156m3098294412\u001b[0m 118ms] connection: connection upload closed: close tcp 172.19.0.1:55651->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;29m236576996\u001b[0m 122ms] connection: connection upload closed: close tcp 172.19.0.1:55648->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;212m3036944068\u001b[0m 123ms] connection: connection upload closed: close tcp 172.19.0.1:55646->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;230m786541782\u001b[0m 124ms] connection: connection upload closed: close tcp 172.19.0.1:55644->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;221m1726498529\u001b[0m 124ms] connection: connection upload closed: close tcp 172.19.0.1:55643->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;231m2979821056\u001b[0m 127ms] connection: connection upload closed: close tcp 172.19.0.1:55640->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;87m3900460871\u001b[0m 127ms] connection: connection upload closed: close tcp 172.19.0.1:55639->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;220m179009484\u001b[0m 129ms] connection: connection upload closed: close tcp 172.19.0.1:55636->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;194m926737330\u001b[0m 130ms] connection: connection upload closed: close tcp 172.19.0.1:55635->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;186m1576331053\u001b[0m 134ms] connection: connection upload closed: close tcp 172.19.0.1:55632->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;42m3763682289\u001b[0m 134ms] connection: connection upload closed: close tcp 172.19.0.1:55631->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;63m2677354799\u001b[0m 141ms] connection: connection upload closed: close tcp 172.19.0.1:55627->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;221m4145306573\u001b[0m 144ms] connection: connection upload closed: close tcp 172.19.0.1:55628->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;110m1631172958\u001b[0m 149ms] connection: connection upload closed: close tcp 172.19.0.1:55624->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;153m1093293390\u001b[0m 149ms] connection: connection upload closed: close tcp 172.19.0.1:55623->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;41m1334379801\u001b[0m 153ms] connection: connection upload closed: close tcp 172.19.0.1:55620->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;79m1710420543\u001b[0m 154ms] connection: connection upload closed: close tcp 172.19.0.1:55619->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;120m3002285672\u001b[0m 159ms] connection: connection upload closed: close tcp 172.19.0.1:55616->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;122m4287554154\u001b[0m 162ms] connection: connection upload closed: close tcp 172.19.0.1:55614->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;139m1779132027\u001b[0m 167ms] connection: connection upload closed: close tcp 172.19.0.1:55612->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;79m3255607103\u001b[0m 170ms] connection: connection upload closed: close tcp 172.19.0.1:55610->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;171m2727312283\u001b[0m 171ms] connection: connection upload closed: close tcp 172.19.0.1:55609->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;223m1528532232\u001b[0m 174ms] connection: connection upload closed: close tcp 172.19.0.1:55606->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;140m2851729020\u001b[0m 174ms] connection: connection upload closed: close tcp 172.19.0.1:55605->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;136m4242534776\u001b[0m 176ms] connection: connection upload closed: close tcp 172.19.0.1:55602->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;168m1972706456\u001b[0m 176ms] connection: connection upload closed: close tcp 172.19.0.1:55601->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;206m3095899838\u001b[0m 179ms] connection: connection upload closed: close tcp 172.19.0.1:55598->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;188m440844460\u001b[0m 180ms] connection: connection upload closed: close tcp 172.19.0.1:55596->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;151m610145415\u001b[0m 183ms] connection: connection upload closed: close tcp 172.19.0.1:55594->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;225m1116066525\u001b[0m 184ms] connection: connection upload closed: close tcp 172.19.0.1:55592->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;33m1540157969\u001b[0m 185ms] connection: connection upload closed: close tcp 172.19.0.1:55590->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;121m1734340713\u001b[0m 189ms] connection: connection upload closed: close tcp 172.19.0.1:55587->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;186m849873322\u001b[0m 190ms] connection: connection upload closed: close tcp 172.19.0.1:55588->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;50m4070694178\u001b[0m 193ms] connection: connection upload closed: close tcp 172.19.0.1:55584->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;187m3049151147\u001b[0m 194ms] connection: connection upload closed: close tcp 172.19.0.1:55583->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;185m795083177\u001b[0m 196ms] connection: connection upload closed: close tcp 172.19.0.1:55580->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;42m2728052250\u001b[0m 198ms] connection: connection upload closed: close tcp 172.19.0.1:55578->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;231m416166912\u001b[0m 207ms] connection: connection upload closed: close tcp 172.19.0.1:55570->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;142m58623870\u001b[0m 85ms] connection: connection upload closed: close tcp 172.19.0.1:55695->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;42m1453863409\u001b[0m 197ms] connection: connection upload closed: close tcp 172.19.0.1:55577->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m3398767828\u001b[0m 51ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;133m2151243637\u001b[0m 61ms] connection: connection upload closed: close tcp 172.19.0.1:55711->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;204m2762784956\u001b[0m 51ms] connection: connection upload closed: close tcp 172.19.0.1:55719->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;29m3201498596\u001b[0m 58ms] connection: connection upload closed: close tcp 172.19.0.1:55716->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;202m4075560890\u001b[0m 59ms] connection: connection upload closed: close tcp 172.19.0.1:55715->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;104m2134679128\u001b[0m 65ms] connection: connection upload closed: close tcp 172.19.0.1:55707->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;157m1140511373\u001b[0m 61ms] connection: connection upload closed: close tcp 172.19.0.1:55712->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m3398767828\u001b[0m 51ms] connection: connection upload closed: close tcp 172.19.0.1:55720->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;104m2166211416\u001b[0m 257ms] connection: connection upload closed: close tcp 172.19.0.1:55505->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;175m1814997919\u001b[0m 256ms] connection: connection upload closed: close tcp 172.19.0.1:55508->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;221m1249905418\u001b[0m 208ms] connection: connection upload closed: close tcp 172.19.0.1:55569->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;117m3626462053\u001b[0m 214ms] connection: connection upload closed: close tcp 172.19.0.1:55566->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;47m2219408927\u001b[0m 218ms] connection: connection upload closed: close tcp 172.19.0.1:55564->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;229m2317796309\u001b[0m 218ms] connection: connection upload closed: close tcp 172.19.0.1:55563->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;222m4169529353\u001b[0m 220ms] connection: connection upload closed: close tcp 172.19.0.1:55560->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;205m1349411005\u001b[0m 221ms] connection: connection upload closed: close tcp 172.19.0.1:55558->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;229m4006711298\u001b[0m 224ms] connection: connection upload closed: close tcp 172.19.0.1:55554->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;46m3417972469\u001b[0m 224ms] connection: connection upload closed: close tcp 172.19.0.1:55556->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;49m3461237752\u001b[0m 226ms] connection: connection upload closed: close tcp 172.19.0.1:55551->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;177m2045288609\u001b[0m 227ms] connection: connection upload closed: close tcp 172.19.0.1:55549->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;83m57048643\u001b[0m 228ms] connection: connection upload closed: close tcp 172.19.0.1:55547->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;36m620658923\u001b[0m 230ms] connection: connection upload closed: close tcp 172.19.0.1:55545->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;225m1103121885\u001b[0m 231ms] connection: connection upload closed: close tcp 172.19.0.1:55543->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;148m2910655876\u001b[0m 232ms] connection: connection upload closed: close tcp 172.19.0.1:55541->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;152m2112269704\u001b[0m 233ms] connection: connection upload closed: close tcp 172.19.0.1:55539->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;38m3418603286\u001b[0m 233ms] connection: connection upload closed: close tcp 172.19.0.1:55537->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;226m3551578844\u001b[0m 234ms] connection: connection upload closed: close tcp 172.19.0.1:55535->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;51m3487414196\u001b[0m 236ms] connection: connection upload closed: close tcp 172.19.0.1:55533->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;72m3275178808\u001b[0m 238ms] connection: connection upload closed: close tcp 172.19.0.1:55530->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;155m1394596235\u001b[0m 238ms] connection: connection upload closed: close tcp 172.19.0.1:55531->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;36m39578388\u001b[0m 241ms] connection: connection upload closed: close tcp 172.19.0.1:55527->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;104m3580440664\u001b[0m 241ms] connection: connection upload closed: close tcp 172.19.0.1:55525->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;130m1662294386\u001b[0m 243ms] connection: connection upload closed: close tcp 172.19.0.1:55523->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;32m2814950672\u001b[0m 246ms] connection: connection upload closed: close tcp 172.19.0.1:55521->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;223m1951855071\u001b[0m 248ms] connection: connection upload closed: close tcp 172.19.0.1:55519->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;118m3608226929\u001b[0m 250ms] connection: connection upload closed: close tcp 172.19.0.1:55517->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;230m2448091096\u001b[0m 251ms] connection: connection upload closed: close tcp 172.19.0.1:55516->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;64m529996336\u001b[0m 254ms] connection: connection upload closed: close tcp 172.19.0.1:55512->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;40m598197487\u001b[0m 254ms] connection: connection upload closed: close tcp 172.19.0.1:55513->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;46m34298101\u001b[0m 256ms] connection: connection upload closed: close tcp 172.19.0.1:55509->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;73m1615139385\u001b[0m 276ms] connection: connection upload closed: close tcp 172.19.0.1:55475->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;63m4245332783\u001b[0m 261ms] connection: connection upload closed: close tcp 172.19.0.1:55501->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;85m2333107013\u001b[0m 261ms] connection: connection upload closed: close tcp 172.19.0.1:55500->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;203m2338016443\u001b[0m 264ms] connection: connection upload closed: close tcp 172.19.0.1:55497->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;218m3052453834\u001b[0m 264ms] connection: connection upload closed: close tcp 172.19.0.1:55495->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;207m496997567\u001b[0m 266ms] connection: connection upload closed: close tcp 172.19.0.1:55492->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;193m1386806525\u001b[0m 267ms] connection: connection upload closed: close tcp 172.19.0.1:55493->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;139m228525435\u001b[0m 269ms] connection: connection upload closed: close tcp 172.19.0.1:55489->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;142m3215845246\u001b[0m 270ms] connection: connection upload closed: close tcp 172.19.0.1:55488->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;183m876404135\u001b[0m 271ms] connection: connection upload closed: close tcp 172.19.0.1:55486->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;192m2411432743\u001b[0m 272ms] connection: connection upload closed: close tcp 172.19.0.1:55483->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;221m2593802445\u001b[0m 273ms] connection: connection upload closed: close tcp 172.19.0.1:55481->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;74m4045655610\u001b[0m 274ms] connection: connection upload closed: close tcp 172.19.0.1:55479->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;122m2245428333\u001b[0m 275ms] connection: connection upload closed: close tcp 172.19.0.1:55477->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;230m4112751832\u001b[0m 66ms] connection: connection upload closed: close tcp 172.19.0.1:55708->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;62m3857808686\u001b[0m 289ms] connection: connection upload closed: close tcp 172.19.0.1:55461->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;228m3925902804\u001b[0m 278ms] connection: connection upload closed: close tcp 172.19.0.1:55474->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;112m3335848288\u001b[0m 281ms] connection: connection upload closed: close tcp 172.19.0.1:55471->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;116m944921956\u001b[0m 282ms] connection: connection upload closed: close tcp 172.19.0.1:55469->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;50m1721044917\u001b[0m 286ms] connection: connection upload closed: close tcp 172.19.0.1:55467->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;85m1974315410\u001b[0m 285ms] connection: connection upload closed: close tcp 172.19.0.1:55466->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;112m1898890592\u001b[0m 288ms] connection: connection upload closed: close tcp 172.19.0.1:55463->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;201m517323705\u001b[0m 296ms] connection: connection upload closed: close tcp 172.19.0.1:55454->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;195m504307963\u001b[0m 293ms] connection: connection upload closed: close tcp 172.19.0.1:55459->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;159m1785965455\u001b[0m 292ms] connection: connection upload closed: close tcp 172.19.0.1:55458->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;96m191439440\u001b[0m 295ms] connection: connection upload closed: close tcp 172.19.0.1:55455->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;33m2395186408\u001b[0m 261ms] connection: connection upload closed: close tcp 172.19.0.1:55503->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;147m3717606275\u001b[0m 300ms] connection: connection upload closed: close tcp 172.19.0.1:55449->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;120m2626073192\u001b[0m 297ms] connection: connection upload closed: close tcp 172.19.0.1:55451->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;33m2395186408\u001b[0m 262ms] connection: connection download closed: raw read: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;48m255878688\u001b[0m 301ms] connection: connection upload closed: close tcp 172.19.0.1:55447->17.253.5.148:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;195m2097300659\u001b[0m 72ms] connection: connection upload closed: close tcp 172.19.0.1:55704->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;155m3526386315\u001b[0m 383ms] connection: connection upload closed: close tcp 172.19.0.1:55317->17.248.193.73:443: shutdown: can't assign requested address\n\u001b[31mERROR\u001b[0m[0029] [\u001b[38;5;195m2097300659\u001b[0m 72ms] connection: connection download closed: raw read: can't assign requested address\n"
+      },
+      "upgrade": {
+        "from": "0.5.1",
+        "to": "0.5.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.5.2_aarch64.dmg",
+            "role": "dmg",
+            "size": 5825405,
+            "sha256": "810f3f736ba58c35c870204a98cec96ad81755e98cdf8fe11c1021a7129866e6"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz",
+            "role": "app",
+            "size": 5941835,
+            "sha256": "fbd1b9c4c24a1ecbd4b63d9b8d6d29fb90f981aeb34bd7fc37257c1d3e1005ba"
+          },
+          {
+            "name": "Sing.Shell_0.5.2_aarch64.app.tar.gz.sig",
+            "role": "signature",
+            "size": 428,
+            "sha256": "b47b48e3c56a79283b0bfd045f24287cd33c9785605fc73f4fd2aa02c8d4b66a"
+          }
+        ]
+      },
+      "desktopEvidence": [
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/preserved config-0.2.0.json",
+            "engine": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "revision": 3,
+            "schemaVersion": 1,
+            "updatePreferences": {
+              "automatic": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "version": "0.2.0"
+        },
+        {
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "frontendReady": true,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/preserved config-0.3.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 2,
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "version": "0.3.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/preserved config-0.4.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "schemaVersion": 3,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.4.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/preserved config-0.5.0.json",
+            "coreRevision": 3,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 2,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [
+                {
+                  "id": "preserved-vless",
+                  "name": "Existing VLESS",
+                  "port": 443,
+                  "protocol": "VLESS",
+                  "server": "example.com",
+                  "source": "本地导入"
+                }
+              ],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": "preserved-vless"
+            },
+            "profileRevision": 7,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.0"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": {
+            "before": "NotFound",
+            "bundle": "/Users/runner/Applications/Sing Shell CI-6915.app",
+            "registered": {
+              "enabled": true,
+              "reason": null,
+              "state": "enabled"
+            },
+            "removed": true
+          },
+          "loginSource": false,
+          "reactivated": false,
+          "restartArgsNormalized": true,
+          "restoredPid": null,
+          "settings": {
+            "configPath": null,
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "managed"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "generated",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": false,
+              "resumeCore": false
+            },
+            "updatePreferences": {
+              "automatic": true,
+              "automaticCore": true,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": true,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": false,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 12287,
+          "settings": {
+            "configPath": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-smoke-AW1jKw/running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        },
+        {
+          "backgroundFallback": false,
+          "closeRequestIntercepted": true,
+          "completed": true,
+          "draftRetained": true,
+          "frontendReady": true,
+          "installThroughLifecycle": true,
+          "loginIO": true,
+          "loginRegistration": null,
+          "loginSource": true,
+          "reactivated": true,
+          "restartArgsNormalized": true,
+          "restoredPid": 12508,
+          "settings": {
+            "configPath": "/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-smoke-rWVHkx/running core.json",
+            "coreRevision": 0,
+            "coreSource": {
+              "mode": "external",
+              "path": "/private/var/folders/q2/p1t6rgxj5fj32g1dc7dmd49r0000gn/T/sing-shell-package-NXj4U4/sing-box-1.14.4-darwin-arm64/sing-box"
+            },
+            "desktop": {
+              "backgroundNoticeShown": true
+            },
+            "managed": {
+              "active": null,
+              "blocked": null,
+              "previous": null,
+              "trial": null
+            },
+            "pendingConfigPath": null,
+            "preferencesRevision": 0,
+            "profile": {
+              "mode": "externalConfig",
+              "nodes": [],
+              "routing": {
+                "customRules": [],
+                "defaultAction": "proxy",
+                "siteRules": []
+              },
+              "ruleCommit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+              "selectedNode": null
+            },
+            "profileRevision": 0,
+            "schemaVersion": 4,
+            "startup": {
+              "restoreCoreOnLaunch": true,
+              "resumeCore": true
+            },
+            "updatePreferences": {
+              "automatic": false,
+              "automaticCore": false,
+              "network": {
+                "customMirrors": [],
+                "disabledBuiltins": [],
+                "fallbackEnabled": false,
+                "revision": 0
+              }
+            }
+          },
+          "target": "aarch64-apple-darwin",
+          "trayAvailable": true,
+          "version": "0.5.1"
+        }
+      ]
+    }
+  ],
+  "publicDownload": {
+    "verifiedAt": "2026-11-26T07:39:23.346Z",
+    "anonymousHTTPS": true,
+    "latestVersion": "v0.5.1",
+    "assets": [
+      {
+        "name": "core-update.json",
+        "size": 4186,
+        "sha256": "cb6488351d429f1e2c03a5adadf34c85b8b0d4d4199a66a97ca5ff64cb901b32",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/core-update.json"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz",
+        "size": 5941837,
+        "sha256": "ca2315a4736b93409fc0aa60a7531473fd678ac67c38cea92ac242cea0334d51",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_aarch64.app.tar.gz"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "sha256": "ce8c14176228353efa86255dedbd58d17f905f4a100f6ffec8005869ff79fe37",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_aarch64.app.tar.gz.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_aarch64.AppImage",
+        "size": 82946568,
+        "sha256": "bc65c466a5496c2f28333e80ddc8f0f7e3b1ab8dc09d3c47ca7981e534cc5fbc",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_aarch64.AppImage"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_aarch64.AppImage.sig",
+        "size": 444,
+        "sha256": "87f72b8f14f63967925b6b4fd1e249fdc7d74c9c22c9e42ad047cf147a8d96fe",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_aarch64.AppImage.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_aarch64.dmg",
+        "size": 5825413,
+        "sha256": "132cf8137ae0cdf17aebfd2cfbb9493ce6a6b4534a76e764d7bb24f15cc3de34",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_aarch64.dmg"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_amd64.AppImage",
+        "size": 85248504,
+        "sha256": "a6c0e960db77852c2d0e195bba93d7a393a8d6ac1bd5680fc8e627d595b4b70f",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_amd64.AppImage"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_amd64.AppImage.sig",
+        "size": 440,
+        "sha256": "5979eee9aceaae76a52d297e85ccd256cd426f6402f939daf1c5ac3647983113",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_amd64.AppImage.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_amd64.deb",
+        "size": 7110572,
+        "sha256": "1f907c07da50098f971e085b57fbc584a5fc99532915220b275d332fcef3cc1d",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_amd64.deb"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_amd64.deb.sig",
+        "size": 436,
+        "sha256": "d46c7f4b4e433d50074ecfc1344459bb2720533ca02411d5b7709f849bb8db74",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_amd64.deb.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_arm64-setup.exe",
+        "size": 3896977,
+        "sha256": "fbd4c6644f490e05fda7bdc2290374b634888512301f0fa96480e27f43d72fd4",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_arm64-setup.exe"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_arm64-setup.exe.sig",
+        "size": 444,
+        "sha256": "da2ab3aec38e5bfdfa47b595a663d9a77583b5edbdfb8e472decd55f06a66c7f",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_arm64-setup.exe.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_arm64.deb",
+        "size": 6720582,
+        "sha256": "58c1535d0996a6e74b7c9212b80141ef29327061bdda1675379abe2392f14f75",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_arm64.deb"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_arm64.deb.sig",
+        "size": 436,
+        "sha256": "ac2628f114686864e32f5bb3febd6e6ca8957a77840254b4b7e12559cdfc6327",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_arm64.deb.sig"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_x64-setup.exe",
+        "size": 4385970,
+        "sha256": "dc02a1b528c997a98910ad684da59ed865140334069a4ea8a10d749467072113",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_x64-setup.exe"
+      },
+      {
+        "name": "Sing.Shell_0.5.1_x64-setup.exe.sig",
+        "size": 440,
+        "sha256": "55fea54e1ba1d50f08ba50e33a26e7977635d7ffd860a2095b5b1ee0f77faa37",
+        "url": "https://github.com/BgaSol/sing-shell/releases/download/v0.5.1/Sing.Shell_0.5.1_x64-setup.exe.sig"
+      }
+    ],
+    "updaterTargets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-apple-darwin"
+    ]
+  }
+}
