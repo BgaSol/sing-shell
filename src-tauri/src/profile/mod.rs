@@ -2,6 +2,7 @@ pub mod config;
 pub mod import;
 pub mod routing;
 pub mod service;
+pub mod tun;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};

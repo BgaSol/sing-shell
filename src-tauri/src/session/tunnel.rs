@@ -54,6 +54,7 @@ struct Client {
 
 pub struct Tunnel {
     root: PathBuf,
+    occupation: Arc<AtomicBool>,
     state: Arc<Mutex<Snapshot>>,
     client: Mutex<Option<Client>>,
 }
@@ -61,9 +62,21 @@ impl Tunnel {
     pub fn new(root: PathBuf) -> Self {
         Self {
             root,
+            occupation: Arc::new(AtomicBool::new(false)),
             state: Arc::new(Mutex::new(Snapshot::default())),
             client: Mutex::new(None),
         }
+    }
+    pub(crate) fn with_occupation(root: PathBuf, occupation: Arc<AtomicBool>) -> Self {
+        let mut tunnel = Self::new(root);
+        tunnel.occupation = occupation;
+        tunnel
+    }
+    fn released(&self) {
+        self.occupation.store(false, Ordering::Release);
+    }
+    pub(crate) fn occupied(&self) -> bool {
+        self.occupation.load(Ordering::Acquire)
     }
     pub fn snapshot(&self) -> Snapshot {
         self.state.lock().unwrap().clone()
@@ -81,6 +94,7 @@ impl Tunnel {
         }
     }
     fn request(&self, request: Request) -> Result<(), String> {
+        self.occupation.store(true, Ordering::Release);
         let mut client = self.client.lock().unwrap();
         if client.as_ref().is_some_and(|c| c.thread.is_finished()) {
             let _ = client.take().unwrap().thread.join();
@@ -137,27 +151,7 @@ impl Tunnel {
                                 let snapshot = exchange(channel, &request).await?;
                                 *state.lock().unwrap() = snapshot;
                                 if quit {
-                                    let closed: Closed = tokio::time::timeout(
-                                        Duration::from_secs(10),
-                                        read(channel),
-                                    )
-                                    .await
-                                    .map_err(|_| "授权进程尚未释放资源")??;
-                                    if !closed.closed {
-                                        return Err("授权进程结束回应无效".into());
-                                    }
-                                    let mut end = [0; 1];
-                                    if tokio::time::timeout(
-                                        Duration::from_secs(10),
-                                        channel.read(&mut end),
-                                    )
-                                    .await
-                                    .map_err(|_| "授权进程尚未释放控制通道")?
-                                    .map_err(|e| e.to_string())?
-                                        != 0
-                                    {
-                                        return Err("授权进程退出回应无效".into());
-                                    }
+                                    confirm_closed(channel).await?;
                                     break;
                                 }
                                 tokio::time::sleep(Duration::from_millis(250)).await;
@@ -182,7 +176,10 @@ impl Tunnel {
                     let mut s = state.lock().unwrap();
                     s.error = Some(error.clone());
                     s.runtime.error = Some(error);
-                    s.phase = if s.runtime.pid.is_some() || network::require_clear().is_err() {
+                    s.phase = if s.phase == Phase::CleanupRequired
+                        || s.runtime.pid.is_some()
+                        || network::require_clear().is_err()
+                    {
                         Phase::CleanupRequired
                     } else {
                         Phase::Failed
@@ -241,8 +238,11 @@ impl Tunnel {
             let mut guard = self.client.lock().unwrap();
             if guard.as_ref().is_some_and(|c| c.thread.is_finished()) {
                 let _ = guard.take().unwrap().thread.join();
-                if network::require_clear().is_ok() {
+                if self.snapshot().phase != Phase::CleanupRequired
+                    && network::require_clear().is_ok()
+                {
                     *self.state.lock().unwrap() = Snapshot::default();
+                    self.released();
                     return Ok(());
                 }
             }
@@ -263,6 +263,7 @@ impl Tunnel {
             drop(guard);
             self.reap();
             *self.state.lock().unwrap() = Snapshot::default();
+            self.released();
             return Ok(());
         }
         let Some(client) = guard.as_ref() else {
@@ -327,7 +328,9 @@ impl Tunnel {
         if snapshot.phase == Phase::CleanupRequired {
             return Err(snapshot.error.unwrap_or("网络清理尚未完成".into()));
         }
-        network::require_clear()
+        network::require_clear()?;
+        self.released();
+        Ok(())
     }
     fn wait_closed(&self, budget: Duration) -> Result<(), String> {
         let deadline = Instant::now() + budget;
@@ -386,16 +389,8 @@ mod tests {
     }
     #[test]
     fn reading_worker_status_does_not_rewrite_or_clean_resources() {
-        let worker = Worker {
-            root: std::env::temp_dir(),
-            runtime: Arc::new(Default::default()),
-            state: Arc::new(Mutex::new(Snapshot {
-                phase: Phase::Running,
-                ..Default::default()
-            })),
-            cancel: Arc::new(AtomicBool::new(false)),
-            start: None,
-        };
+        let worker = Worker::new(std::env::temp_dir());
+        worker.state.lock().unwrap().phase = Phase::Running;
         assert_eq!(worker.snapshot().phase, Phase::Running);
         assert!(!worker.cancel.load(Ordering::Acquire));
         assert_eq!(worker.state.lock().unwrap().phase, Phase::Running);
@@ -455,13 +450,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
             };
             let root = authorization::prepare_root()?;
             let lease = crate::instance::Lease::acquire(&root)?;
-            let mut worker = Worker {
-                root,
-                runtime: Arc::new(Default::default()),
-                state: Arc::new(Mutex::new(Snapshot::default())),
-                cancel: Arc::new(AtomicBool::new(false)),
-                start: None,
-            };
+            let mut worker = Worker::new(root);
             worker.runtime.record_network(worker.root.clone());
             let result = loop {
                 worker.observe_exit();
@@ -521,6 +510,25 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
     })())
 }
 
+async fn confirm_closed(channel: &mut authorization::Channel) -> Result<(), String> {
+    let closed: Closed = tokio::time::timeout(Duration::from_secs(10), read(channel))
+        .await
+        .map_err(|_| "授权进程尚未释放资源")??;
+    if !closed.closed {
+        return Err("授权进程结束回应无效".into());
+    }
+    let mut end = [0; 1];
+    if tokio::time::timeout(Duration::from_secs(10), channel.read(&mut end))
+        .await
+        .map_err(|_| "授权进程尚未释放控制通道")?
+        .map_err(|e| e.to_string())?
+        != 0
+    {
+        return Err("授权进程退出回应无效".into());
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "macos")]
 pub fn authorization_probe() -> Result<(), String> {
     if authorization::elevated() {
@@ -540,22 +548,7 @@ pub fn authorization_probe() -> Result<(), String> {
         if snapshot.runtime.pid.is_some() || snapshot.phase != Phase::Stopped {
             return Err("授权探针未能确认空闲 helper 退出".into());
         }
-        let closed: Closed =
-            tokio::time::timeout(Duration::from_secs(10), read(&mut connection.channel))
-                .await
-                .map_err(|_| "授权探针未收到关闭确认")??;
-        if !closed.closed {
-            return Err("授权探针关闭确认无效".into());
-        }
-        let mut end = [0];
-        if tokio::time::timeout(Duration::from_secs(10), connection.channel.read(&mut end))
-            .await
-            .map_err(|_| "授权探针控制通道未关闭")?
-            .map_err(|e| e.to_string())?
-            != 0
-        {
-            return Err("授权探针控制通道未结束".into());
-        }
+        confirm_closed(&mut connection.channel).await?;
         tokio::time::timeout(Duration::from_secs(20), connection.finish())
             .await
             .map_err(|_| "授权探针未确认 helper 退出")??;

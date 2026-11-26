@@ -1,3 +1,4 @@
+mod routes;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 #[derive(Serialize, Deserialize)]
@@ -133,9 +134,8 @@ pub fn recover(root: &Path) -> Result<(), String> {
     }
     let current = match birth(record.pid) {
         Ok(birth) => birth,
-        Err(_) => {
-            return clear_record(root);
-        }
+        Err(_) if gone(record.pid)? => return clear_record(root),
+        Err(error) => return Err(error),
     };
     if current != record.birth {
         return clear_record(root);
@@ -171,13 +171,57 @@ pub fn recover(root: &Path) -> Result<(), String> {
         }
     }
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
-    while birth(record.pid).is_ok_and(|b| b == record.birth) {
+    while !gone(record.pid)? && birth(record.pid)? == record.birth {
         if std::time::Instant::now() >= deadline {
             return Err("旧授权核心仍在退出，请重试".into());
         }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
     clear_record(root)
+}
+fn gone(pid: u32) -> Result<bool, String> {
+    #[cfg(unix)]
+    {
+        if pid == 0 || pid > i32::MAX as u32 {
+            return Ok(true);
+        }
+        if unsafe { libc::kill(pid as i32, 0) } == 0 {
+            return Ok(false);
+        }
+        let error = std::io::Error::last_os_error();
+        match error.raw_os_error() {
+            Some(libc::ESRCH) => Ok(true),
+            Some(libc::EPERM) => Ok(false),
+            _ => Err(error.to_string()),
+        }
+    }
+    #[cfg(windows)]
+    unsafe {
+        use windows_sys::Win32::{
+            Foundation::CloseHandle,
+            System::Threading::{
+                GetExitCodeProcess, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION,
+            },
+        };
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if handle.is_null() {
+            let error = std::io::Error::last_os_error();
+            return if error.raw_os_error() == Some(87) {
+                Ok(true)
+            } else {
+                Err(error.to_string())
+            };
+        }
+        let mut exit = 259;
+        let ok = GetExitCodeProcess(handle, &mut exit);
+        let error = std::io::Error::last_os_error();
+        CloseHandle(handle);
+        if ok == 0 {
+            Err(error.to_string())
+        } else {
+            Ok(exit != 259)
+        }
+    }
 }
 fn clear_record(root: &Path) -> Result<(), String> {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
@@ -203,11 +247,7 @@ impl Observation {
     }
 }
 pub fn interface_name() -> &'static str {
-    if cfg!(target_os = "macos") {
-        "utun223"
-    } else {
-        "sing-shell"
-    }
+    crate::profile::tun::INTERFACE
 }
 
 #[cfg(windows)]
@@ -252,8 +292,27 @@ pub fn observe() -> Result<Observation, String> {
                     while let Some(a) = address.as_ref() {
                         if !a.Address.lpSockaddr.is_null() {
                             match (*a.Address.lpSockaddr).sa_family {
-                                AF_INET => result.ipv4 = true,
-                                AF_INET6 => result.ipv6 = true,
+                                AF_INET => {
+                                    let address = &*(a.Address.lpSockaddr as *const windows_sys::Win32::Networking::WinSock::SOCKADDR_IN);
+                                    result.ipv4 |= std::net::Ipv4Addr::from(
+                                        address.sin_addr.S_un.S_addr.to_ne_bytes(),
+                                    )
+                                    .to_string()
+                                        == crate::profile::tun::ADDRESS[0]
+                                            .split('/')
+                                            .next()
+                                            .unwrap();
+                                }
+                                AF_INET6 => {
+                                    let address = &*(a.Address.lpSockaddr as *const windows_sys::Win32::Networking::WinSock::SOCKADDR_IN6);
+                                    result.ipv6 |=
+                                        std::net::Ipv6Addr::from(address.sin6_addr.u.Byte)
+                                            .to_string()
+                                            == crate::profile::tun::ADDRESS[1]
+                                                .split('/')
+                                                .next()
+                                                .unwrap();
+                                }
                                 _ => {}
                             }
                         }
@@ -270,19 +329,29 @@ pub fn observe() -> Result<Observation, String> {
                     (*table).Table.as_ptr(),
                     (*table).NumEntries as usize,
                 );
-                let mut v4 = false;
-                let mut v6 = false;
-                for route in routes
-                    .iter()
-                    .filter(|r| r.InterfaceIndex == index && r.DestinationPrefix.PrefixLength <= 1)
-                {
-                    match route.DestinationPrefix.Prefix.si_family {
-                        AF_INET => v4 = true,
-                        AF_INET6 => v6 = true,
+                let mut v4 = Vec::new();
+                let mut v6 = Vec::new();
+                for route in routes.iter().filter(|r| r.InterfaceIndex == index) {
+                    let prefix = route.DestinationPrefix.PrefixLength;
+                    let address = route.DestinationPrefix.Prefix;
+                    match address.si_family {
+                        AF_INET => v4.push(format!(
+                            "{}/{}",
+                            std::net::Ipv4Addr::from(
+                                address.Ipv4.sin_addr.S_un.S_addr.to_ne_bytes()
+                            ),
+                            prefix
+                        )),
+                        AF_INET6 => v6.push(format!(
+                            "{}/{}",
+                            std::net::Ipv6Addr::from(address.Ipv6.sin6_addr.u.Byte),
+                            prefix
+                        )),
                         _ => {}
                     }
                 }
-                result.routes = v4 && v6;
+                result.routes = routes::covered(v4.iter().map(String::as_str), false)
+                    && routes::covered(v6.iter().map(String::as_str), true);
                 FreeMibTable(table.cast());
             }
         }
@@ -305,8 +374,19 @@ pub fn observe() -> Result<Observation, String> {
                 result.interface = true;
                 if !item.ifa_addr.is_null() {
                     match (*item.ifa_addr).sa_family as i32 {
-                        libc::AF_INET => result.ipv4 = true,
-                        libc::AF_INET6 => result.ipv6 = true,
+                        libc::AF_INET => {
+                            let address = &*(item.ifa_addr as *const libc::sockaddr_in);
+                            result.ipv4 |=
+                                std::net::Ipv4Addr::from(address.sin_addr.s_addr.to_ne_bytes())
+                                    .to_string()
+                                    == crate::profile::tun::ADDRESS[0].split('/').next().unwrap();
+                        }
+                        libc::AF_INET6 => {
+                            let address = &*(item.ifa_addr as *const libc::sockaddr_in6);
+                            result.ipv6 |= std::net::Ipv6Addr::from(address.sin6_addr.s6_addr)
+                                .to_string()
+                                == crate::profile::tun::ADDRESS[1].split('/').next().unwrap();
+                        }
                         _ => {}
                     }
                 }
@@ -324,35 +404,41 @@ pub fn observe() -> Result<Observation, String> {
                 "/sbin/ip"
             };
             let routes = |family: &str| -> Result<bool, String> {
-                let output = std::process::Command::new(ip)
-                    .args(["-j", family, "route", "show", "table", "all"])
-                    .output()
-                    .map_err(|e| format!("无法读取路由，请安装 iproute2：{e}"))?;
+                let output = crate::platform::command::output(
+                    ip,
+                    &["-j", family, "route", "show", "table", "all"],
+                )
+                .map_err(|e| format!("无法读取路由，请安装 iproute2：{e}"))?;
                 if !output.status.success() {
                     return Err("无法读取 TUN 路由表".into());
                 }
-                let routes: Vec<serde_json::Value> =
-                    serde_json::from_slice(&output.stdout).map_err(|_| "系统路由输出无效")?;
-                Ok(routes.iter().any(|r| r["dev"] == interface_name()))
+                let rules = crate::platform::command::output(ip, &["-j", family, "rule", "show"])?;
+                if !rules.status.success() {
+                    return Err("无法读取 TUN 策略规则".into());
+                }
+                routes::linux(
+                    &String::from_utf8_lossy(&output.stdout),
+                    &String::from_utf8_lossy(&rules.stdout),
+                    interface_name(),
+                    family == "-6",
+                )
             };
             result.routes = routes("-4")? && routes("-6")?;
         }
         #[cfg(target_os = "macos")]
         {
             let routes = |family: &str| -> Result<bool, String> {
-                let output = std::process::Command::new("/usr/sbin/netstat")
-                    .args(["-rn", "-f", family])
-                    .output()
-                    .map_err(|e| e.to_string())?;
+                let output =
+                    crate::platform::command::output("/usr/sbin/netstat", &["-rn", "-f", family])
+                        .map_err(|e| e.to_string())?;
                 if !output.status.success() {
                     return Err("无法读取 TUN 路由状态".into());
                 }
-                Ok(String::from_utf8_lossy(&output.stdout).lines().any(|line| {
-                    line.split_whitespace().any(|part| part == interface_name())
-                        && line.split_whitespace().next().is_some_and(|destination| {
-                            destination == "default" || destination.ends_with("/1")
-                        })
-                }))
+                Ok(routes::macos(
+                    &String::from_utf8_lossy(&output.stdout),
+                    interface_name(),
+                    family == "inet6",
+                ))
             };
             result.routes = routes("inet")? && routes("inet6")?;
         }

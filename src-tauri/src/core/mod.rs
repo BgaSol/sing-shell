@@ -670,8 +670,7 @@ impl CoreService {
         package::owned(&self.store.root, program)?;
         package::verify_path(&self.runtime, &p.reference, program, &op.cancel)?;
         if s.profile.mode == crate::profile::Mode::Generated
-            && (settings::stable(&p.reference.version)? < semver::Version::new(1, 14, 4)
-                || settings::stable(&p.reference.version)? >= semver::Version::new(1, 15, 0))
+            && crate::profile::tun::require_version(&p.reference.version).is_err()
         {
             self.block(
                 &p,

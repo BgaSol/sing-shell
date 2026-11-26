@@ -11,6 +11,9 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [v0.5.4 发行记录](releases/v0.5.4.md)：临时系统 DNS、平台生命周期整改与验收状态
+- [v0.5.4 包验证证据](releases/v0.5.4-verification.json)：固定原包、五原生安装升级、卸载诊断及首次失败
+- [v0.5.4 网络验证证据](releases/v0.5.4-network-verification.json)：五原生清理、临时解析器与 137 Mac 原包 VLESS
 - [v0.5.3 发行记录](releases/v0.5.3.md)：macOS 按需系统授权与旧服务迁移
 - [v0.5.3 包验证证据](releases/v0.5.3-verification.json)：固定原包、五原生安装升级、签名及首次失败记录
 - [v0.5.3 网络验证证据](releases/v0.5.3-network-verification.json)：五原生异常清理与 Mac 系统授权后的真实 TUN

@@ -30,7 +30,7 @@ pub fn bundle(executable: &Path, installed: bool) -> Result<Bundle, String> {
             || std::fs::canonicalize(&binary).map_err(|e| e.to_string())?
                 != std::fs::canonicalize(executable).map_err(|e| e.to_string())?
         {
-            return Err("当前程序不是完整的 Sing Shell.app，无法登记系统服务".into());
+            return Err("当前程序不是完整的 Sing Shell.app，请使用正式安装包".into());
         }
         let icon = main
             .objectForInfoDictionaryKey(&NSString::from_str("CFBundleIconFile"))
@@ -51,7 +51,7 @@ pub fn bundle(executable: &Path, installed: bool) -> Result<Bundle, String> {
                     .any(|x| x.as_os_str() == "AppTranslocation")
             {
                 return Err(
-                    "请先将 Sing Shell.app 移出磁盘映像或临时目录，再开启登录启动。".into(),
+                    "请先将 Sing Shell.app 移出磁盘映像或临时目录，再使用系统集成功能。".into(),
                 );
             }
         }

@@ -41,7 +41,7 @@ pub struct StartSpec {
     pub version: Option<String>,
 }
 pub struct RuntimeService {
-    network_owned: AtomicBool,
+    network_owned: Arc<AtomicBool>,
     network_root: Mutex<Option<PathBuf>>,
     state: Arc<Mutex<RuntimeSnapshot>>,
     stop: Arc<AtomicBool>,
@@ -122,7 +122,7 @@ impl Drop for Process {
 impl Default for RuntimeService {
     fn default() -> Self {
         Self {
-            network_owned: AtomicBool::new(false),
+            network_owned: Arc::new(AtomicBool::new(false)),
             network_root: Mutex::new(None),
             state: Arc::new(Mutex::new(Default::default())),
             stop: Arc::new(AtomicBool::new(false)),
@@ -136,6 +136,10 @@ impl RuntimeService {
     pub fn record_network(&self, root: PathBuf) {
         *self.network_root.lock().unwrap() = Some(root);
     }
+    pub(crate) fn network_occupation(&self) -> Arc<AtomicBool> {
+        self.network_owned.clone()
+    }
+    #[cfg(feature = "test-fixtures")]
     pub fn network_owned(&self, value: bool) {
         self.network_owned.store(value, Ordering::Release);
     }
