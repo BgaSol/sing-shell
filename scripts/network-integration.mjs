@@ -50,7 +50,9 @@ try{
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
     for(const file of ['started.json','stopped.json','stop'])await fs.rm(path.join(control,file),{force:true});
-    worker=spawn(executable,process.env.SING_SHELL_NETWORK_EXECUTABLE?['--smoke-test','--network-fixture-input',inputFile]:[inputFile],{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});worker.stderr.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});
+    const command=approvedMac?'/usr/bin/open':executable;
+    const args=approvedMac?['-W','-n','--env','SING_SHELL_NETWORK_PREFLIGHT=1','--stdout',path.join(control,'app.stdout'),'--stderr',path.join(control,'app.stderr'),path.resolve(executable,'../../..'),'--args','--smoke-test','--network-fixture-input',inputFile]:process.env.SING_SHELL_NETWORK_EXECUTABLE?['--smoke-test','--network-fixture-input',inputFile]:[inputFile];
+    worker=spawn(command,args,{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});worker.stderr.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});
     return Promise.race([waitFile('started.json'),new Promise((_,reject)=>{worker.once('error',reject);worker.once('exit',code=>reject(Error(`worker exited ${code}: ${logs}`)));})]);
   }
   console.log('Waiting for authorized worker to prepare the official core and TUN');
