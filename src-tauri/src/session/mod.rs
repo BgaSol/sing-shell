@@ -556,7 +556,7 @@ impl SessionService {
         if self.gate.runtime_other(op.id) {
             self.gate.wait_runtime(op.id)?;
         }
-        let stopped = self.tunnel.stop().and_then(|_| {
+        let stopped = self.tunnel.close().and_then(|_| {
             self.runtime.network_owned(false);
             self.runtime.stop()?;
             crate::profile::config::remove_generated(&self.store.root)
