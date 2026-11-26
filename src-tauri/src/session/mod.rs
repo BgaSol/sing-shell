@@ -675,7 +675,7 @@ mod tests {
     #[test]
     fn node_restore_does_not_require_an_external_configuration() {
         let mut settings = crate::settings::Settings::default();
-        assert_eq!(settings.profile.mode, crate::profile::Mode::Generated);
+        assert!(settings.profile.mode == crate::profile::Mode::Generated);
         assert!(!super::missing_restore_config(&settings));
         settings.profile.mode = crate::profile::Mode::ExternalConfig;
         assert!(super::missing_restore_config(&settings));
