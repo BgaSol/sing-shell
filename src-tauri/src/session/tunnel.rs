@@ -172,6 +172,9 @@ impl Tunnel {
                                 Some(format!("控制通道已结束，正在等待 helper 清理：{error}"));
                         }
                         let finished = connection.finish().await;
+                        if result.is_ok() && finished.is_ok() {
+                            *state.lock().unwrap() = Snapshot::default();
+                        }
                         result.and(finished)
                     })
                 })();
