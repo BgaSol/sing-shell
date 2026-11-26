@@ -54,6 +54,8 @@ startup_restore 覆盖无前端的一次恢复、主动停止/来源选择/关�
 
 profile 回归覆盖 schema 3→4 原字节备份、独立修订、原子导入、票据重放拒绝和快照凭据保护；单元覆盖协议解析、未知字段、网段规范化和固定规则摘要。设置 `SING_SHELL_TEST_CORE` 后执行 `cargo test --manifest-path src-tauri/Cargo.toml --locked --test profile -- --include-ignored`，以官方 1.14.4 检查全部支持协议配置，再运行两个受控加密出口实测域名、CIDR、集合和默认动作。出口探针只替换传输和入口，不重写生成的路由或 SRS；不改变系统网络。
 
+工程脚本回归还覆盖“导入节点 → 选择节点 → 保存分流”的连续交互状态，防止忙状态未释放或干净表单未跟随节点修订。协议检查包含 VMess、WebSocket、gRPC、TLS 和 Reality；配置通过不能代替各远端协议的真实服务器互通。
+
 真实 TUN 仅在可丢弃的原生运行器运行 `.github/workflows/network-preflight.yml`。基础探测限制为两个测试 IP；生产 worker 集成使用正式授权通道、独立官方核心验证、生成配置、TCP/UDP IPv4/IPv6 和接口退出观测。实际包复用该链路，需环境 `SING_SHELL_NETWORK_PREFLIGHT=1`，并已由系统提权；不会在维护者日常桌面运行。
 
 macOS 探测注册官方 SMAppService，状态需人工允许时如实记录，并用独立 root 入口验证同一 worker。它不代表实际交互允许后 launchd 激活已验证。UAC/polkit 对话框、物理切网/休眠、其他 VPN 冲突等未执行项在发行证据列出，不能以夹具成功替代。

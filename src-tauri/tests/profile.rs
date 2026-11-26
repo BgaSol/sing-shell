@@ -276,16 +276,28 @@ fn profile_revision_is_independent_and_migration_preserves_original_bytes() {
 #[ignore = "requires official core in SING_SHELL_TEST_CORE; validates generated TUN configuration without starting it"]
 fn official_core_checks_every_supported_protocol_and_site_assets() {
     let core = std::env::var_os("SING_SHELL_TEST_CORE").unwrap();
-    let samples = [
+    let mut samples: Vec<String> = [
         "ss://YWVzLTEyOC1nY206cGFzcw@127.0.0.1:443#ss",
         "trojan://test@127.0.0.1:443#trojan",
         "vless://550e8400-e29b-41d4-a716-446655440000@127.0.0.1:443?security=tls#vless",
         "hysteria2://test@127.0.0.1:443#hy2",
         "tuic://550e8400-e29b-41d4-a716-446655440000:test@127.0.0.1:443#tuic",
-    ];
+        "trojan://test@127.0.0.1:443?type=ws&path=%2Fconnect&host=example.com#ws",
+        "trojan://test@127.0.0.1:443?type=grpc&serviceName=test#grpc",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
+    use base64::Engine;
+    let vmess = serde_json::json!({"v":"2","ps":"vmess","add":"127.0.0.1","port":"443","id":"550e8400-e29b-41d4-a716-446655440000","aid":"0","net":"ws","path":"/connect","host":"example.com","tls":"tls","sni":"example.com"});
+    samples.push(format!(
+        "vmess://{}",
+        base64::engine::general_purpose::STANDARD.encode(vmess.to_string())
+    ));
+    samples.push(format!("vless://550e8400-e29b-41d4-a716-446655440000@127.0.0.1:443?security=reality&sni=example.com&fp=chrome&pbk={}&sid=0123",base64::engine::general_purpose::URL_SAFE_NO_PAD.encode([1u8;32])));
     let root = directory();
     for sample in samples {
-        let (name, spec) = profile::import::link(sample).unwrap();
+        let (name, spec) = profile::import::link(&sample).unwrap();
         let mut profile = Profile::default();
         profile.nodes = vec![Node {
             id: "n".into(),
