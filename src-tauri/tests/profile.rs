@@ -14,6 +14,41 @@ fn directory() -> std::path::PathBuf {
     fs::create_dir(&path).unwrap();
     path
 }
+#[test]
+fn application_drop_removes_generated_credentials_without_an_active_process() {
+    let root = directory();
+    let app = sing_shell::app::Application::open(root.clone(), "0.5.0".into()).unwrap();
+    fs::create_dir_all(root.join("runtime")).unwrap();
+    fs::write(root.join("runtime/generated.json"), b"private candidate").unwrap();
+    drop(app);
+    assert!(!root.join("runtime/generated.json").exists());
+    fs::remove_dir_all(root).unwrap();
+}
+#[test]
+fn deletion_cannot_race_a_start_or_an_authorized_connection() {
+    use std::sync::Arc;
+    let root = directory();
+    let store = Arc::new(sing_shell::settings::SettingsStore::open(root.clone()).unwrap());
+    let gate = Arc::new(sing_shell::app::Admission::default());
+    let runtime = Arc::new(sing_shell::runtime::RuntimeService::default());
+    let service = profile::service::Service::new(store.clone(), gate.clone(), runtime.clone());
+    let preview = service
+        .preview("ss://YWVzLTEyOC1nY206cGFzcw@127.0.0.1:443#test")
+        .unwrap();
+    service.commit(preview.ticket, 0).unwrap();
+    let id = store.snapshot().profile.nodes[0].id.clone();
+    let revision = store.snapshot().profile_revision;
+    let starting = gate.begin(sing_shell::app::Kind::Runtime).unwrap();
+    assert!(service.delete(id.clone(), revision).is_err());
+    drop(starting);
+    runtime.network_owned(true);
+    assert!(service.delete(id.clone(), revision).is_err());
+    runtime.network_owned(false);
+    assert!(service.delete(id, revision).is_ok());
+    drop(service);
+    drop(store);
+    fs::remove_dir_all(root).unwrap();
+}
 
 #[test]
 #[ignore = "requires official core; measures generated routing through two controlled encrypted exits without changing system networking"]

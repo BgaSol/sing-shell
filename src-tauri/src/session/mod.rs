@@ -78,6 +78,7 @@ impl SessionService {
         })
     }
     pub fn initialize(&self) -> Result<(), String> {
+        crate::profile::config::remove_generated(&self.store.root)?;
         self.engine.initialize()?;
         self.arm_restore();
         Ok(())
@@ -191,7 +192,8 @@ impl SessionService {
         self.invalidate_restore();
         self.tunnel.close()?;
         self.runtime.network_owned(false);
-        self.runtime.stop()
+        self.runtime.stop()?;
+        crate::profile::config::remove_generated(&self.store.root)
     }
     pub fn ensure_stopped(&self) -> Result<(), String> {
         let s = self.runtime_snapshot();
@@ -556,7 +558,8 @@ impl SessionService {
         }
         let stopped = self.tunnel.stop().and_then(|_| {
             self.runtime.network_owned(false);
-            self.runtime.stop()
+            self.runtime.stop()?;
+            crate::profile::config::remove_generated(&self.store.root)
         });
         if let Err(e) = saved {
             return Err(format!(
@@ -660,5 +663,10 @@ impl SessionService {
             drop(op);
             core.wake.notify_one();
         });
+    }
+}
+impl Drop for SessionService {
+    fn drop(&mut self) {
+        let _ = self.stop_internal();
     }
 }

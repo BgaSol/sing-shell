@@ -55,6 +55,9 @@ impl CoreService {
             if s.profile.selected().is_none() {
                 Ok(None)
             } else {
+                self.runtime
+                    .logs
+                    .redact(s.profile.selected().unwrap().spec.secrets());
                 crate::profile::config::build(&s.profile, &self.store.root).map(|c| Some(c.path))
             }
         } else {

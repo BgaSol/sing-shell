@@ -130,9 +130,12 @@ pub struct Obfs {
 impl NodeSpec {
     pub fn secrets(&self) -> Vec<String> {
         match self {
-            Self::Shadowsocks { password, .. }
-            | Self::Trojan { password, .. }
-            | Self::Hysteria2 { password, .. } => vec![password.clone()],
+            Self::Shadowsocks { password, .. } | Self::Trojan { password, .. } => {
+                vec![password.clone()]
+            }
+            Self::Hysteria2 { password, obfs, .. } => std::iter::once(password.clone())
+                .chain(obfs.iter().map(|o| o.password.clone()))
+                .collect(),
             Self::Vless { uuid, .. } | Self::Vmess { uuid, .. } => vec![uuid.clone()],
             Self::Tuic { uuid, password, .. } => vec![uuid.clone(), password.clone()],
         }

@@ -87,8 +87,12 @@ pub fn build(profile: &Profile, root: &Path) -> Result<Generated, String> {
     Ok(Generated { path, digest })
 }
 
-pub fn remove_generated(root: &Path) {
-    let _ = fs::remove_file(root.join("runtime/generated.json"));
+pub fn remove_generated(root: &Path) -> Result<(), String> {
+    match fs::remove_file(root.join("runtime/generated.json")) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(_) => Err("生成配置未能清理，请检查本机私有目录权限".into()),
+    }
 }
 
 #[cfg(test)]

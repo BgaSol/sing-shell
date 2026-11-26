@@ -174,7 +174,8 @@ impl Service {
         Ok(self.snapshot())
     }
     pub fn delete(&self, id: String, expected: u64) -> Result<Snapshot, String> {
-        let _op = self.gate.begin(Kind::Profile)?;
+        let _op = self.gate.begin(Kind::Selection)?;
+        self.runtime.stopped()?;
         self.store.profile(expected, |p| {
             if p.nodes.iter().all(|n| n.id != id) {
                 return Err("节点不存在".into());

@@ -186,6 +186,17 @@ impl Tunnel {
                             let snapshot = exchange(&mut channel, &request).await?;
                             *state.lock().unwrap() = snapshot;
                             if quit {
+                                let mut end = [0; 1];
+                                let count = tokio::time::timeout(
+                                    Duration::from_secs(20),
+                                    channel.read(&mut end),
+                                )
+                                .await
+                                .map_err(|_| "授权进程尚未释放控制通道")?
+                                .map_err(|e| e.to_string())?;
+                                if count != 0 {
+                                    return Err("授权进程退出回应无效".into());
+                                }
                                 break;
                             }
                             tokio::time::sleep(Duration::from_millis(250)).await;
@@ -475,6 +486,7 @@ impl Worker {
             let observation = network::observe()?;
             if !observation.interface {
                 network::forget(&self.root)?;
+                crate::profile::config::remove_generated(&self.root)?;
                 *self.state.lock().unwrap() = Snapshot::default();
                 return Ok(());
             }
