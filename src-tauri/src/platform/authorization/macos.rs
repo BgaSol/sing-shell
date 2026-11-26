@@ -291,6 +291,102 @@ mod tests {
     use super::*;
     use std::os::fd::FromRawFd;
     #[test]
+    fn replaced_executable_cannot_relabel_running_processes_as_the_new_build() {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        if let Some(directory) = std::env::var_os("SING_SHELL_TEST_REPLACED_IMAGE") {
+            let directory = PathBuf::from(directory);
+            let endpoint = directory.join("control.sock");
+            if std::env::var_os("SING_SHELL_TEST_REPLACED_CLIENT").is_some() {
+                runtime.block_on(async {
+                    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+                    let mut stream = tokio::net::UnixStream::connect(endpoint).await.unwrap();
+                    stream.write_u8(1).await.unwrap();
+                    let mut end = [0];
+                    tokio::time::timeout(std::time::Duration::from_secs(15), stream.read(&mut end))
+                        .await
+                        .unwrap()
+                        .unwrap();
+                });
+                return;
+            }
+            runtime.block_on(async {
+                use tokio::io::AsyncReadExt;
+                let listener = tokio::net::UnixListener::bind(endpoint).unwrap();
+                std::fs::write(directory.join("listening"), "ready").unwrap();
+                let (mut stream, _) =
+                    tokio::time::timeout(std::time::Duration::from_secs(15), listener.accept())
+                        .await
+                        .unwrap()
+                        .unwrap();
+                stream.read_u8().await.unwrap();
+                let peer = token(&stream).unwrap();
+                verify(&stream, peer[5], false).unwrap();
+                std::fs::write(directory.join("verified-old"), "ready").unwrap();
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+                while !directory.join("replaced").exists() {
+                    assert!(std::time::Instant::now() < deadline);
+                    tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+                }
+                assert!(
+                    verify(&stream, peer[5], false).is_err(),
+                    "old running images must not adopt a replacement's disk identity"
+                );
+            });
+            return;
+        }
+        let directory = std::env::temp_dir().join(format!(
+            "ss-image-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let original = std::env::current_exe().unwrap();
+        let executable = directory.join("peer");
+        std::fs::copy(&original, &executable).unwrap();
+        let command = || {
+            let mut command = std::process::Command::new(&executable);
+            command.args(["--exact", "platform::authorization::macos::tests::replaced_executable_cannot_relabel_running_processes_as_the_new_build", "--nocapture"])
+                .env("SING_SHELL_TEST_REPLACED_IMAGE", &directory);
+            command
+        };
+        let mut server = command().spawn().unwrap();
+        let wait = |name: &str| {
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+            while !directory.join(name).exists() {
+                assert!(std::time::Instant::now() < deadline, "timeout {name}");
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+        };
+        wait("listening");
+        let mut client = command()
+            .env("SING_SHELL_TEST_REPLACED_CLIENT", "1")
+            .spawn()
+            .unwrap();
+        wait("verified-old");
+        let replacement = directory.join("replacement");
+        std::fs::copy(&original, &replacement).unwrap();
+        assert!(std::process::Command::new("/usr/bin/codesign")
+            .args([
+                "--force",
+                "--sign",
+                "-",
+                "--identifier",
+                "com.bgasol.singshell.replacement-test"
+            ])
+            .arg(&replacement)
+            .status()
+            .unwrap()
+            .success());
+        std::fs::rename(replacement, executable).unwrap();
+        std::fs::write(directory.join("replaced"), "ready").unwrap();
+        assert!(server.wait().unwrap().success());
+        assert!(client.wait().unwrap().success());
+        std::fs::remove_dir_all(directory).unwrap();
+    }
+    #[test]
     #[ignore = "launchd integration runs on a disposable native macOS runner"]
     fn launchd_socket_activation_authenticates_production_peer_verifier() {
         let runtime = tokio::runtime::Builder::new_current_thread()
