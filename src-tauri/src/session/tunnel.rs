@@ -540,6 +540,22 @@ pub fn authorization_probe() -> Result<(), String> {
         if snapshot.runtime.pid.is_some() || snapshot.phase != Phase::Stopped {
             return Err("授权探针未能确认空闲 helper 退出".into());
         }
+        let closed: Closed =
+            tokio::time::timeout(Duration::from_secs(10), read(&mut connection.channel))
+                .await
+                .map_err(|_| "授权探针未收到关闭确认")??;
+        if !closed.closed {
+            return Err("授权探针关闭确认无效".into());
+        }
+        let mut end = [0];
+        if tokio::time::timeout(Duration::from_secs(10), connection.channel.read(&mut end))
+            .await
+            .map_err(|_| "授权探针控制通道未关闭")?
+            .map_err(|e| e.to_string())?
+            != 0
+        {
+            return Err("授权探针控制通道未结束".into());
+        }
         tokio::time::timeout(Duration::from_secs(20), connection.finish())
             .await
             .map_err(|_| "授权探针未确认 helper 退出")??;
