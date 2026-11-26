@@ -5,6 +5,7 @@ const sites=[['github','GitHub'],['google','Google'],['youtube','YouTube'],['tel
 export function createProfiles(){
   const input=element<HTMLTextAreaElement>('node-input'),result=element('node-import-result'),nodeList=element('node-list');
   const previewButton=element<HTMLButtonElement>('node-preview'),commitButton=element<HTMLButtonElement>('node-commit');
+  const fileInput=element<HTMLInputElement>('node-file');
   const routingDefault=element<HTMLSelectElement>('routing-default'),routingState=element('routing-state'),custom=element('custom-rules');
   let revision=0,profile:Profile|null=null,ticket:number|null=null,busy=false,nodeSignature='',routingBaseline='',routingRevision=0,draft:Routing|null=null;
   const siteControls=new Map<string,HTMLSelectElement>();
@@ -12,11 +13,29 @@ export function createProfiles(){
   const permission=element<HTMLButtonElement>('network-permission');permission.hidden=!/Mac/.test(navigator.platform);permission.onclick=()=>void action(()=>core.networkSettings());
   const mode=element<HTMLSelectElement>('profile-mode');mode.onchange=()=>void action(async()=>{await core.profileMode(mode.value as Profile['mode'],revision);await reload();});
   function issue(error:unknown){if(!element('routing-panel').hidden){routingState.textContent=String(error);routingState.setAttribute('role','alert');}else{result.textContent=String(error);result.setAttribute('role','alert');}}
-  async function action(task:()=>Promise<unknown>){if(busy)return;busy=true;input.disabled=true;previewButton.disabled=true;commitButton.disabled=true;try{await task();}catch(e){issue(e);}finally{busy=false;input.disabled=false;previewButton.disabled=false;commitButton.disabled=ticket===null;for(const button of nodeList.querySelectorAll<HTMLButtonElement>('button[data-node]'))button.disabled=button.dataset.node===profile?.selectedNode;}}
-  input.oninput=()=>{if(ticket!==null){ticket=null;commitButton.disabled=true;void core.profileCancel();}result.textContent='';};
-  previewButton.onclick=()=>void action(async()=>{const p=await core.profilePreview(input.value);ticket=p.ticket;result.setAttribute('role','status');result.textContent=p.items.map(item=>`第 ${item.line} 项：${item.error??(item.duplicate?'已存在':`${item.node?.name} · ${item.node?.protocol}`)}`).join('\n');if(!p.items.some(i=>i.node&&!i.duplicate)){ticket=null;await core.profileCancel();}});
+  async function action(task:()=>Promise<unknown>){if(busy)return;busy=true;input.disabled=true;fileInput.disabled=true;previewButton.disabled=true;commitButton.disabled=true;try{await task();}catch(e){issue(e);}finally{busy=false;input.disabled=false;fileInput.disabled=false;previewButton.disabled=false;commitButton.disabled=ticket===null;for(const button of nodeList.querySelectorAll<HTMLButtonElement>('button[data-node]'))button.disabled=button.dataset.node===profile?.selectedNode;}}
+  function invalidatePreview(){ticket=null;commitButton.disabled=true;result.textContent='';return core.profileCancel();}
+  input.oninput=()=>void invalidatePreview().catch(issue);
+  previewButton.onclick=()=>void action(async()=>{
+    await invalidatePreview();
+    const p=await core.profilePreview(input.value);
+    result.setAttribute('role','status');
+    result.textContent=p.items.map(item=>`第 ${item.line} 项：${item.error??(item.duplicate?'已存在':`${item.node?.name} · ${item.node?.protocol}`)}`).join('\n');
+    if(p.items.some(i=>i.node&&!i.duplicate))ticket=p.ticket;
+    else await core.profileCancel();
+  });
   commitButton.onclick=()=>void action(async()=>{if(ticket===null)return;await core.profileCommit(ticket,revision);ticket=null;input.value='';result.textContent='节点已导入。请选择一个节点后启动。';await reload();});
-  element<HTMLInputElement>('node-file').onchange=()=>void action(async()=>{const files=element<HTMLInputElement>('node-file').files;if(!files?.length)return;const file=files[0];if(file.size>2*1024*1024)throw Error('文件超过 2 MiB');input.value=await file.text();input.dispatchEvent(new Event('input'));});
+  fileInput.onchange=()=>void action(async()=>{
+    const file=fileInput.files?.[0];
+    if(!file)return;
+    await invalidatePreview();
+    try{
+      if(file.size>2*1024*1024)throw Error('文件超过 2 MiB');
+      let bytes:ArrayBuffer;
+      try{bytes=await file.arrayBuffer();}catch{throw Error('无法读取节点文件');}
+      try{input.value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw Error('节点文件不是有效的 UTF-8 文本');}
+    }finally{fileInput.value='';}
+  });
   element('update-site-rules').onclick=()=>void action(async()=>{const button=element<HTMLButtonElement>('update-site-rules');button.disabled=true;routingState.textContent='正在准备站点列表，不影响当前连接…';try{await core.profileUpdateRules(revision);await reload();routingState.textContent='站点列表已准备，下次启动或应用后生效';}finally{button.disabled=false;}});
   function dirty(){return !!draft&&JSON.stringify(draft)!==routingBaseline;}
   function changed(){routingState.textContent=dirty()?'尚未保存':'';element<HTMLButtonElement>('save-routing').disabled=!dirty();}

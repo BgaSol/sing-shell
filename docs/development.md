@@ -54,7 +54,11 @@ startup_restore 覆盖无前端的一次恢复、主动停止/来源选择/关�
 
 profile 回归覆盖 schema 3→4 原字节备份、独立修订、原子导入、票据重放拒绝和快照凭据保护；单元覆盖协议解析、未知字段、网段规范化和固定规则摘要。设置 `SING_SHELL_TEST_CORE` 后执行 `cargo test --manifest-path src-tauri/Cargo.toml --locked --test profile -- --include-ignored`，以官方 1.14.4 检查全部支持协议配置，再运行两个受控加密出口实测域名、CIDR、集合和默认动作。出口探针只替换传输和入口，不重写生成的路由或 SRS；不改变系统网络。
 
+`import_links` 覆盖 VLESS `encryption=none` 的等价转换、严格单次解码、TLS 别名冲突、传输字段边界、行号与安全错误。profile 集成覆盖预览/提交/选择、存储重开、生成配置保真，以及新预览整体失败、取消、过期、修订冲突和原子写入失败；过期与迟到完成使用确定性状态测试。官方配置检查包含完整 VLESS + TLS + WebSocket 分享链接和显式 SNI 的 gRPC 样例。Windows 手动执行这些集成测试也须加 `--features test-fixtures`，使测试程序包含原生对话框 manifest；`npm run test` 已包含该参数。
+
 工程脚本回归还覆盖“导入节点 → 选择节点 → 保存分流”的连续交互状态，防止忙状态未释放或干净表单未跟随节点修订。协议检查包含 VMess、WebSocket、gRPC、TLS 和 Reality；配置通过不能代替各远端协议的真实服务器互通。
+
+文件读取/严格 UTF-8 解码失败、预览异常、全部无效和部分有效时的票据/按钮状态，以及恶意名称按文本显示，由 `scripts/profiles.test.mjs` 回归。合法链接预览不启动核心；未提供 SNI 的链接能导入不代表远端握手已验证。
 
 真实 TUN 仅在可丢弃的原生运行器运行 `.github/workflows/network-preflight.yml`。基础探测限制为两个测试 IP；生产 worker 集成使用正式授权通道、独立官方核心验证、生成配置、TCP/UDP IPv4/IPv6 和接口退出观测。实际包复用该链路，需环境 `SING_SHELL_NETWORK_PREFLIGHT=1`，并已由系统提权；不会在维护者日常桌面运行。
 

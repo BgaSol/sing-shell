@@ -302,6 +302,8 @@ fn official_core_checks_every_supported_protocol_and_site_assets() {
         "ss://YWVzLTEyOC1nY206cGFzcw@127.0.0.1:443#ss",
         "trojan://test@127.0.0.1:443#trojan",
         "vless://550e8400-e29b-41d4-a716-446655440000@127.0.0.1:443?security=tls#vless",
+        "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?encryption=none&security=tls&type=ws&host=cdn.example.com&path=%2Fwsss#vless-ws",
+        "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?encryption=none&security=tls&sni=tls.example.com&type=grpc&serviceName=test#vless-grpc",
         "hysteria2://test@127.0.0.1:443#hy2",
         "tuic://550e8400-e29b-41d4-a716-446655440000:test@127.0.0.1:443#tuic",
         "trojan://test@127.0.0.1:443?type=ws&path=%2Fconnect&host=example.com#ws",
@@ -404,6 +406,114 @@ fn imports_are_atomic_replay_safe_and_public_settings_hide_credentials() {
         .unwrap();
     assert!(!store.snapshot().startup.resume_core);
     assert!(store.snapshot().startup.last_connection.is_none());
+    drop(service);
+    drop(store);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
+    use std::sync::Arc;
+    let sample = "vless://550e8400-e29b-41d4-a716-446655440000@example.com:443?encryption=none&security=tls&sni=tls.example.com&type=ws&host=cdn.example.com&path=%2Fwsss#zzz";
+    let root = directory();
+    let store = Arc::new(sing_shell::settings::SettingsStore::open(root.clone()).unwrap());
+    let service = profile::service::Service::new(
+        store.clone(),
+        Arc::new(Default::default()),
+        Arc::new(Default::default()),
+    );
+    let preview = service
+        .preview(&format!("{sample}\n{sample}\nunknown://private-value"))
+        .unwrap();
+    assert_eq!(preview.items.len(), 3);
+    assert!(preview.items[1].duplicate);
+    assert!(preview.items[2].error.is_some());
+    service.commit(preview.ticket, 0).unwrap();
+    let snapshot = store.snapshot();
+    assert_eq!(snapshot.profile.nodes.len(), 1);
+    assert!(snapshot.profile.selected_node.is_none());
+    service
+        .select(snapshot.profile.nodes[0].id.clone(), 1)
+        .unwrap();
+    let spec = snapshot.profile.nodes[0].spec.clone();
+    for equivalent in [
+        sample.replace("encryption=none&", ""),
+        spec.outbound().to_string(),
+    ] {
+        let duplicate = service.preview(&equivalent).unwrap();
+        assert!(duplicate.items[0].duplicate);
+        service
+            .commit(duplicate.ticket, store.snapshot().profile_revision)
+            .unwrap();
+        assert_eq!(store.snapshot().profile.nodes.len(), 1);
+    }
+    let public = serde_json::to_string(&service.snapshot()).unwrap();
+    assert!(!public.contains("550e8400"));
+    assert!(!store.snapshot().public().to_string().contains("550e8400"));
+    drop(service);
+    drop(store);
+    let reopened = sing_shell::settings::SettingsStore::open(root.clone()).unwrap();
+    assert!(reopened.error.is_none());
+    let selected = reopened.snapshot();
+    assert_eq!(selected.profile.selected().unwrap().name, "zzz");
+    assert!(selected.profile.selected().unwrap().spec == spec);
+    let generated = profile::config::build(&selected.profile, &root).unwrap();
+    let value: serde_json::Value =
+        serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
+    assert_eq!(
+        value["outbounds"][0]["tls"]["server_name"],
+        "tls.example.com"
+    );
+    assert_eq!(
+        value["outbounds"][0]["transport"]["headers"]["Host"],
+        "cdn.example.com"
+    );
+    assert_eq!(value["outbounds"][0]["transport"]["path"], "/wsss");
+    assert!(value["outbounds"][0].get("encryption").is_none());
+    drop(reopened);
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn new_previews_and_cancellation_invalidate_old_tickets_but_write_failures_allow_retry() {
+    use std::sync::Arc;
+    let root = directory();
+    let store = Arc::new(sing_shell::settings::SettingsStore::open(root.clone()).unwrap());
+    let service = profile::service::Service::new(
+        store.clone(),
+        Arc::new(Default::default()),
+        Arc::new(Default::default()),
+    );
+    let link = "trojan://private-test@example.com:443";
+    for failed in [
+        String::new(),
+        "{".into(),
+        "x".repeat(profile::import::MAX_BYTES + 1),
+    ] {
+        let old = service.preview(link).unwrap();
+        assert!(service.preview(&failed).is_err());
+        assert!(service.commit(old.ticket, 0).is_err());
+        assert_eq!(store.snapshot().profile_revision, 0);
+    }
+    let old = service.preview(link).unwrap();
+    let current = service.preview(link).unwrap();
+    assert!(service.commit(old.ticket, 0).is_err());
+    service.cancel();
+    assert!(service.commit(current.ticket, 0).is_err());
+    let current = service.preview(link).unwrap();
+    assert!(service.commit(current.ticket, 1).is_err());
+    assert_eq!(store.snapshot().profile_revision, 0);
+    let settings = root.join("settings.json");
+    // A directory at the destination makes the atomic replacement fail on every platform.
+    fs::create_dir(&settings).unwrap();
+    assert!(service.commit(current.ticket, 0).is_err());
+    assert!(store.snapshot().profile.nodes.is_empty());
+    assert!(store.snapshot().profile.selected_node.is_none());
+    assert_eq!(store.snapshot().profile_revision, 0);
+    fs::remove_dir(&settings).unwrap();
+    service.commit(current.ticket, 0).unwrap();
+    assert_eq!(store.snapshot().profile.nodes.len(), 1);
+    assert!(service.commit(current.ticket, 1).is_err());
     drop(service);
     drop(store);
     fs::remove_dir_all(root).unwrap();
