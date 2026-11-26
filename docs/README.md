@@ -23,3 +23,5 @@
 - [v0.1.0 发行记录](releases/v0.1.0.md)：包来源、原生验收、摘要及限制
 
 [临时整改计划](plans/)统一放在 `plans/`，不代表已实现功能。
+
+- [托盘呈现与 TUN 授权生命周期整改](plans/desktop-network-lifecycle.md)：身份认证、会话收尾、状态投影和原生验收
