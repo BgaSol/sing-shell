@@ -1,0 +1,1296 @@
+{
+  "version": "0.6.1",
+  "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+  "verificationToolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+  "productionTreesMatch": true,
+  "toolOnlyChanges": [
+    "scripts/network-integration.mjs"
+  ],
+  "packageRun": "45906776175",
+  "verificationRun": "45909237578",
+  "checkRun": "45909219119",
+  "networkRun": "45906781063",
+  "draft": {
+    "releaseId": 459991798,
+    "assetsVerified": 16,
+    "sourceMatches": true,
+    "updaterManifestMatches": true,
+    "updaterManifestSha256": "8b0db86bd9c55fe93b9603c5e1d0f9fb641c5ddf73aad5cfc3dc654831177689"
+  },
+  "firstFailure": {
+    "version": "0.6.1",
+    "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+    "originalPackageRun": "45906776175",
+    "firstVerificationAttempt": 1,
+    "target": "aarch64-apple-darwin",
+    "failure": "Network fixture replace.json was observed before its direct write completed; native JSON reader reported EOF and replacement response timed out.",
+    "correction": {
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "files": [
+        "scripts/network-integration.mjs"
+      ],
+      "behavior": "Write complete JSON to replace.part and atomically rename to replace.json; no relaxed assertions or changed application bytes."
+    },
+    "report": {
+      "version": "0.6.1",
+      "target": "aarch64-apple-darwin",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "run": "45906776175",
+      "verificationRun": "45906776175",
+      "nativeHost": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "25.6.0"
+      },
+      "passed": false,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.dmg",
+          "role": "dmg",
+          "size": 6157904,
+          "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+          "role": "app",
+          "size": 6296650,
+          "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+          "role": "signature",
+          "size": 428,
+          "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive executable: native architecture, WebView, IPC and exit",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "771bea7ddd27f14b4c5f1e80c190f381847b06748df3b8482ef45a9a3abcfb9b",
+          "programHash": "6546126c1759683fe85798da92409215d53c50e0f2b346b4f74a61babc8dbec2",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "6546126c1759683fe85798da92409215d53c50e0f2b346b4f74a61babc8dbec2",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 6157904,
+              "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 6296650,
+              "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 6157904,
+              "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 6296650,
+              "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+            }
+          ]
+        }
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: sudo: 1/null\n\n1 !== 0\n\n    at run (file:///Users/runner/work/sing-shell/sing-shell/scripts/verify-package.mjs:21:473)\n    at networkPackage (file:///Users/runner/work/sing-shell/sing-shell/scripts/verify-package.mjs:33:8)\n    at file:///Users/runner/work/sing-shell/sing-shell/scripts/verify-package.mjs:166:145\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)"
+    }
+  },
+  "reports": [
+    {
+      "version": "0.6.1",
+      "target": "x86_64-pc-windows-msvc",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "run": "45906776175",
+      "verificationRun": "45909237578",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "x64",
+        "release": "10.0.26100"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_x64-setup.exe",
+          "role": "nsis",
+          "size": 4637159,
+          "sha256": "4da50d50d57377775f510e89d572ffa10ba7d9d2cd84fbffea19e3a0232c2024"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_x64-setup.exe.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "0f82b1ecbb096a0349c3db400549820dd4ee7e5e3d729b66e6e880aef4a3de46"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual NSIS /AllUsers application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /AllUsers installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /AllUsers update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /AllUsers uninstall preserves another installation login registration",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual NSIS /CurrentUser application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /CurrentUser installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /CurrentUser update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /CurrentUser uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-amd64.zip",
+        "sha256": "99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "20384863956950aa0e74ac11a590eeee80080da96dbb4e415d5f4c517a7ce280",
+          "programHash": "8f30682ee198855440d2a7fe070d5d3653793b2d01bb8c85eea88f93bbe7c8b9",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "8f30682ee198855440d2a7fe070d5d3653793b2d01bb8c85eea88f93bbe7c8b9",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4637159,
+              "sha256": "4da50d50d57377775f510e89d572ffa10ba7d9d2cd84fbffea19e3a0232c2024"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "0f82b1ecbb096a0349c3db400549820dd4ee7e5e3d729b66e6e880aef4a3de46"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_x64-setup.exe",
+              "role": "nsis",
+              "size": 4637159,
+              "sha256": "4da50d50d57377775f510e89d572ffa10ba7d9d2cd84fbffea19e3a0232c2024"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_x64-setup.exe.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "0f82b1ecbb096a0349c3db400549820dd4ee7e5e3d729b66e6e880aef4a3de46"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.6.1",
+        "to": "0.6.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.6.2_x64-setup.exe",
+            "role": "nsis",
+            "size": 4634602,
+            "sha256": "e7781d7472fe3b94541ff1bff7cffc0f301830adc29bc00a18e02793640237f6"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_x64-setup.exe.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "6ee1d98251d73b1ca76984fb21aefdbbdfb4e95a082d000bb91d1eb0955c199d"
+          }
+        ]
+      },
+      "installationProbes": [
+        {
+          "stage": "reinstall before foreign-login uninstall",
+          "scope": "/AllUsers",
+          "facts": {
+            "status": 0,
+            "stdout": "{\"directory\":\"C:\\\\Program Files\\\\Sing Shell CI-8656\",\"registry\":[{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\previous-installed\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\previous-installed\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Program Files\\\\Sing Shell CI-8656\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Program Files\\\\Sing Shell CI-8656\\\"\",\"default\":null,\"allUsers\":\"1\"}],\"binaryVersion\":\"0.6.1\",\"exists\":true}\r\n",
+            "stderr": ""
+          }
+        },
+        {
+          "stage": "reinstall before foreign-login uninstall",
+          "scope": "/CurrentUser",
+          "facts": {
+            "status": 0,
+            "stdout": "{\"directory\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\installed\",\"registry\":[{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\installed\",\"allUsers\":null},{\"currentUser\":\"1\",\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\installed\\\"\",\"default\":null,\"allUsers\":null},{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\installed\",\"allUsers\":null},{\"currentUser\":\"1\",\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-SuyTVU\\\\installed\\\"\",\"default\":null,\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Program Files\\\\Sing Shell CI-8656\",\"allUsers\":null}],\"binaryVersion\":\"0.6.1\",\"exists\":true}\r\n",
+            "stderr": ""
+          }
+        }
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "target": "aarch64-pc-windows-msvc",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "run": "45906776175",
+      "verificationRun": "45909237578",
+      "nativeHost": {
+        "platform": "win32",
+        "arch": "arm64",
+        "release": "10.0.26200"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_arm64-setup.exe",
+          "role": "nsis",
+          "size": 4117418,
+          "sha256": "5b7cd129e8eb7f864f92e5177fdeb77bc30e84e7fb28537cf79341a6b7b8bb5d"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_arm64-setup.exe.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "90db35bc87a060ae2caa26ab80a5094a65371c49742a3b725d8e439de92d129c"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual NSIS /AllUsers application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /AllUsers installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /AllUsers update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /AllUsers uninstall preserves another installation login registration",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual NSIS /CurrentUser application: authorized worker, encrypted IPv4/IPv6 TCP/UDP TUN forwarding and network cleanup",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "NSIS /CurrentUser installed executable: native architecture, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then exits and releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "NSIS /CurrentUser update preserves scope, path, login registration and Windows disabled state; uninstall removes only owned registration",
+        "NSIS /CurrentUser uninstall preserves another installation login registration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI",
+        "tray host unavailable: visible foreground fallback verified"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-windows-arm64.zip",
+        "sha256": "8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "c47651a226e6d7dc94bf13e03702d1b98bba32d5b1dcf8312a6a8be01bc5b2e0",
+          "programHash": "fa52dcb75bdc08e864927e260baad31a4d62668f0af40725d7a5e5aac37dfb92",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "fa52dcb75bdc08e864927e260baad31a4d62668f0af40725d7a5e5aac37dfb92",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 4117418,
+              "sha256": "5b7cd129e8eb7f864f92e5177fdeb77bc30e84e7fb28537cf79341a6b7b8bb5d"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "90db35bc87a060ae2caa26ab80a5094a65371c49742a3b725d8e439de92d129c"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_arm64-setup.exe",
+              "role": "nsis",
+              "size": 4117418,
+              "sha256": "5b7cd129e8eb7f864f92e5177fdeb77bc30e84e7fb28537cf79341a6b7b8bb5d"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_arm64-setup.exe.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "90db35bc87a060ae2caa26ab80a5094a65371c49742a3b725d8e439de92d129c"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.6.1",
+        "to": "0.6.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.6.2_arm64-setup.exe",
+            "role": "nsis",
+            "size": 4116873,
+            "sha256": "bbaa5798d4fb15686a432a4375c6409ee44f7fa5ca9215dd4f9eceba8cf7f8f1"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_arm64-setup.exe.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "cfbb6e28bb48febaacf4dc8fba84f9d27b27cbf4fb2d792839930081749bc403"
+          }
+        ]
+      },
+      "installationProbes": [
+        {
+          "stage": "reinstall before foreign-login uninstall",
+          "scope": "/AllUsers",
+          "facts": {
+            "status": 0,
+            "stdout": "{\"directory\":\"C:\\\\Program Files\\\\Sing Shell CI-5648\",\"registry\":[{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\previous-installed\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\previous-installed\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Program Files\\\\Sing Shell CI-5648\",\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Program Files\\\\Sing Shell CI-5648\\\"\",\"default\":null,\"allUsers\":\"1\"}],\"binaryVersion\":\"0.6.1\",\"exists\":true}\r\n",
+            "stderr": ""
+          }
+        },
+        {
+          "stage": "reinstall before foreign-login uninstall",
+          "scope": "/CurrentUser",
+          "facts": {
+            "status": 0,
+            "stdout": "{\"directory\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\installed\",\"registry\":[{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\installed\",\"allUsers\":null},{\"currentUser\":\"1\",\"hive\":\"CurrentUser\",\"view\":\"Registry32\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\installed\\\"\",\"default\":null,\"allUsers\":null},{\"currentUser\":null,\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\installed\",\"allUsers\":null},{\"currentUser\":\"1\",\"hive\":\"CurrentUser\",\"view\":\"Registry64\",\"key\":\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Uninstall\\\\Sing Shell\",\"version\":\"0.6.1\",\"installLocation\":\"\\\"C:\\\\Users\\\\RUNNER~1\\\\AppData\\\\Local\\\\Temp\\\\sing-shell-package-HhuWzE\\\\installed\\\"\",\"default\":null,\"allUsers\":null},{\"currentUser\":null,\"hive\":\"LocalMachine\",\"view\":\"Registry64\",\"key\":\"Software\\\\bgasol\\\\Sing Shell\",\"version\":null,\"installLocation\":null,\"default\":\"C:\\\\Program Files\\\\Sing Shell CI-5648\",\"allUsers\":null}],\"binaryVersion\":\"0.6.1\",\"exists\":true}\r\n",
+            "stderr": ""
+          }
+        }
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "target": "x86_64-unknown-linux-gnu",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "run": "45906776175",
+      "verificationRun": "45909237578",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "x64",
+        "release": "6.8.0-1070-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_amd64.deb",
+          "role": "deb",
+          "size": 7449462,
+          "sha256": "112a6c9338bcebabdff4afc976c1ae9fa9fa8123db113f35023d796ee9d3ecfa"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_amd64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "94315bbbbbddc623a26f2b0f682b19e95419eaefeb9ea7b099cdfb403e5ea3dd"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_amd64.AppImage",
+          "role": "appimage",
+          "size": 85531128,
+          "sha256": "a871b0fb0c1bb3cc9c063498949efe68e16f7ebc2e4c10230a13408955635364"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_amd64.AppImage.sig",
+          "role": "signature",
+          "size": 440,
+          "sha256": "b6de894b9451f015a8c0fc67f72833b22a1e49bade0bdf967e343521bbdc08f4"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-amd64.tar.gz",
+        "sha256": "699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "868ecb9fb0233770d4f80869a5d1380f03359ff7c1c307ca8dac4e99c71e4153",
+          "programHash": "1264361b5f8868c8768f7555d3e77e20118bf503c41ac08bb290a0d99056aa3a",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "1264361b5f8868c8768f7555d3e77e20118bf503c41ac08bb290a0d99056aa3a",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_amd64.deb",
+              "role": "deb",
+              "size": 7449462,
+              "sha256": "112a6c9338bcebabdff4afc976c1ae9fa9fa8123db113f35023d796ee9d3ecfa"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "94315bbbbbddc623a26f2b0f682b19e95419eaefeb9ea7b099cdfb403e5ea3dd"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85531128,
+              "sha256": "a871b0fb0c1bb3cc9c063498949efe68e16f7ebc2e4c10230a13408955635364"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "b6de894b9451f015a8c0fc67f72833b22a1e49bade0bdf967e343521bbdc08f4"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_amd64.deb",
+              "role": "deb",
+              "size": 7449462,
+              "sha256": "112a6c9338bcebabdff4afc976c1ae9fa9fa8123db113f35023d796ee9d3ecfa"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "94315bbbbbddc623a26f2b0f682b19e95419eaefeb9ea7b099cdfb403e5ea3dd"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.AppImage",
+              "role": "appimage",
+              "size": 85531128,
+              "sha256": "a871b0fb0c1bb3cc9c063498949efe68e16f7ebc2e4c10230a13408955635364"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_amd64.AppImage.sig",
+              "role": "signature",
+              "size": 440,
+              "sha256": "b6de894b9451f015a8c0fc67f72833b22a1e49bade0bdf967e343521bbdc08f4"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.6.1",
+        "to": "0.6.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.6.2_amd64.deb",
+            "role": "deb",
+            "size": 7449460,
+            "sha256": "14df643b5ea7db384ca2c698c7ba69cc6eadd274e5f4dfea691be265e4254b45"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_amd64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "fe359dc413e6e95228ece935a330f1e05ed89ada81a92abe369aa87785ddf54c"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_amd64.AppImage",
+            "role": "appimage",
+            "size": 85531128,
+            "sha256": "a43b4ae4958aa27be8a8244d60976f9bc62f1ac04e51c1c6bdb3a95df3f1d2ab"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_amd64.AppImage.sig",
+            "role": "signature",
+            "size": 440,
+            "sha256": "1d42f2de0aef1e93326c9fb2b2ce9395097ceedec94e7ea34e451f3b237bf714"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.6.1",
+      "target": "aarch64-unknown-linux-gnu",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "run": "45906776175",
+      "verificationRun": "45909237578",
+      "nativeHost": {
+        "platform": "linux",
+        "arch": "arm64",
+        "release": "6.8.0-1070-azure"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_arm64.deb",
+          "role": "deb",
+          "size": 7038292,
+          "sha256": "a8451172c51fe939203aaef2bb5d99c29f186eb03634cc58f2a1b4f36f75082f"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_arm64.deb.sig",
+          "role": "signature",
+          "size": 436,
+          "sha256": "e216fd2db8915e31445f1d8294805937ee468d9b5645b211a105b465ddde0602"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.AppImage",
+          "role": "appimage",
+          "size": 83216904,
+          "sha256": "c36c8d15566ab88fd2b7524a079d017d75b4b71caec847eb4c7570ef74ece559"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.AppImage.sig",
+          "role": "signature",
+          "size": 444,
+          "sha256": "d3f4e3ddc489c7612daf0bb76dbc60e1fe27e3c53623fe03f52edab512817c91"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "DEB extracted executable: native architecture, WebView, IPC and exit",
+        "actual DEB executable: authorized worker and encrypted TUN forwarding",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual AppImage executable: authorized worker and encrypted TUN forwarding",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "AppImage extraction, WebView, IPC and exit",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "DEB system installation",
+        "DEB system upgrade"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-linux-arm64.tar.gz",
+        "sha256": "436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "38dde437a91d7f5e6b6b0092c079c724ee750aae36609a97bfe521fef736391d",
+          "programHash": "d953af885f11d6b547c21a3c0ffe70796963afc802fab959d548311002b4908a",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "d953af885f11d6b547c21a3c0ffe70796963afc802fab959d548311002b4908a",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_arm64.deb",
+              "role": "deb",
+              "size": 7038292,
+              "sha256": "a8451172c51fe939203aaef2bb5d99c29f186eb03634cc58f2a1b4f36f75082f"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "e216fd2db8915e31445f1d8294805937ee468d9b5645b211a105b465ddde0602"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 83216904,
+              "sha256": "c36c8d15566ab88fd2b7524a079d017d75b4b71caec847eb4c7570ef74ece559"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "d3f4e3ddc489c7612daf0bb76dbc60e1fe27e3c53623fe03f52edab512817c91"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_arm64.deb",
+              "role": "deb",
+              "size": 7038292,
+              "sha256": "a8451172c51fe939203aaef2bb5d99c29f186eb03634cc58f2a1b4f36f75082f"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_arm64.deb.sig",
+              "role": "signature",
+              "size": 436,
+              "sha256": "e216fd2db8915e31445f1d8294805937ee468d9b5645b211a105b465ddde0602"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.AppImage",
+              "role": "appimage",
+              "size": 83216904,
+              "sha256": "c36c8d15566ab88fd2b7524a079d017d75b4b71caec847eb4c7570ef74ece559"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.AppImage.sig",
+              "role": "signature",
+              "size": 444,
+              "sha256": "d3f4e3ddc489c7612daf0bb76dbc60e1fe27e3c53623fe03f52edab512817c91"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.6.1",
+        "to": "0.6.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.6.2_arm64.deb",
+            "role": "deb",
+            "size": 7038294,
+            "sha256": "507d01086415eaa930f08baaa936d35c8c0b32a32803466df695358b32fe4c03"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_arm64.deb.sig",
+            "role": "signature",
+            "size": 436,
+            "sha256": "7002590050066dc4c3b902fd2a206d7cac5738045c59a60500be736bf92ddc05"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_aarch64.AppImage",
+            "role": "appimage",
+            "size": 83216904,
+            "sha256": "5b81940b3db80d4c037bc9faf9a94d6b40c8faa9fde5d289163e44d9a0672836"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_aarch64.AppImage.sig",
+            "role": "signature",
+            "size": 444,
+            "sha256": "65926a1e63b1c97f617a9262e2f438a5b79d51e456896ccacdbb6ea54f470a17"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.6.1",
+      "target": "aarch64-apple-darwin",
+      "source": "5dba19fa9331c9303d591913f798c58b26814d4e",
+      "toolSource": "0e8455b3397c92a0e7c1db8ea2294dd29c8a19a2",
+      "run": "45906776175",
+      "verificationRun": "45909237578",
+      "nativeHost": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "release": "25.6.0"
+      },
+      "passed": true,
+      "packages": [
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.dmg",
+          "role": "dmg",
+          "size": 6157904,
+          "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+          "role": "app",
+          "size": 6296650,
+          "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+        },
+        {
+          "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+          "role": "signature",
+          "size": 428,
+          "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+        }
+      ],
+      "verified": [
+        "baseline and upgrade-candidate Tauri signatures",
+        "same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration",
+        "official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.5.4 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "published old version reads its managed core and schema",
+        "signed previous version starts with its own settings schema",
+        "upgraded package preserves managed settings and existing core bytes",
+        "explicit initialization recovers an existing official core, starts and stops it",
+        "official updater installs the signed major version; old schema is preserved and requires explicit initialization",
+        "published signed v0.6.0 upgrades to this release with explicit old-schema refusal and original files preserved",
+        "DMG mounted executable: native architecture, WebView, IPC and exit",
+        "app archive executable: native architecture, WebView, IPC and exit",
+        "native current-user login registration, read-back, system-disabled facts and cleanup",
+        "installed resources include all five pinned SRS sources, editable sources and GPL / CC-BY-SA notices",
+        "actual macOS app bundle: privileged worker, encrypted IPv4/IPv6 TCP/UDP and TUN cleanup; administrator authorization separately scoped",
+        "running official core survives hide and second-instance activation, then releases its port",
+        "production lifecycle: login launch, core restoration, preflight, resource cleanup, signed install and restarted core restoration"
+      ],
+      "skipped": [
+        "publisher code signing",
+        "macOS notarization",
+        "system proxy is outside product scope",
+        "interactive UAC/polkit authorization",
+        "macOS administrator authorization dialog",
+        "suspend and physical network switching",
+        "actual desktop logout/login",
+        "physical tray visibility and macOS approval UI"
+      ],
+      "officialCore": {
+        "version": "1.14.4",
+        "archive": "sing-box-1.14.4-darwin-arm64.tar.gz",
+        "sha256": "0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+      },
+      "managedRecovery": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": "c83ec5f6b02959b6707a824e7efea428eeb4e553e42edd4326e0deff73f8b584",
+          "programHash": "6546126c1759683fe85798da92409215d53c50e0f2b346b4f74a61babc8dbec2",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "coreVersion": "1.14.4",
+          "backupHash": null,
+          "programHash": "6546126c1759683fe85798da92409215d53c50e0f2b346b4f74a61babc8dbec2",
+          "started": true,
+          "stopped": true,
+          "automaticConnection": false
+        }
+      ],
+      "previousUpgrades": [
+        {
+          "from": "0.5.4",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": true,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 6157904,
+              "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 6296650,
+              "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+            }
+          ]
+        },
+        {
+          "from": "0.6.0",
+          "to": "0.6.1",
+          "signatureVerified": true,
+          "actualVersionConfirmed": true,
+          "oldSchemaPreserved": false,
+          "candidateFiles": [
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.dmg",
+              "role": "dmg",
+              "size": 6157904,
+              "sha256": "4398e74968cee656b598fd1db4a7975591a1253741efb0412491076d32adfd9e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz",
+              "role": "app",
+              "size": 6296650,
+              "sha256": "760bba3716b57848b554337ecbf14b9cce1eec3dbe5b99a6e0d66a232f55284e"
+            },
+            {
+              "name": "Sing.Shell_0.6.1_aarch64.app.tar.gz.sig",
+              "role": "signature",
+              "size": 428,
+              "sha256": "a7270d550226d214aac734ffb03d91a5818fa71ac242234c16a1cc0f1a4b8fbc"
+            }
+          ]
+        }
+      ],
+      "networkIntegration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "temporary resolver released and all existing network-service DNS preferences preserved",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "dnsReleaseMs": [
+          8,
+          17
+        ],
+        "log": ""
+      },
+      "upgrade": {
+        "from": "0.6.1",
+        "to": "0.6.2",
+        "signatureVerified": true,
+        "actualVersionConfirmed": true,
+        "settingsPreserved": true,
+        "productionLifecycle": true,
+        "restoredCore": true,
+        "loginArgumentConsumed": true,
+        "candidateFiles": [
+          {
+            "name": "Sing.Shell_0.6.2_aarch64.dmg",
+            "role": "dmg",
+            "size": 6157912,
+            "sha256": "e3ff3fff106c4229f95b0096a7bf88340f06c489647968e32800cefacf5bc241"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_aarch64.app.tar.gz",
+            "role": "app",
+            "size": 6296666,
+            "sha256": "d78c89b392faa2b726023c7c9cf875158b43864bd3946e3a784e173403856d1f"
+          },
+          {
+            "name": "Sing.Shell_0.6.2_aarch64.app.tar.gz.sig",
+            "role": "signature",
+            "size": 428,
+            "sha256": "c4681a4df00f8184c42e98dd0318bc8165cc504eeb9364dcd5a88a13a8c2e8be"
+          }
+        ]
+      }
+    }
+  ]
+}
