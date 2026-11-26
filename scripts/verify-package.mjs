@@ -28,7 +28,7 @@ function driverInput(manifest,root,executable,data,verifyOnly,currentVersion=ver
 function verifySignature(manifest,root){run(driver,[driverInput(manifest,root,driver,directory,true)]);}
 let official;
 function networkPackage(executable,label){
-  const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:official};
+  const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:official,APPIMAGE_EXTRACT_AND_RUN:'1'};
   if(process.platform==='win32')run(process.execPath,['scripts/network-integration.mjs',target],env);
   else run('sudo',['-E',process.execPath,'scripts/network-integration.mjs',target],env);
   const result=JSON.parse(fs.readFileSync(path.join('artifacts/network-preflight',target,'integration-report.json')));assert.equal(result.passed,true);report.networkIntegration=result;report.verified.push(label);

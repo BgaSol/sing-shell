@@ -29,9 +29,13 @@ try{
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
   const input={node:{id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultAction:'proxy',customRules:[],siteRules:[{site:'github',action:'direct'}]},coreVersion:'1.14.4',control};
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
-  worker=spawn(executable,process.env.SING_SHELL_NETWORK_EXECUTABLE?['--smoke-test','--network-fixture-input',inputFile]:[inputFile],{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs+=bytes;});worker.stderr.on('data',bytes=>{logs+=bytes;});
+  async function launch(){
+    for(const file of ['started.json','stopped.json','stop'])await fs.rm(path.join(control,file),{force:true});
+    worker=spawn(executable,process.env.SING_SHELL_NETWORK_EXECUTABLE?['--smoke-test','--network-fixture-input',inputFile]:[inputFile],{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});worker.stderr.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});
+    return Promise.race([waitFile('started.json'),new Promise((_,reject)=>{worker.once('error',reject);worker.once('exit',code=>reject(Error(`worker exited ${code}: ${logs}`)));})]);
+  }
   console.log('Waiting for authorized worker to prepare the official core and TUN');
-  const started=await Promise.race([waitFile('started.json'),new Promise((_,reject)=>worker.once('exit',code=>reject(Error(`worker exited ${code}: ${logs}`))))]);
+  const started=await launch();
   console.log('Authorized TUN running; verifying selected-node traffic');
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
   report.verified.push('production network worker authenticates control channel and independently verifies official core','typed node and routing become checked private TUN config','native interface and IPv4/IPv6 routes are confirmed');
@@ -39,6 +43,15 @@ try{
   await tcpEcho('127.0.0.1',echoPort);report.verified.push('loopback bypass remains direct');
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
-  assert.ok(!JSON.stringify(started).includes(password));report.verified.push('stop releases actual TUN and terminates authorization worker','worker diagnostics do not return known node credential');report.passed=true;
+  assert.ok(!JSON.stringify(started).includes(password));report.verified.push('stop releases actual TUN and terminates authorization worker','worker diagnostics do not return known node credential');
+  const interrupted=await launch();process.kill(interrupted.runtime.pid,'SIGKILL');await delay(2000);
+  await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
+  assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
+  report.verified.push('unexpected official core exit is cleaned without crash reconnection');
+  await launch();worker.kill('SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(12_000);
+  const recovered=await launch();assert.equal(recovered.phase,'running');await tcpEcho('198.18.77.1',echoPort);
+  await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
+  assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
+  report.verified.push('controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown');report.passed=true;
 }catch(error){report.error=String(error);process.exitCode=1;if(process.platform==='darwin'){report.routeDiagnostics=spawnSync('/usr/sbin/netstat',['-rn'],{encoding:'utf8'}).stdout;}if(process.platform==='linux'){report.routeDiagnostics=spawnSync('ip',['-j','route','show','table','all'],{encoding:'utf8'}).stdout;}}
 finally{clearTimeout(timeout);if(worker){worker.kill();await delay(12_000);}if(proxy)proxy.kill();if(udp)udp.close();if(tcp)tcp.close();report.log=logs.slice(-32768);await fs.writeFile(path.join(directory,'integration-report.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));process.exit(report.passed?0:1);}

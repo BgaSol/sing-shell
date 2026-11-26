@@ -14,6 +14,203 @@ fn directory() -> std::path::PathBuf {
     fs::create_dir(&path).unwrap();
     path
 }
+
+#[test]
+#[ignore = "requires official core; measures generated routing through two controlled encrypted exits without changing system networking"]
+fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
+    use sing_shell::{
+        profile::routing::{Action, Rule, SiteRule},
+        runtime::{RuntimeService, StartSpec},
+    };
+    use std::{
+        io::{Read, Write},
+        net::{TcpListener, TcpStream},
+        sync::{atomic::AtomicBool, Arc},
+        thread,
+        time::Duration,
+    };
+    let core = std::path::PathBuf::from(std::env::var_os("SING_SHELL_TEST_CORE").unwrap());
+    let root = directory();
+    let port = || {
+        TcpListener::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port()
+    };
+    let proxy_port = port();
+    let direct_port = port();
+    let mixed_port = port();
+    let stopped = Arc::new(AtomicBool::new(false));
+    let mut echoes = Vec::new();
+    let mut echo_ports = Vec::new();
+    for label in [b'P', b'D'] {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        echo_ports.push(listener.local_addr().unwrap().port());
+        listener.set_nonblocking(true).unwrap();
+        let stop = stopped.clone();
+        echoes.push(thread::spawn(move || {
+            while !stop.load(Ordering::Acquire) {
+                if let Ok((mut stream, _)) = listener.accept() {
+                    stream
+                        .set_read_timeout(Some(Duration::from_secs(5)))
+                        .unwrap();
+                    let mut bytes = [0; 4];
+                    if stream.read_exact(&mut bytes).is_ok() {
+                        let _ = stream.write_all(&[label]);
+                    }
+                } else {
+                    thread::sleep(Duration::from_millis(10));
+                }
+            }
+        }));
+    }
+    let server = RuntimeService::default();
+    let client = RuntimeService::default();
+    let run = |runtime: &RuntimeService, file: &str, value: &serde_json::Value| {
+        let path = root.join(file);
+        fs::write(&path, value.to_string()).unwrap();
+        runtime
+            .start(
+                &StartSpec {
+                    executable: core.clone(),
+                    config: path,
+                    version: Some("1.14.4".into()),
+                },
+                Arc::new(AtomicBool::new(false)),
+            )
+            .unwrap();
+    };
+    run(
+        &server,
+        "server.json",
+        &serde_json::json!({
+            "inbounds":[{"type":"shadowsocks","tag":"proxy-in","listen":"127.0.0.1","listen_port":proxy_port,"method":"aes-128-gcm","password":"test-password"},{"type":"shadowsocks","tag":"direct-in","listen":"127.0.0.1","listen_port":direct_port,"method":"aes-128-gcm","password":"test-password"}],
+            "outbounds":[{"type":"direct","tag":"echo"}],
+            "route":{"rules":[{"inbound":["proxy-in"],"action":"route","outbound":"echo","override_address":"127.0.0.1","override_port":echo_ports[0]},{"inbound":["direct-in"],"action":"route","outbound":"echo","override_address":"127.0.0.1","override_port":echo_ports[1]}],"final":"echo"}
+        }),
+    );
+    let spec = |port| profile::NodeSpec::Shadowsocks {
+        server: "127.0.0.1".into(),
+        server_port: port,
+        method: "aes-128-gcm".into(),
+        password: "test-password".into(),
+    };
+    let mut profile = Profile::default();
+    profile.nodes.push(Node {
+        id: "n".into(),
+        name: "test".into(),
+        source: "fixture".into(),
+        spec: spec(proxy_port),
+    });
+    profile.selected_node = Some("n".into());
+    profile.routing.custom_rules = vec![
+        Rule::Domain {
+            value: "example.test".into(),
+            include_subdomains: true,
+            action: Action::Direct,
+        },
+        Rule::Domain {
+            value: "www.example.test".into(),
+            include_subdomains: false,
+            action: Action::Proxy,
+        },
+        Rule::Domain {
+            value: "deep.example.test".into(),
+            include_subdomains: true,
+            action: Action::Proxy,
+        },
+        Rule::Domain {
+            value: "github.com".into(),
+            include_subdomains: false,
+            action: Action::Proxy,
+        },
+        Rule::Ip {
+            value: "198.18.20.0/24".into(),
+            action: Action::Direct,
+        },
+        Rule::Ip {
+            value: "198.18.20.1/32".into(),
+            action: Action::Proxy,
+        },
+    ];
+    profile.routing.site_rules = vec![
+        SiteRule {
+            site: "github".into(),
+            action: Action::Direct,
+        },
+        SiteRule {
+            site: "google".into(),
+            action: Action::Proxy,
+        },
+    ];
+    let generated = profile::config::build(&profile, &root).unwrap();
+    let mut config: serde_json::Value =
+        serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
+    // Keep generated routing and SRS unchanged; replace only ingress, DNS transport and exit probes.
+    config["inbounds"] =
+        serde_json::json!([{"type":"mixed","listen":"127.0.0.1","listen_port":mixed_port}]);
+    let mut direct = spec(direct_port).outbound();
+    direct["tag"] = serde_json::json!("direct");
+    config["outbounds"][1] = direct;
+    let hosts = serde_json::json!({"example.test":["198.18.20.1"],"www.example.test":["198.18.20.1"],"a.example.test":["198.18.20.1"],"a.deep.example.test":["198.18.20.2"],"github.com":["198.18.77.1"],"api.github.com":["198.18.77.1"],"google.com":["198.18.77.1"],"unmatched.test":["198.18.77.1"]});
+    config["dns"]["servers"] = serde_json::json!([{"type":"hosts","tag":"local","predefined":hosts},{"type":"hosts","tag":"proxy-dns","predefined":hosts}]);
+    run(&client, "client.json", &config);
+    let request = |host: &str, expected: u8| {
+        let mut stream = TcpStream::connect(("127.0.0.1", mixed_port)).unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(8)))
+            .unwrap();
+        stream.write_all(&[5, 1, 0]).unwrap();
+        let mut greeting = [0; 2];
+        stream.read_exact(&mut greeting).unwrap();
+        assert_eq!(greeting, [5, 0]);
+        let mut address = vec![5, 1, 0];
+        if let Ok(ip) = host.parse::<std::net::Ipv4Addr>() {
+            address.push(1);
+            address.extend(ip.octets());
+        } else {
+            address.extend([3, host.len() as u8]);
+            address.extend(host.as_bytes());
+        }
+        address.extend(80u16.to_be_bytes());
+        stream.write_all(&address).unwrap();
+        let mut reply = [0; 10];
+        stream.read_exact(&mut reply).unwrap();
+        assert_eq!(reply[1], 0, "{host}");
+        stream.write_all(b"ping").unwrap();
+        let mut marker = [0; 1];
+        stream.read_exact(&mut marker).unwrap();
+        assert_eq!(marker[0], expected, "wrong exit for {host}");
+    };
+    for (host, expected) in [
+        ("127.0.0.1", b'D'),
+        ("198.18.77.1", b'P'),
+        ("198.18.20.2", b'D'),
+        ("198.18.20.1", b'P'),
+        ("example.test", b'D'),
+        ("a.example.test", b'D'),
+        ("www.example.test", b'P'),
+        ("a.deep.example.test", b'P'),
+        ("github.com", b'P'),
+        ("api.github.com", b'D'),
+        ("google.com", b'P'),
+        ("unmatched.test", b'P'),
+    ] {
+        request(host, expected);
+    }
+    client.stop().unwrap();
+    config["route"]["final"] = serde_json::json!("direct");
+    run(&client, "client.json", &config);
+    request("unmatched.test", b'D');
+    client.stop().unwrap();
+    server.stop().unwrap();
+    stopped.store(true, Ordering::Release);
+    for echo in echoes {
+        echo.join().unwrap();
+    }
+    fs::remove_dir_all(root).unwrap();
+}
 #[test]
 fn profile_revision_is_independent_and_migration_preserves_original_bytes() {
     let root = directory();
