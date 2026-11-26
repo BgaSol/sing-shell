@@ -5,6 +5,8 @@ use std::{
 };
 use tokio::io::{AsyncRead, AsyncWrite};
 mod handshake;
+#[cfg(any(test, target_os = "macos"))]
+mod launchd;
 #[cfg(target_os = "macos")]
 mod macos;
 pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
@@ -467,6 +469,43 @@ mod native {
         if cancel.load(Ordering::Acquire) {
             return Err("网络授权已取消".into());
         }
+        let stream = match activate(cancel, progress).await {
+            Ok(stream) => stream,
+            Err(error) => {
+                if cancel.load(Ordering::Acquire) {
+                    return Err(error);
+                }
+                progress(Stage::Registration);
+                match super::macos::recover_registration(cancel) {
+                    Ok(true) => activate(cancel, progress).await.map_err(|next| {
+                        super::macos::activation_error(format!(
+                            "已恢复一次失效登记，仍未就绪：{next}（首次：{error}）"
+                        ))
+                    })?,
+                    Ok(false) => return Err(super::macos::activation_error(error)),
+                    Err(recovery) => {
+                        return Err(format!(
+                            "{}；登记恢复未完成：{recovery}",
+                            super::macos::activation_error(error)
+                        ))
+                    }
+                }
+            }
+        };
+        let process = super::macos::token(&stream)?;
+        Ok(Connection {
+            channel: Box::new(stream),
+            process: Some(Process::Mac(process)),
+        })
+    }
+    #[cfg(target_os = "macos")]
+    async fn activate(
+        cancel: &AtomicBool,
+        progress: &impl Fn(Stage),
+    ) -> Result<tokio::net::UnixStream, String> {
+        if cancel.load(Ordering::Acquire) {
+            return Err("网络授权已取消".into());
+        }
         progress(Stage::Activation);
         let mut stream = tokio::net::UnixStream::connect(super::macos::SOCKET)
             .await
@@ -482,11 +521,7 @@ mod native {
             }),
         )
         .await?;
-        let process = super::macos::token(&stream)?;
-        Ok(Connection {
-            channel: Box::new(stream),
-            process: Some(Process::Mac(process)),
-        })
+        Ok(stream)
     }
     pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         if !elevated() {

@@ -527,6 +527,36 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
     })())
 }
 
+#[cfg(target_os = "macos")]
+pub fn authorization_probe() -> Result<(), String> {
+    if authorization::elevated() {
+        return Err("授权探针须以普通用户运行，不能用 root 入口替代 SMAppService".into());
+    }
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .map_err(|e| e.to_string())?;
+    runtime.block_on(async {
+        let mut connection =
+            authorization::connect(&PathBuf::new(), &AtomicBool::new(false), &|stage| {
+                println!("{}", serde_json::json!({"authorizationStage": stage}))
+            })
+            .await?;
+        let snapshot = exchange(&mut connection.channel, &Request::Quit).await?;
+        if snapshot.runtime.pid.is_some() || snapshot.phase != Phase::Stopped {
+            return Err("授权探针未能确认空闲 helper 退出".into());
+        }
+        tokio::time::timeout(Duration::from_secs(20), connection.finish())
+            .await
+            .map_err(|_| "授权探针未确认 helper 退出")??;
+        println!(
+            "{}",
+            serde_json::json!({"authenticated":true,"helperExited":true,"coreStarted":false})
+        );
+        Ok(())
+    })
+}
+
 pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
     if !authorization::elevated() {
         return Err("network fixture needs a disposable privileged runner".into());

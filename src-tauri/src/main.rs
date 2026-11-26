@@ -494,6 +494,14 @@ fn main() {
     if args.iter().any(|a| a == "--smoke-test")
         && std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1")
     {
+        #[cfg(target_os = "macos")]
+        if args.iter().any(|a| a == "--network-authorization") {
+            if let Err(error) = sing_shell::session::tunnel::authorization_probe() {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+            return;
+        }
         if let Some(index) = args.iter().position(|a| a == "--network-fixture-input") {
             let file = args.get(index + 1).expect("network fixture input missing");
             let fixture_args = vec![args[0].clone(), file.clone()];

@@ -66,6 +66,8 @@ profile 回归覆盖 schema 3→4 原字节备份、独立修订、原子导入�
 
 macOS 探测注册官方 SMAppService，状态需人工允许时如实记录，并用独立 root 入口验证同一 worker。它不代表实际交互允许后 launchd 激活已验证。UAC/polkit 对话框、物理切网/休眠、其他 VPN 冲突等未执行项在发行证据列出，不能以夹具成功替代。
 
+macOS 完整安装包可用普通用户执行 `SING_SHELL_NETWORK_PREFLIGHT=1 "/Applications/Sing Shell.app/Contents/MacOS/sing-shell" --smoke-test --network-authorization`，验证正式 SMAppService 登记、失效登记恢复、launchd 激活、双方身份与协议及 helper 退出。探针不传节点、不启动核心，也不能用 root 执行；必要的系统允许仍由用户完成。EX_CONFIG 用户报告作为回归样本，缺失/未知字段、其他归属、有 PID、活动作业及非配置启动失败均不得授权重置登记。
+
 授权协议回归覆盖延迟就绪、错误身份不发送确认、取消、超时、超限、错误 nonce 和旧协议。macOS 默认原生测试用继承监听 socket 验证 accept 前后身份变化；Check 另执行生产 Rust verifier 的隔离 launchd socket activation 测试。两者均不代表用户在系统设置允许正式 daemon 后的真实激活。隧道回归覆盖关闭超时保留同一线程、重试回收及只读状态；纯节点恢复不依赖原始配置路径。
 
 原生 smoke 分别断言收起与真正退出，读取登录项适配测试 IO。实际包额外用官方 sing-box 执行启动恢复、收起后的 SOCKS5 回环、第二实例唤回同一窗口、PID 保留和真正退出后的端口释放。Linux Xvfb 配合 Openbox 验证实际最小化。合成登录参数不代表真实注销/登录；物理托盘展示、macOS 系统允许提示和实际登录会话未执行时记录为跳过。

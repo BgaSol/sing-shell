@@ -55,7 +55,7 @@ pub async fn bounded<T>(
     tokio::select! {
         biased;
         _ = cancellation => Err("网络授权已取消".into()),
-        result = tokio::time::timeout(duration, work) => result.map_err(|_| "网络授权握手超时，请确认系统已允许 helper 后重试".to_string())?,
+        result = tokio::time::timeout(duration, work) => result.map_err(|_| "网络授权握手超时".to_string())?,
     }
 }
 pub async fn client<S: AsyncRead + AsyncWrite + Unpin>(
