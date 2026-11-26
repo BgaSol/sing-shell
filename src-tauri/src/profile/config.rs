@@ -39,7 +39,7 @@ pub fn build(profile: &Profile, root: &Path) -> Result<Generated, String> {
     rules.insert(1, json!({"protocol":"dns","action":"hijack-dns"}));
     let mut rule_sets = Vec::new();
     for site in &profile.routing.site_rules {
-        let path = crate::rulesets::materialize(root, &site.site)?;
+        let path = crate::rulesets::materialize_at(root, &profile.rule_commit, &site.site)?;
         rule_sets.push(json!({"type":"local","tag":format!("site-{}",site.site),"format":"binary","path":path}));
     }
     let mut dns_rules = Vec::new();

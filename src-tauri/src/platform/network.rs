@@ -128,14 +128,24 @@ pub fn observe() -> Result<Observation, String> {
     if result.interface {
         #[cfg(target_os = "linux")]
         {
-            let v4 = std::fs::read_to_string("/proc/net/route").map_err(|e| e.to_string())?;
-            let v6 = std::fs::read_to_string("/proc/net/ipv6_route").map_err(|e| e.to_string())?;
-            result.routes = v4
-                .lines()
-                .any(|l| l.split_whitespace().next() == Some(interface_name()))
-                && v6
-                    .lines()
-                    .any(|l| l.split_whitespace().last() == Some(interface_name()));
+            let ip = if std::path::Path::new("/usr/sbin/ip").is_file() {
+                "/usr/sbin/ip"
+            } else {
+                "/sbin/ip"
+            };
+            let routes = |family: &str| -> Result<bool, String> {
+                let output = std::process::Command::new(ip)
+                    .args(["-j", family, "route", "show", "table", "all"])
+                    .output()
+                    .map_err(|e| format!("无法读取路由，请安装 iproute2：{e}"))?;
+                if !output.status.success() {
+                    return Err("无法读取 TUN 路由表".into());
+                }
+                let routes: Vec<serde_json::Value> =
+                    serde_json::from_slice(&output.stdout).map_err(|_| "系统路由输出无效")?;
+                Ok(routes.iter().any(|r| r["dev"] == interface_name()))
+            };
+            result.routes = routes("-4")? && routes("-6")?;
         }
         #[cfg(target_os = "macos")]
         {

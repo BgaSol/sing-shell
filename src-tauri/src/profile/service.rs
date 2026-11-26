@@ -39,14 +39,20 @@ pub struct Service {
     gate: Arc<Admission>,
     pending: Mutex<Option<Pending>>,
     next: AtomicU64,
+    runtime: Arc<crate::runtime::RuntimeService>,
 }
 impl Service {
-    pub fn new(store: Arc<SettingsStore>, gate: Arc<Admission>) -> Self {
+    pub fn new(
+        store: Arc<SettingsStore>,
+        gate: Arc<Admission>,
+        runtime: Arc<crate::runtime::RuntimeService>,
+    ) -> Self {
         Self {
             store,
             gate,
             pending: Mutex::new(None),
             next: AtomicU64::new(0),
+            runtime,
         }
     }
     pub fn snapshot(&self) -> Snapshot {
@@ -62,6 +68,37 @@ impl Service {
         if self.store.error.is_some() {
             return Err("设置无法读取，请先处理存储错误".into());
         }
+        if input.len() > import::MAX_BYTES {
+            return Err("导入内容超过 2 MiB".into());
+        }
+        let formatted;
+        let input = if (input.trim_start().starts_with('/')
+            || input.trim_start().starts_with('{')
+            || input.trim_start().starts_with('['))
+            && serde_json::from_str::<serde_json::Value>(input).is_err()
+        {
+            let directory = self.store.root.join("import");
+            crate::private_files::directory(&directory)?;
+            let source = directory.join("source.jsonc");
+            crate::private_files::write(&source, input.as_bytes())?;
+            struct Cleanup(std::path::PathBuf);
+            impl Drop for Cleanup {
+                fn drop(&mut self) {
+                    let _ = std::fs::remove_file(&self.0);
+                }
+            }
+            let _cleanup = Cleanup(source.clone());
+            let core = settings
+                .selected_path(&self.store.root)
+                .map_err(|_| "JSONC 提取需要等待核心就绪")?;
+            formatted = self
+                .runtime
+                .format_config(&core, &source, &_op.cancel)
+                .map_err(|_| "核心未能读取此 JSONC；原文件未被修改，导入尚未提交")?;
+            formatted.as_str()
+        } else {
+            input
+        };
         let preview = import::preview(input, &settings.profile.nodes)?;
         let id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
         let nodes = preview

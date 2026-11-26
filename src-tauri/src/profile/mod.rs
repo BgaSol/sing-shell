@@ -276,6 +276,22 @@ impl NodeSpec {
             if t.alpn.len() > 8 || t.alpn.iter().any(|v| v.is_empty() || v.len() > 255) {
                 return Err("ALPN 参数无效".into());
             }
+            if t.utls.as_ref().is_some_and(|u| {
+                !u.enabled
+                    || ![
+                        "chrome",
+                        "firefox",
+                        "edge",
+                        "safari",
+                        "ios",
+                        "android",
+                        "random",
+                        "randomized",
+                    ]
+                    .contains(&u.fingerprint.as_str())
+            }) {
+                return Err("不支持此 TLS 指纹".into());
+            }
             if let Some(r) = &t.reality {
                 if !r.enabled
                     || r.public_key.is_empty()
@@ -283,6 +299,35 @@ impl NodeSpec {
                     || !r.short_id.bytes().all(|b| b.is_ascii_hexdigit())
                 {
                     return Err("Reality 参数无效".into());
+                }
+            }
+        }
+        let transport = match self {
+            Self::Trojan { transport, .. }
+            | Self::Vless { transport, .. }
+            | Self::Vmess { transport, .. } => transport.as_ref(),
+            _ => None,
+        };
+        if let Some(transport) = transport {
+            match transport {
+                Transport::WebSocket { path, headers } => {
+                    if path.len() > 4096
+                        || path.chars().any(char::is_control)
+                        || headers.len() > 1
+                        || headers.iter().any(|(key, value)| {
+                            !key.eq_ignore_ascii_case("host")
+                                || value.is_empty()
+                                || value.len() > 253
+                                || value.chars().any(|c| c.is_control() || c.is_whitespace())
+                        })
+                    {
+                        return Err("WebSocket 路径或 Host 无效".into());
+                    }
+                }
+                Transport::Grpc { service_name } => {
+                    if service_name.len() > 512 || service_name.chars().any(char::is_control) {
+                        return Err("gRPC 服务名称无效".into());
+                    }
                 }
             }
         }
@@ -355,13 +400,26 @@ pub enum Mode {
     Generated,
     ExternalConfig,
 }
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Profile {
     pub mode: Mode,
     pub nodes: Vec<Node>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
+    #[serde(default = "crate::rulesets::bundled_commit")]
+    pub rule_commit: String,
+}
+impl Default for Profile {
+    fn default() -> Self {
+        Self {
+            mode: Mode::Generated,
+            nodes: vec![],
+            selected_node: None,
+            routing: Default::default(),
+            rule_commit: crate::rulesets::bundled_commit(),
+        }
+    }
 }
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -370,6 +428,7 @@ pub struct PublicProfile {
     pub nodes: Vec<NodeSummary>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
+    pub rule_commit: String,
 }
 impl Profile {
     pub fn public(&self) -> PublicProfile {
@@ -378,6 +437,7 @@ impl Profile {
             nodes: self.nodes.iter().map(Node::summary).collect(),
             selected_node: self.selected_node.clone(),
             routing: self.routing.clone(),
+            rule_commit: self.rule_commit.clone(),
         }
     }
 }
@@ -388,6 +448,7 @@ impl Profile {
             .and_then(|id| self.nodes.iter().find(|n| &n.id == id))
     }
     pub fn validate(&self) -> Result<(), String> {
+        crate::rulesets::validate_commit(&self.rule_commit)?;
         if self.nodes.len() > 2000 {
             return Err("最多保存 2,000 个节点".into());
         }

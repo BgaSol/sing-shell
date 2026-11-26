@@ -51,7 +51,8 @@ impl Application {
             gate.clone(),
             version,
         );
-        let profiles = crate::profile::service::Service::new(store.clone(), gate.clone());
+        let profiles =
+            crate::profile::service::Service::new(store.clone(), gate.clone(), runtime.clone());
         Self {
             core,
             session,
@@ -124,6 +125,7 @@ pub enum Kind {
     CoreFetch,
     Preferences,
     Profile,
+    Rules,
     Check,
     Download(crate::updates::Component),
     Diagnostic,
@@ -205,6 +207,7 @@ impl Admission {
             (Kind::CoreFetch, Kind::CoreFetch)
             | (Kind::Preferences, Kind::Preferences)
             | (Kind::Profile, Kind::Profile)
+            | (Kind::Rules, Kind::Rules)
             | (Kind::Diagnostic, Kind::Diagnostic) => true,
             _ => false,
         });

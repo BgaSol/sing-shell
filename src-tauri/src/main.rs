@@ -235,11 +235,14 @@ fn core_snapshot(app: State<App>) -> serde_json::Value {
     serde_json::json!({"settings":settings_value,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.session.logs(),"storageError":app.store.error,"closing":app.gate.closing()})
 }
 #[tauri::command]
-fn profile_import_preview(
+async fn profile_import_preview(
     input: String,
-    app: State<App>,
+    app: State<'_, App>,
 ) -> Result<sing_shell::profile::service::Preview, String> {
-    app.profiles.preview(&input)
+    let application = app.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || application.profiles.preview(&input))
+        .await
+        .map_err(|e| e.to_string())?
 }
 #[tauri::command]
 fn profile_import_cancel(app: State<App>) {
@@ -292,6 +295,24 @@ fn profile_mode(
     app: State<App>,
 ) -> Result<sing_shell::profile::service::Snapshot, String> {
     app.session.mode(mode, expected_revision)
+}
+#[tauri::command]
+async fn profile_update_rules(
+    expected_revision: u64,
+    app: State<'_, App>,
+) -> Result<sing_shell::profile::service::Snapshot, String> {
+    let operation = app.gate.begin(Kind::Rules)?;
+    let application = app.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let commit = sing_shell::rulesets::latest(&application.store.root, &operation.cancel)?;
+        application.store.profile(expected_revision, |p| {
+            p.rule_commit = commit;
+            Ok(())
+        })?;
+        Ok(application.profiles.snapshot())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 #[tauri::command]
 fn profile_set_routing(
@@ -596,6 +617,7 @@ fn main() {
             profile_import_cancel,
             profile_snapshot,
             profile_mode,
+            profile_update_rules,
             profile_rename_node,
             profile_delete_node,
             profile_import_commit,

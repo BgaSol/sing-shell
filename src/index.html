@@ -60,7 +60,7 @@
         <section aria-labelledby="nodes-title"><div class="section-heading"><h2 id="nodes-title">节点</h2><span id="nodes-count"></span></div>
           <p class="hint">粘贴一行或多行节点链接，预览无误后一次导入。导入不会自动启动。</p>
           <label for="node-input">节点链接或 sing-box 节点 JSON</label><textarea id="node-input" rows="7" spellcheck="false" placeholder="ss://、trojan://、vless://、vmess://、hysteria2:// 或 tuic://"></textarea>
-          <label for="node-file">或导入本地文件</label><input id="node-file" type="file" accept=".txt,.json" />
+          <label for="node-file">或导入本地文件</label><input id="node-file" type="file" accept=".txt,.json,.jsonc" />
           <div class="actions"><button id="node-preview" class="primary" type="button">预览导入</button><button id="node-commit" type="button" disabled>导入预览中的节点</button></div><p id="node-import-result" role="status"></p>
           <div id="node-list"></div>
         </section>
@@ -68,7 +68,7 @@
       <div id="routing-panel" hidden>
         <section aria-labelledby="routing-title"><div class="section-heading"><h2 id="routing-title">分流</h2><span id="routing-state"></span></div>
           <label>未命中规则：<select id="routing-default"><option value="proxy">走代理</option><option value="direct">走直连</option></select></label>
-          <h3>常用站点</h3><div id="site-rules"></div>
+          <div class="section-heading"><h3>常用站点</h3><button id="update-site-rules" type="button">更新站点列表</button></div><p id="site-rules-version" class="hint"></p><div id="site-rules"></div>
           <h3>自定义规则</h3><div id="custom-rules"></div>
           <div class="actions"><input id="rule-value" aria-label="域名或 IP/CIDR" placeholder="域名或 IP/CIDR" /><select id="rule-kind" aria-label="规则类型"><option value="domain">域名</option><option value="ip">IP / 网段</option></select><select id="rule-action" aria-label="规则动作"><option value="direct">直连</option><option value="proxy">代理</option></select><button id="add-rule" type="button">添加规则</button></div><label><input id="rule-subdomains" type="checkbox" checked /> 域名规则包含子域名</label>
           <div class="actions"><button id="save-routing" class="primary" type="button">保存分流设置</button></div><p class="hint">保存后下次启动生效；运行中请在运行页点击应用并重启。</p>

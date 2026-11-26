@@ -68,7 +68,7 @@ impl Logs {
                 };
                 if let Some(capture) = &capture {
                     let mut value = capture.lock().unwrap();
-                    let remaining = 65536usize.saturating_sub(value.len());
+                    let remaining = (2 * 1024 * 1024usize).saturating_sub(value.len());
                     value.extend_from_slice(&bytes[..count.min(remaining)]);
                 }
                 for byte in &bytes[..count] {

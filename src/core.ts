@@ -8,7 +8,7 @@ export interface RouteRule {kind:'domain'|'ip';value:string;includeSubdomains?:b
 export interface SiteRule {site:string;action:RouteAction}
 export interface Routing {defaultAction:RouteAction;customRules:RouteRule[];siteRules:SiteRule[]}
 export interface NodeSummary {id:string;name:string;source:string;protocol:string;server:string;port:number}
-export interface Profile {mode:'generated'|'externalConfig';nodes:NodeSummary[];selectedNode:string|null;routing:Routing}
+export interface Profile {mode:'generated'|'externalConfig';nodes:NodeSummary[];selectedNode:string|null;routing:Routing;ruleCommit:string}
 export interface ProfileSnapshot extends Profile {revision:number}
 export interface Settings {schemaVersion:number;coreRevision:number;profileRevision:number;preferencesRevision:number;profile:Profile;coreSource:{mode:'managed'}|{mode:'external';path:string};managed:{active:ManagedRef|null;previous:ManagedRef|null;trial:'awaitingStart'|'starting'|null};configPath:string|null;pendingConfigPath:string|null;updatePreferences:Preferences;startup:{restoreCoreOnLaunch:boolean;resumeCore:boolean};desktop:{backgroundNoticeShown:boolean}}
 export interface CoreState {maintenance:{phase:'idle'|'checking'|'downloading'|'preparing'|'ready'|'paused'|'error';candidate:Candidate|null;error:string|null;downloadedBytes:number;totalBytes:number|null;network:{endpoint:string;attempt:number;error:string|null}|null;lastCheckedAt:number;nextCheckAt:number};initialized:boolean;usable:boolean;notice:string|null;configError:string|null;restore:'none'|'waiting'|'starting'|'finished';canStart:boolean;canStop:boolean;canImport:boolean;canRetry:boolean;phase:string;pendingChanges:boolean;runningNode:NodeSummary|null;network:{interface:boolean;ipv4:boolean;ipv6:boolean;routes:boolean}}
@@ -44,4 +44,5 @@ export const core = {
   profileDelete:(id:string,expectedRevision:number)=>invoke<ProfileSnapshot>('profile_delete_node',{id,expectedRevision}),
   profileRouting:(routing:Routing,expectedRevision:number)=>invoke<ProfileSnapshot>('profile_set_routing',{routing,expectedRevision}),
   profileMode:(mode:Profile['mode'],expectedRevision:number)=>invoke<ProfileSnapshot>('profile_mode',{mode,expectedRevision}),
+  profileUpdateRules:(expectedRevision:number)=>invoke<ProfileSnapshot>('profile_update_rules',{expectedRevision}),
 };

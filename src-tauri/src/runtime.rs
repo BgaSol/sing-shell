@@ -197,7 +197,12 @@ impl RuntimeService {
                 .current_dir(config.parent().ok_or("配置目录不存在")?);
         }
         let capture = Arc::new(Mutex::new(Vec::new()));
-        let mut process = Process::spawn(&mut command, &self.logs, Some(capture.clone()))?;
+        let command_logs = if action == "format" {
+            Logs::default()
+        } else {
+            self.logs.clone()
+        };
+        let mut process = Process::spawn(&mut command, &command_logs, Some(capture.clone()))?;
         let deadline = Instant::now() + Duration::from_secs(15);
         loop {
             if cancel.load(Ordering::Acquire) {
@@ -236,6 +241,14 @@ impl RuntimeService {
         file(core)?;
         self.command(core, Some(config), "check", cancel)
             .map(|_| ())
+    }
+    pub fn format_config(
+        &self,
+        core: &Path,
+        config: &Path,
+        cancel: &AtomicBool,
+    ) -> Result<String, String> {
+        self.command(core, Some(config), "format", cancel)
     }
     pub fn start(&self, spec: &StartSpec, cancel: Arc<AtomicBool>) -> Result<(), String> {
         if self.snapshot().pid.is_some() {

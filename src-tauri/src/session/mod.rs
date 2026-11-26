@@ -122,6 +122,7 @@ impl SessionService {
         let desired = settings.profile.selected().map(|node| tunnel::Connection {
             node: node.clone(),
             routing: settings.profile.routing.clone(),
+            rule_commit: settings.profile.rule_commit.clone(),
         });
         Snapshot {
             can_start: !busy
@@ -292,6 +293,7 @@ impl SessionService {
         Ok(tunnel::Connection {
             node,
             routing: s.profile.routing,
+            rule_commit: s.profile.rule_commit,
         })
     }
     fn check_owned(&self, op: &Operation) -> Result<(), String> {
@@ -326,6 +328,7 @@ impl SessionService {
             None => self.desired_connection()?,
         };
         input.profile().validate()?;
+        self.runtime.logs.redact(input.node.spec.secrets());
         let generated = crate::profile::config::build(&input.profile(), &self.store.root)?;
         self.runtime.validate(
             &s.selected_path(&self.store.root)?,

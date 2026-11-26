@@ -21,6 +21,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 pub struct Connection {
     pub node: Node,
     pub routing: Routing,
+    #[serde(default = "crate::rulesets::bundled_commit")]
+    pub rule_commit: String,
 }
 impl Connection {
     pub fn profile(&self) -> Profile {
@@ -29,11 +31,12 @@ impl Connection {
             nodes: vec![self.node.clone()],
             selected_node: Some(self.node.id.clone()),
             routing: self.routing.clone(),
+            rule_commit: self.rule_commit.clone(),
         }
     }
     pub fn fingerprint(&self) -> String {
         crate::rulesets::digest(
-            &serde_json::to_vec(&(&self.node.spec, &self.routing))
+            &serde_json::to_vec(&(&self.node.spec, &self.routing, &self.rule_commit))
                 .expect("connection serialization"),
         )
     }
@@ -353,6 +356,7 @@ impl Worker {
             let result = (|| {
                 runtime.logs.redact(input.node.spec.secrets());
                 input.profile().validate()?;
+                crate::rulesets::prepare(&root, &input.rule_commit, &cancel)?;
                 let core = trusted_core(&root, &version, &runtime, &cancel)?;
                 crate::platform::network::require_clear()?;
                 let config = crate::profile::config::build(&input.profile(), &root)?;
@@ -622,6 +626,7 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
         Connection {
             node: input.node,
             routing: input.routing,
+            rule_commit: crate::rulesets::bundled_commit(),
         },
         input.core_version,
         &cancel,
