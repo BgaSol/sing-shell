@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
-
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Action {
@@ -16,44 +15,64 @@ impl Action {
         }
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(tag = "kind", rename_all = "camelCase", deny_unknown_fields)]
-pub enum Rule {
-    Domain {
-        value: String,
-        #[serde(rename = "includeSubdomains")]
-        include_subdomains: bool,
-        action: Action,
-    },
-    Ip {
-        value: String,
-        action: Action,
-    },
-}
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct SiteRule {
-    pub site: String,
-    pub action: Action,
+pub struct Domain {
+    pub value: String,
+    pub include_subdomains: bool,
 }
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "camelCase", deny_unknown_fields)]
+pub enum Match {
+    Custom {
+        domains: Vec<Domain>,
+        #[serde(rename = "ipCidrs")]
+        ip_cidrs: Vec<String>,
+    },
+    Source {
+        #[serde(rename = "sourceId")]
+        source_id: String,
+    },
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Policy {
+    pub id: String,
+    pub name: String,
+    pub enabled: bool,
+    pub exit: Action,
+    pub r#match: Match,
+}
+impl Policy {
+    pub fn tag(&self) -> String {
+        format!("policy-{}", self.id)
+    }
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Routing {
-    pub default_action: Action,
-    pub custom_rules: Vec<Rule>,
-    pub site_rules: Vec<SiteRule>,
+    pub default_exit: Action,
+    pub policies: Vec<Policy>,
 }
-
-pub const SITE_IDS: &[&str] = &[
-    "github",
-    "google",
-    "youtube",
-    "telegram",
-    "microsoft",
-    "apple",
-    "openai",
-    "cn",
-];
+impl Default for Routing {
+    fn default() -> Self {
+        Self {
+            default_exit: Action::Proxy,
+            policies: [("cn-domain", "国内站点"), ("cn-ip", "中国大陆 IP")]
+                .into_iter()
+                .map(|(id, name)| Policy {
+                    id: id.into(),
+                    name: name.into(),
+                    enabled: true,
+                    exit: Action::Direct,
+                    r#match: Match::Source {
+                        source_id: id.into(),
+                    },
+                })
+                .collect(),
+        }
+    }
+}
 pub const PRIVATE_NETWORKS: &[&str] = &[
     "127.0.0.0/8",
     "10.0.0.0/8",
@@ -64,7 +83,6 @@ pub const PRIVATE_NETWORKS: &[&str] = &[
     "fc00::/7",
     "fe80::/10",
 ];
-
 pub fn domain(value: &str) -> Result<String, String> {
     let value = value.trim().trim_end_matches('.');
     if value.is_empty()
@@ -146,165 +164,171 @@ fn overlap(a: (IpAddr, u8), b: (IpAddr, u8)) -> bool {
 }
 impl Routing {
     pub fn normalized(&self) -> Result<Self, String> {
-        if self.custom_rules.len() > 1000 || self.site_rules.len() > SITE_IDS.len() {
-            return Err("分流规则超过上限".into());
+        if self.policies.len() > 100 {
+            return Err("最多保存 100 条策略".into());
         }
-        let mut keys = std::collections::BTreeSet::new();
-        let mut rules = Vec::new();
-        for rule in &self.custom_rules {
-            let (key, normalized) = match rule {
-                Rule::Domain {
-                    value,
-                    include_subdomains,
-                    action,
-                } => {
-                    let value = domain(value)?;
-                    (
-                        format!("domain:{include_subdomains}:{value}"),
-                        Rule::Domain {
-                            value,
-                            include_subdomains: *include_subdomains,
-                            action: *action,
-                        },
-                    )
-                }
-                Rule::Ip { value, action } => {
-                    let parsed = network(value)?;
-                    if *action == Action::Proxy
-                        && PRIVATE_NETWORKS
-                            .iter()
-                            .any(|n| overlap(parsed, network(n).unwrap()))
-                    {
-                        return Err("本机和局域网固定直连，不能添加与之冲突的代理网段".into());
+        let mut out = self.clone();
+        let mut ids = std::collections::BTreeSet::new();
+        let mut sources = std::collections::BTreeSet::new();
+        let mut count = 0;
+        for (index, p) in out.policies.iter_mut().enumerate() {
+            if p.id.is_empty()
+                || p.id.len() > 64
+                || !p.id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
+                || !ids.insert(p.id.clone())
+            {
+                return Err(format!("第 {} 条策略标识无效或重复", index + 1));
+            }
+            p.name = p.name.trim().into();
+            if p.name.is_empty()
+                || p.name.chars().count() > 64
+                || p.name.chars().any(char::is_control)
+            {
+                return Err(format!("第 {} 条策略名称无效", index + 1));
+            }
+            let name = p.name.clone();
+            let issue = |message: &str| format!("{name}：{message}");
+            match &mut p.r#match {
+                Match::Source { source_id } => {
+                    crate::rulesets::definition(source_id)?;
+                    if !sources.insert(source_id.clone()) {
+                        return Err(issue("同一开源来源只能添加一次"));
                     }
-                    let value = format!("{}/{}", parsed.0, parsed.1);
-                    (
-                        format!("ip:{value}"),
-                        Rule::Ip {
-                            value,
-                            action: *action,
-                        },
-                    )
                 }
-            };
-            if !keys.insert(key) {
-                return Err("相同规则只能有一个代理或直连动作".into());
+                Match::Custom { domains, ip_cidrs } => {
+                    count += domains.len() + ip_cidrs.len();
+                    if domains.is_empty() && ip_cidrs.is_empty() {
+                        return Err(issue("至少填写一个域名或 IP"));
+                    }
+                    let mut keys = std::collections::BTreeSet::new();
+                    for (i, d) in domains.iter_mut().enumerate() {
+                        d.value = domain(&d.value)
+                            .map_err(|e| format!("{name} / 域名 {}：{e}", i + 1))?;
+                        if !keys.insert(format!("{}:{}", d.include_subdomains, d.value)) {
+                            return Err(format!("{name} / 域名 {}：条件重复", i + 1));
+                        }
+                    }
+                    let mut keys = std::collections::BTreeSet::new();
+                    for (i, value) in ip_cidrs.iter_mut().enumerate() {
+                        let net =
+                            network(value).map_err(|e| format!("{name} / IP {}：{e}", i + 1))?;
+                        if p.exit == Action::Proxy
+                            && PRIVATE_NETWORKS
+                                .iter()
+                                .any(|n| overlap(net, network(n).unwrap()))
+                        {
+                            return Err(format!(
+                                "{name} / IP {}：本机和局域网固定直连；全局出口请修改默认规则",
+                                i + 1
+                            ));
+                        }
+                        *value = format!("{}/{}", net.0, net.1);
+                        if !keys.insert(value.clone()) {
+                            return Err(format!("{name} / IP {}：条件重复", i + 1));
+                        }
+                    }
+                    domains.sort_by(|a, b| {
+                        (&a.value, a.include_subdomains).cmp(&(&b.value, b.include_subdomains))
+                    });
+                    ip_cidrs.sort();
+                }
             }
-            rules.push(normalized);
         }
-        let mut sites = std::collections::BTreeSet::new();
-        for site in &self.site_rules {
-            if !SITE_IDS.contains(&site.site.as_str()) || !sites.insert(&site.site) {
-                return Err("站点无效或重复，请为每个站点选择一个动作".into());
-            }
+        if count > 1000 {
+            return Err("自定义匹配项总数最多 1,000 个".into());
         }
-        rules.sort_by_key(|r| match r {
-            Rule::Domain {
-                value,
-                include_subdomains,
-                ..
-            } => (
-                u8::from(*include_subdomains),
-                usize::MAX - value.len(),
-                value.clone(),
-            ),
-            Rule::Ip { value, .. } => (
-                2,
-                usize::MAX - network(value).unwrap().1 as usize,
-                value.clone(),
-            ),
-        });
-        let mut site_rules = self.site_rules.clone();
-        site_rules.sort_by_key(|r| (r.action != Action::Direct, r.site.clone()));
-        Ok(Self {
-            default_action: self.default_action,
-            custom_rules: rules,
-            site_rules,
-        })
+        Ok(out)
     }
     pub fn validate(&self) -> Result<(), String> {
         self.normalized().map(|_| ())
     }
-    pub fn core_rules(&self) -> Result<Vec<serde_json::Value>, String> {
-        let normalized = self.normalized()?;
-        let mut rules = vec![
-            serde_json::json!({"ip_cidr":PRIVATE_NETWORKS,"action":"route","outbound":"direct"}),
-        ];
-        for rule in normalized.custom_rules {
-            rules.push(match rule{Rule::Domain{value,include_subdomains,action}=>if include_subdomains{serde_json::json!({"domain_suffix":[value],"action":"route","outbound":action.tag()})}else{serde_json::json!({"domain":[value],"action":"route","outbound":action.tag()})},Rule::Ip{value,action}=>serde_json::json!({"ip_cidr":[value],"action":"route","outbound":action.tag()})});
+    pub fn effective(&self) -> Self {
+        let mut v = self.clone();
+        v.policies.retain(|p| p.enabled);
+        for p in &mut v.policies {
+            p.name.clear();
         }
-        for site in normalized.site_rules {
-            rules.push(serde_json::json!({"rule_set":[format!("site-{}",site.site)],"action":"route","outbound":site.action.tag()}));
-        }
-        Ok(rules)
+        v
+    }
+    pub fn source_ids(&self) -> Vec<String> {
+        self.policies
+            .iter()
+            .filter_map(|p| {
+                if let Match::Source { source_id } = &p.r#match {
+                    Some(source_id.clone())
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn normalizes_domains_and_network_boundaries() {
-        assert_eq!(domain(" GITHUB.COM. ").unwrap(), "github.com");
-        assert!(domain("https://github.com/a").is_err());
-        assert_eq!(
-            network("203.0.113.199/24").unwrap(),
-            ("203.0.113.0".parse().unwrap(), 24)
-        );
-        assert_eq!(
-            network("2001:db8::19/64").unwrap(),
-            ("2001:db8::".parse().unwrap(), 64)
-        );
-        assert!(network("1.2.3.4/33").is_err());
-        assert_eq!(network("0.0.0.0/0").unwrap().1, 0);
+    fn custom(id: &str) -> Policy {
+        Policy {
+            id: id.into(),
+            name: id.into(),
+            enabled: true,
+            exit: Action::Direct,
+            r#match: Match::Custom {
+                domains: vec![Domain {
+                    value: " Example.COM. ".into(),
+                    include_subdomains: true,
+                }],
+                ip_cidrs: vec!["192.0.2.3/24".into()],
+            },
+        }
     }
     #[test]
-    fn conflicts_are_rejected_and_order_is_deterministic() {
+    fn normalization_preserves_priority_and_overlap() {
         let r = Routing {
-            default_action: Action::Proxy,
-            custom_rules: vec![
-                Rule::Ip {
-                    value: "203.0.113.0/24".into(),
-                    action: Action::Direct,
-                },
-                Rule::Domain {
-                    value: "example.com".into(),
-                    include_subdomains: true,
-                    action: Action::Proxy,
-                },
-                Rule::Domain {
-                    value: "www.example.com".into(),
-                    include_subdomains: false,
-                    action: Action::Direct,
-                },
-            ],
-            site_rules: vec![
-                SiteRule {
-                    site: "github".into(),
-                    action: Action::Proxy,
-                },
-                SiteRule {
-                    site: "google".into(),
-                    action: Action::Direct,
-                },
-            ],
-        };
-        let rules = r.core_rules().unwrap();
-        assert_eq!(rules[1]["domain"][0], "www.example.com");
-        assert_eq!(rules[2]["domain_suffix"][0], "example.com");
-        assert_eq!(rules[4]["outbound"], "direct");
-        let mut invalid = r.clone();
-        invalid.custom_rules.push(Rule::Domain {
-            value: "EXAMPLE.COM.".into(),
-            include_subdomains: true,
-            action: Action::Direct,
-        });
-        assert!(invalid.validate().is_err());
-        invalid = r;
-        invalid.custom_rules.push(Rule::Ip {
-            value: "192.168.1.0/24".into(),
-            action: Action::Proxy,
-        });
-        assert!(invalid.validate().is_err());
+            default_exit: Action::Proxy,
+            policies: vec![custom("b"), custom("a")],
+        }
+        .normalized()
+        .unwrap();
+        assert_eq!(r.policies[0].id, "b");
+        if let Match::Custom { domains, ip_cidrs } = &r.policies[0].r#match {
+            assert_eq!(domains[0].value, "example.com");
+            assert_eq!(ip_cidrs[0], "192.0.2.0/24");
+        } else {
+            panic!()
+        }
+    }
+    #[test]
+    fn duplicate_and_protected_ranges_are_rejected() {
+        let mut p = custom("a");
+        if let Match::Custom { domains, .. } = &mut p.r#match {
+            domains.push(domains[0].clone());
+        }
+        assert!(Routing {
+            default_exit: Action::Proxy,
+            policies: vec![p]
+        }
+        .validate()
+        .is_err());
+        let mut p = custom("a");
+        p.exit = Action::Proxy;
+        if let Match::Custom { ip_cidrs, .. } = &mut p.r#match {
+            *ip_cidrs = vec!["0.0.0.0/0".into()];
+        }
+        assert!(Routing {
+            default_exit: Action::Proxy,
+            policies: vec![p]
+        }
+        .validate()
+        .is_err());
+    }
+    #[test]
+    fn metadata_and_disabled_policies_do_not_change_effective_input() {
+        let mut a = Routing::default();
+        let before = a.effective();
+        a.policies[0].name = "改名".into();
+        let mut p = custom("off");
+        p.enabled = false;
+        a.policies.push(p);
+        assert_eq!(before, a.effective());
     }
 }

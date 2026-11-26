@@ -1,136 +1,134 @@
-use super::{Mode, Profile};
-use crate::settings;
-use serde_json::json;
-use sha2::{Digest, Sha256};
+use super::{
+    routing::{Action, Match},
+    Mode, Profile,
+};
+use crate::{
+    rulesets::{self, Version},
+    settings,
+};
+use serde_json::{json, Value};
 use std::{
     fs,
     path::{Path, PathBuf},
 };
-
 pub struct Generated {
     pub path: PathBuf,
     pub digest: String,
 }
-
-pub fn build(profile: &Profile, root: &Path) -> Result<Generated, String> {
+// Compilation uses only the supplied profile and fixed content versions.
+pub fn compile(profile: &Profile, versions: &[Version], root: &Path) -> Result<Value, String> {
     if profile.mode != Mode::Generated {
-        return Err("当前使用的是原始配置模式".into());
+        return Err("当前为原始配置模式".into());
     }
     let node = profile.selected().ok_or("请先选择节点")?;
     node.spec.validate()?;
-    let mut rules = profile.routing.core_rules()?;
-    let resolve_at = rules
-        .iter()
-        .enumerate()
-        .find(|(index, rule)| *index > 0 && rule.get("ip_cidr").is_some())
-        .map(|(index, _)| index)
-        .unwrap_or_else(|| {
-            rules
-                .iter()
-                .position(|rule| rule.get("rule_set").is_some())
-                .unwrap_or(rules.len())
-        });
-    rules.insert(resolve_at, json!({"action":"resolve"}));
-    rules.insert(
-        resolve_at + 1,
-        json!({"ip_cidr":super::routing::PRIVATE_NETWORKS,"action":"route","outbound":"direct"}),
-    );
-    rules.insert(0, json!({"action":"sniff"}));
-    rules.insert(1, json!({"protocol":"dns","action":"hijack-dns"}));
-    let mut rule_sets = Vec::new();
-    for site in &profile.routing.site_rules {
-        let path = crate::rulesets::materialize_at(root, &profile.rule_commit, &site.site)?;
-        rule_sets.push(json!({"type":"local","tag":format!("site-{}",site.site),"format":"binary","path":path}));
-    }
-    let mut dns_rules = Vec::new();
-    for rule in &profile.routing.normalized()?.custom_rules {
-        if let super::routing::Rule::Domain {
-            value,
-            include_subdomains,
-            action,
-        } = rule
-        {
-            let mut rule = if *include_subdomains {
-                json!({"domain_suffix":[value]})
-            } else {
-                json!({"domain":[value]})
-            };
-            rule["server"] = json!(if *action == super::routing::Action::Direct {
-                "local"
-            } else {
-                "proxy-dns"
-            });
-            dns_rules.push(rule);
+    let routing = profile.routing.normalized()?;
+    let protected =
+        json!({"ip_cidr":super::routing::PRIVATE_NETWORKS,"action":"route","outbound":"direct"});
+    let mut rules = vec![
+        json!({"action":"sniff"}),
+        json!({"protocol":"dns","action":"hijack-dns"}),
+        protected.clone(),
+        json!({"action":"resolve"}),
+        protected,
+    ];
+    let mut sets = Vec::new();
+    let mut dns = Vec::new();
+    for p in routing.policies.iter().filter(|p| p.enabled) {
+        let tag = p.tag();
+        let server = if p.exit == Action::Direct {
+            "local"
+        } else {
+            "proxy-dns"
+        };
+        match &p.r#match {
+            Match::Custom { domains, ip_cidrs } => {
+                let mut items = Vec::new();
+                let mut dns_items = Vec::new();
+                for d in domains {
+                    let r = if d.include_subdomains {
+                        json!({"domain_suffix":[d.value]})
+                    } else {
+                        json!({"domain":[d.value]})
+                    };
+                    items.push(r.clone());
+                    dns_items.push(r);
+                }
+                if !ip_cidrs.is_empty() {
+                    items.push(json!({"ip_cidr":ip_cidrs}));
+                }
+                sets.push(json!({"type":"inline","tag":tag,"rules":[{"type":"logical","mode":"or","rules":items}]}));
+                if !dns_items.is_empty() {
+                    dns.push(
+                        json!({"type":"logical","mode":"or","rules":dns_items,"server":server}),
+                    );
+                }
+            }
+            Match::Source { source_id } => {
+                let version = versions
+                    .iter()
+                    .find(|v| &v.source_id == source_id)
+                    .ok_or_else(|| format!("{} 没有固定可用版本", p.name))?;
+                let path = rulesets::materialize_at(root, version)?;
+                sets.push(json!({"type":"local","tag":tag,"format":"binary","path":path}));
+                if rulesets::definition(source_id)?.domains {
+                    dns.push(json!({"rule_set":[tag],"server":server}));
+                }
+            }
         }
-    }
-    for site in &profile.routing.normalized()?.site_rules {
-        dns_rules.push(json!({"rule_set":[format!("site-{}",site.site)],"server":if site.action==super::routing::Action::Direct{"local"}else{"proxy-dns"}}));
+        rules.push(json!({"rule_set":[tag],"action":"route","outbound":p.exit.tag()}));
     }
     let mut outbound = node.spec.outbound();
     outbound["domain_resolver"] = json!("local");
-    let value = json!({
-        "log":{"level":"info","disabled":false,"timestamp":false},
-        "dns":{"servers":[{"type":"local","tag":"local"},{"type":"https","tag":"proxy-dns","server":"1.1.1.1","path":"/dns-query","tls":{"enabled":true,"server_name":"cloudflare-dns.com"},"detour":"proxy"}],"rules":dns_rules,"final":if profile.routing.default_action==super::routing::Action::Direct{"local"}else{"proxy-dns"}},
-        "inbounds":[{"type":"tun","tag":"tun-in","interface_name":super::tun::INTERFACE,"address":super::tun::ADDRESS,"auto_route":true,"strict_route":true,"stack":"mixed","mtu":1400,"dns_mode":"hijack","dns_address":super::tun::DNS}],
-        "outbounds":[outbound,{"type":"direct","tag":"direct","domain_resolver":"local"}],
-        "route":{"auto_detect_interface":true,"default_domain_resolver":"local","rules":rules,"rule_set":rule_sets,"final":profile.routing.default_action.tag()}
-    });
-    let bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
-    let digest = Sha256::digest(&bytes)
-        .iter()
-        .map(|b| format!("{b:02x}"))
-        .collect::<String>();
-    let dir = root.join("runtime");
-    crate::private_files::directory(&dir)?;
-    let path = dir.join("generated.json");
-    settings::write_json(&path, &value)?;
-    Ok(Generated { path, digest })
+    Ok(
+        json!({"log":{"level":"info","disabled":false,"timestamp":false},"dns":{"servers":[{"type":"local","tag":"local"},{"type":"https","tag":"proxy-dns","server":"1.1.1.1","path":"/dns-query","tls":{"enabled":true,"server_name":"cloudflare-dns.com"},"detour":"proxy"}],"rules":dns,"final":if routing.default_exit==Action::Direct{"local"}else{"proxy-dns"}},"inbounds":[{"type":"tun","tag":"tun-in","interface_name":super::tun::INTERFACE,"address":super::tun::ADDRESS,"auto_route":true,"strict_route":true,"stack":"mixed","mtu":1400,"dns_mode":"hijack","dns_address":super::tun::DNS}],"outbounds":[outbound,{"type":"direct","tag":"direct","domain_resolver":"local"}],"route":{"auto_detect_interface":true,"default_domain_resolver":"local","rules":rules,"rule_set":sets,"final":routing.default_exit.tag()}}),
+    )
 }
-
+pub fn build(profile: &Profile, root: &Path) -> Result<Generated, String> {
+    let versions = rulesets::selected(root, &profile.routing)?;
+    let value = compile(profile, &versions, root)?;
+    let directory = root.join("runtime");
+    crate::private_files::directory(&directory)?;
+    let path = directory.join("generated.json");
+    settings::write_json(&path, &value)?;
+    Ok(Generated {
+        path,
+        digest: rulesets::digest(&serde_json::to_vec(&value).unwrap()),
+    })
+}
 pub fn remove_generated(root: &Path) -> Result<(), String> {
     match fs::remove_file(root.join("runtime/generated.json")) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(_) => Err("生成配置未能清理，请检查本机私有目录权限".into()),
+        Err(_) => Err("生成配置未能清理".into()),
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::profile::{Node, NodeSpec, Profile};
-    use serde_json::Value;
     #[test]
-    fn generated_config_is_deterministic_and_has_tun_and_default_proxy() {
-        let node = Node {
-            id: "n".into(),
-            name: "test".into(),
-            source: "test".into(),
-            spec: NodeSpec::Trojan {
-                server: "example.com".into(),
-                server_port: 443,
-                password: "secret".into(),
-                tls: crate::profile::Tls {
-                    enabled: true,
-                    server_name: Some("example.com".into()),
-                    alpn: vec![],
-                    insecure: false,
-                    utls: None,
-                    reality: None,
-                },
-                transport: None,
-            },
-        };
-        let mut profile = Profile::default();
-        profile.nodes.push(node);
-        profile.selected_node = Some("n".into());
-        let root = std::env::temp_dir().join(format!("sing-shell-profile-{}", std::process::id()));
-        let a = build(&profile, &root).unwrap();
-        let b = build(&profile, &root).unwrap();
-        assert_eq!(a.digest, b.digest);
-        let value: Value = serde_json::from_slice(&fs::read(a.path).unwrap()).unwrap();
-        assert_eq!(value["inbounds"][0]["type"], "tun");
-        assert_eq!(value["route"]["final"], "proxy");
-        let _ = fs::remove_dir_all(root);
+    fn mixed_conditions_are_explicit_or_and_policy_order_is_preserved() {
+        let root = std::env::temp_dir().join(format!(
+            "sing-shell-compile-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        let node = super::super::import::preview("trojan://secret@example.com:443", &[])
+            .unwrap()
+            .nodes
+            .remove(0);
+        let profile=Profile{selected_node:Some(node.id.clone()),nodes:vec![node],routing:serde_json::from_value(json!({"defaultExit":"proxy","policies":[{"id":"work","name":"工作","enabled":true,"exit":"direct","match":{"kind":"custom","domains":[{"value":"example.com","includeSubdomains":true}],"ipCidrs":["192.0.2.0/24"]}}]})).unwrap(),..Default::default()};
+        let v = compile(&profile, &[], &root).unwrap();
+        assert_eq!(v["route"]["rule_set"][0]["rules"][0]["mode"], "or");
+        assert_eq!(
+            v["route"]["rule_set"][0]["rules"][0]["rules"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(v["route"]["rules"][3]["action"], "resolve");
+        assert_eq!(v["route"]["rules"][5]["rule_set"][0], "policy-work");
+        assert_eq!(v["dns"]["rules"][0]["rules"].as_array().unwrap().len(), 1);
     }
 }

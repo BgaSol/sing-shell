@@ -17,6 +17,7 @@ pub fn now() -> u64 {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Log {
+    pub sequence: u64,
     pub received_at: u64,
     pub source: String,
     pub message: String,
@@ -29,15 +30,17 @@ impl Logs {
         *self.1.lock().unwrap() = secrets.into_iter().filter(|s| !s.is_empty()).collect();
     }
     pub fn push(&self, source: &str, message: impl Into<String>) {
-        let mut message = message.into();
+        let mut message: String = message.into().chars().take(8192).collect();
         for secret in self.1.lock().unwrap().iter() {
             message = message.replace(secret, "[已隐藏]");
         }
         let mut logs = self.0.lock().unwrap();
+        let sequence = logs.back().map(|l| l.sequence + 1).unwrap_or(1);
         if logs.len() == 1000 {
             logs.pop_front();
         }
         logs.push_back(Log {
+            sequence,
             received_at: now(),
             source: source.into(),
             message,
@@ -45,6 +48,23 @@ impl Logs {
     }
     pub fn snapshot(&self) -> Vec<Log> {
         self.0.lock().unwrap().iter().cloned().collect()
+    }
+    pub fn page(&self, after: u64, limit: usize) -> Vec<Log> {
+        let mut size = 0;
+        self.0
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|l| l.sequence > after)
+            .take(limit.min(100))
+            .take_while(|log| {
+                size += serde_json::to_vec(log)
+                    .map(|b| b.len())
+                    .unwrap_or(usize::MAX);
+                size <= 256 * 1024
+            })
+            .cloned()
+            .collect()
     }
     pub fn reader(
         &self,
@@ -90,5 +110,31 @@ impl Logs {
                 logs.push(source, String::from_utf8_lossy(&line).to_string());
             }
         })
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn paging_is_bounded_by_encoded_bytes_and_keeps_redaction_across_switches() {
+        let logs = Logs::default();
+        logs.redact(vec!["first-secret".into()]);
+        logs.push("core", "first-secret");
+        logs.redact(vec!["second-secret".into()]);
+        logs.push("core", "second-secret");
+        assert!(logs
+            .snapshot()
+            .iter()
+            .all(|log| !log.message.contains("secret")));
+        assert_eq!(logs.1.lock().unwrap().len(), 1);
+        for _ in 0..100 {
+            logs.push("core", "\u{0000}".repeat(8192));
+        }
+        let page = logs.page(0, 100);
+        assert!(!page.is_empty());
+        assert!(page.len() < 100);
+        assert!(serde_json::to_vec(&page).unwrap().len() < 257 * 1024);
+        let next = logs.page(page.last().unwrap().sequence, 100);
+        assert!(!next.is_empty());
     }
 }

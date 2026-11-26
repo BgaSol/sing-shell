@@ -1,59 +1,80 @@
 ---
 name: Sing Shell
-description: 沿用 SoDeck 多巴胺语言的轻量 sing-box 桌面壳
+description: 紧凑暖色侧栏的 sing-box 桌面客户端
 colors:
-  background: "#fbf1e8"
-  ink: "#20211f"
-  surface: "#fffbe6"
-  subtle: "#fffef5"
-  muted: "#585c52"
-  separator: "#cfccba"
-  accent: "#5346a6"
-  primary: "#ffde75"
-  primary-hover: "#ffe795"
-  navigation: "#ffb7cf"
-  hover: "#fff0bc"
-  pressed: "#f5dea3"
-  success: "#176b4f"
-  success-bg: "#d5f1e5"
-  error: "#a12c38"
-  error-bg: "#ffd7cc"
-  disabled-bg: "#ece8d9"
+  background: "#fffdf7"
+  ground: "#fbf4e9"
+  sidebar: "#f6eddd"
+  ink: "#292b26"
+  subtle: "#fffefa"
+  muted: "#62655a"
+  separator: "#d9d9cc"
+  accent: "#6752a4"
+  primary: "#ffda76"
+  primary-hover: "#ffe397"
+  navigation: "#f6c4d0"
+  hover: "#fff1c6"
+  pressed: "#f1dda2"
+  success: "#216447"
+  success-bg: "#e6f2e8"
+  error: "#9a3039"
+  error-bg: "#fbe4de"
+  disabled-bg: "#eeeade"
+  disabled-ink: "#727468"
+  primary-border: "#d5b357"
+  placeholder: "#6b6d61"
+  running-border: "#b2cdb9"
+  modal-border: "#aeae9f"
+  backdrop: "rgb(31 33 29 / .34)"
 typography:
+  section:
+    fontSize: "16px"
+    fontWeight: 650
+  brand:
+    fontSize: "15px"
+    fontWeight: 650
+  compact-title:
+    fontSize: "22px"
+  auxiliary:
+    fontSize: "11px"
   title:
     fontFamily: '"Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "16px"
-    fontWeight: 700
+    fontSize: "24px"
+    fontWeight: 650
+    lineHeight: 1.3
+    letterSpacing: "-.025em"
   body:
     fontFamily: '"Segoe UI Variable", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
     fontSize: "13px"
-    lineHeight: 1.6
+    lineHeight: 1.5
   label:
     fontSize: "12px"
     fontWeight: 600
   log:
     fontFamily: '"Cascadia Code", "SFMono-Regular", Consolas, monospace'
     fontSize: "12px"
-    lineHeight: 1.8
+    lineHeight: 1.7
 rounded:
   control: "8px"
-  panel: "12px"
+  input: "6px"
+  modal: "12px"
 spacing:
   sm: "8px"
   md: "12px"
   lg: "16px"
-  section: "18px"
+  page: "26px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
-    padding: "7px 13px"
+    padding: "6px 11px"
+    height: "34px"
   input:
     backgroundColor: "{colors.subtle}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
-    padding: "8px 10px"
+    rounded: "{rounded.input}"
+    padding: "6px 9px"
   navigation-current:
     backgroundColor: "{colors.navigation}"
     textColor: "{colors.ink}"
@@ -61,13 +82,7 @@ components:
   status-running:
     backgroundColor: "{colors.success-bg}"
     textColor: "{colors.success}"
-    rounded: "{rounded.control}"
-    padding: "7px 11px"
-  panel:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.panel}"
-    padding: "18px 22px"
+    rounded: "{rounded.input}"
 ---
 
 # Design System: Sing Shell
@@ -76,48 +91,51 @@ components:
 
 **Creative North Star: "多巴胺贝壳"**
 
-沿用 SoDeck 多巴胺语言的轻量 sing-box 桌面壳。日常应用采用 Operate 模式：状态清楚、操作直接、配置与日志易读。固定浅色，以暖奶油底色承托淡黄面板。
+保留贝壳标识和暖奶油、淡黄、粉色的品牌语言，采用用户确认的紧凑侧栏方案。日常使用为 Operate 模式，列表、真实运行状态和编辑动作清楚可见。
 
 **Key Characteristics:**
-- 粉底黄贝壳、绿底座的品牌标识。
-- 墨黑结构线、平面色块、紧凑的操作密度。
-- 黄色主操作、粉色当前导航、紫色焦点、绿色运行、桃粉错误。
+- 暖色侧栏承托粉色当前导航。
+- 主区域使用紧凑行、细分隔线和原位详情。
+- 黄色主操作、紫色焦点、绿色运行、桃粉错误。
 
 ## Colors
 
-主色用于启动、保存等明确操作；粉色标识当前导航。奶油背景、淡黄面板和近白控件区分层级，墨黑承担正文与结构，灰绿承担辅助说明。
+纸白主区域与浅米侧栏区分空间；黄色用于明确提交，粉色用于导航选中，浅黄用于筛选。运行与错误同时保留文字。
 
-**The State Color Rule.** 运行使用绿色，失败使用桃粉底和深红文字；处理中使用黄色底和紫色文字。状态同时保留文字，不只依赖颜色。
+**The State Color Rule.** 颜色说明状态，文字说明事实；处理中目标不得画成已连接。
 
 ## Typography
 
-界面使用系统中文无衬线字体。品牌标题（25px / 700）、区域标题（16px / 700）、字段标题（14px / 650）构成层级；正文与按钮（13px），提示与状态（12px）。日志使用等宽字体及表格数字，长路径和日志允许折行。
+系统中文无衬线保持桌面阅读习惯。页面标题 24px / 650，区域标题 16px，正文 13px，表单标签 12px，辅助摘要 11px。日志限定使用等宽字体。流量、序号使用表格数字，长名称与路径允许换行。
 
 ## Layout
 
-内容单列，最大宽度（1080px）。首屏依次为品牌与状态、运行／软件更新导航、运行配置、运行日志。主区域间距使用 section；桌面边距（24px 32px 16px）。窄于（680px）时边距收为（18px 16px 16px），区域间距改用 lg，标题和操作可换行。
+固定侧栏 160px，760px 以下收为 132px；主区域独立滚动，常规留白 20px / 26px，紧凑窗口 16px。列表行最小约 66px，通过内容决定高度。只有设置展开二级，页内筛选和来源详情保持在内容区域。
+
+模态框最大宽度 600px，与窗口四周至少留 16px；头尾固定，内容单独滚动。默认 960×720、最小 620×560 和系统缩放下操作保持可达。
 
 ## Elevation & Depth
 
-**The Flat Rule.** 面板与控件保持平面，不使用阴影、渐变或装饰动效；依靠底色、边框和留白表达层级。对话框使用半透明墨黑遮罩。
+**The Flat Rule.** 不使用阴影、渐变和装饰动效；用表面颜色、细边框和间距表达层级。原生 dialog 使用半透明墨黑遮罩。
 
 ## Shapes
 
-区域与对话框使用 panel 圆角，按钮、输入框、状态和日志使用 control 圆角。主要边框（2px），内部细分隔（1px）。图标使用圆端点线性 SVG，品牌保留贝壳轮廓。
+控件使用 6—8px 圆角，模态框 12px；常规边界 1px。播放为圆形按钮，SVG 图标使用一致线宽，不以字符图标替代。仅导航折叠箭头保留短暂旋转，减少动态效果偏好下关闭过渡。
 
 ## Components
 
-- **按钮：** 黄色主操作、近白次操作；悬停变浅黄，按下变深黄；禁用呈灰绿。最小高度（36px）。
-- **输入：** 近白底、墨黑边框；占位提示可读。所有键盘焦点使用紫色外轮廓（3px），向外偏移（3px）。
-- **导航：** 图标与文字并列；当前页粉底实线框，其余透明底。
-- **状态：** 小圆点与文字并列；状态语义见 Colors。
-- **面板与日志：** 淡黄面板，日志内层近白；日志可滚动、可键盘聚焦，区域随可用高度伸展。
+- 主按钮最小 34px，黄色提交；次按钮纸白，悬停浅黄，禁用灰米。
+- 输入使用近白表面，所有键盘焦点采用紫色 3px 外轮廓与 3px 偏移。
+- 主导航图标与文字并列，粉色标识当前页；设置二级缩进，选中浅黄。
+- 标签为小型浅米摘要，默认标签可见；筛选使用 aria-pressed。
+- 模态框使用原生顶层和背景 inert；取消、Esc、关闭保护修改，返回编辑与关闭恢复焦点。
+- 活动和来源详情原位展开，不为查看信息弹出额外模态框。
 
 ## Do's and Don'ts
 
-- **Do** 保留品牌／状态、导航、配置、日志的操作顺序。
-- **Do** 使用既有语义色，并保留文字状态与清晰键盘焦点。
-- **Don't** 添加深色模式、阴影、渐变或装饰动效。
-- **Don't** 把日志等宽字体扩展为普通界面字体。
+- **Do** 复用语义色、细分隔、紧凑行与清晰焦点。
+- **Do** 以真实内容和最小窗口检查换行、滚动和操作区。
+- **Don't** 新增深色主题、阴影、渐变或装饰动效。
+- **Don't** 把原始日志等宽样式扩展为普通界面字体。
 
-依据：`src/style.css`、`src/index.html`、`assets/icon.svg`；产品边界以 `AGENTS.md` 与 `README.md` 为准。
+依据：src/style.css、src/index.html、modal.ts、nodes.ts、routing.ts 和 assets/icon.svg。

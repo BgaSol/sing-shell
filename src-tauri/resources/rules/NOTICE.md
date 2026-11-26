@@ -1,17 +1,23 @@
-# Bundled site rules
+# Bundled routing data
 
-Source: https://github.com/SagerNet/sing-geosite/tree/8b8788649349cf73fcd12fc81a5cae580e60360c
+Four domain sources (cn-domain, Google, GitHub, Telegram) are unchanged SRS files from
+SagerNet/sing-geosite, commit 8b8788649349cf73fcd12fc81a5cae580e60360c.
+Copyright (C) 2022 nekohasekai <contact-sagernet@sekai.icu>.
+They are licensed under GPL-3.0-or-later; LICENSE and COPYING contain the upstream notice and full license.
 
-Copyright (C) 2022 by nekohasekai <contact-sagernet@sekai.icu>
-License: GNU GPL version 3 or later. The upstream notice is in LICENSE;
-the complete license is in COPYING. No rule content was changed.
+China IP data is unchanged srs/cn.srs from Loyalsoldier/geoip, release commit
+360904642cb991b4b8fa8740cee1320fd2110c72.
+Upstream: https://github.com/Loyalsoldier/geoip
+Licenses: CC-BY-SA-4.0 and GPL-3.0; see LICENSE-geoip and COPYING-geoip, obtained from
+source commit 74979bc45fae8c817081b11c5222863f0f31d4e5.
+This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com.
+Attribution and source data compilation are by Loyalsoldier and the upstream contributors.
 
-manifest.json identifies every binary and its SHA-256. source/*.json contains
-editable JSON reconstructed from those exact SRS files with official sing-box
-1.14.4 `rule-set decompile`. Rebuild each file with:
+manifest.json pins all five source IDs, commits, byte sizes and SHA-256 digests.
+source/*.json is editable JSON decompiled from those exact binaries with official sing-box 1.14.4.
+No matching data was changed. Rebuild, for example:
 
-    sing-box rule-set compile source/github.json -o geosite-github.srs
+    sing-box rule-set compile source/cn-ip.json -o geoip-cn.srs
 
-Replace github with the other site identifiers. JSON, binaries, manifest and
-license texts are included in the application resources and source repository.
-The upstream generator is at https://github.com/SagerNet/sing-geosite.
+The SagerNet generator is at https://github.com/SagerNet/sing-geosite.
+The IP data generator and its data sources are documented at https://github.com/Loyalsoldier/geoip.

@@ -109,7 +109,7 @@ impl CoreService {
         if self.initialized.load(Ordering::Acquire) {
             return Ok(());
         }
-        if let Some(error) = &self.store.error {
+        if let Some(error) = &self.store.error() {
             self.initialized.store(true, Ordering::Release);
             return Err(error.clone());
         }
@@ -246,7 +246,7 @@ impl CoreService {
                     v.config_path = Some(path);
                     v.pending_config_path = None;
                     v.profile.mode = crate::profile::Mode::ExternalConfig;
-                    v.profile_revision += 1;
+                    v.nodes_revision += 1;
                     if v.managed
                         .blocked
                         .as_ref()
@@ -262,7 +262,7 @@ impl CoreService {
                 self.store.core(s.core_revision, |v| {
                     v.pending_config_path = Some(path);
                     v.profile.mode = crate::profile::Mode::ExternalConfig;
-                    v.profile_revision += 1;
+                    v.nodes_revision += 1;
                     Ok(())
                 })?;
                 self.notify("配置路径已保存，等待核心校验");
@@ -398,8 +398,8 @@ impl CoreService {
         if !self.initialized.load(Ordering::Acquire) {
             return Err("核心服务正在初始化".into());
         }
-        if self.store.error.is_some() {
-            return Err(self.store.error.clone().unwrap());
+        if self.store.error().is_some() {
+            return Err(self.store.error().clone().unwrap());
         }
         let s = self.store.snapshot();
         let takeover = *self.takeover.lock().unwrap();

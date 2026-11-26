@@ -40,3 +40,8 @@ test('release aggregation runs after verified reuse and refuses failed or cancel
   assert.equal(accepts(() => false, {...needs, verify:{result:'failure'}}), false);
   assert.equal(accepts(() => false, {...needs, select:{result:'failure'}}), false);
 });
+
+test('every frontend IPC command is registered by the native application',()=>{
+ const main=fs.readFileSync(path.join(root,'src-tauri/src/main.rs'),'utf8');const registered=main.split('tauri::generate_handler![')[1]?.split(']')[0]??'';
+ for(const name of fs.readdirSync(path.join(root,'src')).filter(name=>name.endsWith('.ts'))){const source=fs.readFileSync(path.join(root,'src',name),'utf8');for(const match of source.matchAll(/\binvoke(?:<[\s\S]*?>)?\(\s*['"]([a-z_]+)['"]/g)){assert.match(registered,new RegExp('\\b'+match[1]+'\\b'),`${name}: unregistered IPC ${match[1]}`);}}
+});

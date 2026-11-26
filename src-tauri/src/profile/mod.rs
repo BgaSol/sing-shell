@@ -371,15 +371,17 @@ pub struct Node {
     pub id: String,
     pub name: String,
     pub source: String,
+    pub tags: Vec<String>,
     pub spec: NodeSpec,
 }
-#[derive(Clone, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeSummary {
     pub id: String,
     pub name: String,
     pub source: String,
-    pub protocol: &'static str,
+    pub tags: Vec<String>,
+    pub protocol: String,
     pub server: String,
     pub port: u16,
 }
@@ -390,7 +392,8 @@ impl Node {
             id: self.id.clone(),
             name: self.name.clone(),
             source: self.source.clone(),
-            protocol: self.spec.protocol(),
+            tags: self.tags.clone(),
+            protocol: self.spec.protocol().into(),
             server: server.into(),
             port,
         }
@@ -411,8 +414,6 @@ pub struct Profile {
     pub nodes: Vec<Node>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
-    #[serde(default = "crate::rulesets::bundled_commit")]
-    pub rule_commit: String,
 }
 impl Default for Profile {
     fn default() -> Self {
@@ -421,7 +422,6 @@ impl Default for Profile {
             nodes: vec![],
             selected_node: None,
             routing: Default::default(),
-            rule_commit: crate::rulesets::bundled_commit(),
         }
     }
 }
@@ -432,7 +432,6 @@ pub struct PublicProfile {
     pub nodes: Vec<NodeSummary>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
-    pub rule_commit: String,
 }
 impl Profile {
     pub fn public(&self) -> PublicProfile {
@@ -441,7 +440,6 @@ impl Profile {
             nodes: self.nodes.iter().map(Node::summary).collect(),
             selected_node: self.selected_node.clone(),
             routing: self.routing.clone(),
-            rule_commit: self.rule_commit.clone(),
         }
     }
 }
@@ -452,7 +450,6 @@ impl Profile {
             .and_then(|id| self.nodes.iter().find(|n| &n.id == id))
     }
     pub fn validate(&self) -> Result<(), String> {
-        crate::rulesets::validate_commit(&self.rule_commit)?;
         if self.nodes.len() > 2000 {
             return Err("最多保存 2,000 个节点".into());
         }
@@ -465,6 +462,7 @@ impl Profile {
             {
                 return Err("节点标识或名称无效".into());
             }
+            normalize_tags(node.tags.clone())?;
             node.spec.validate()?;
         }
         if self.selected_node.is_some() && self.selected().is_none() {
@@ -472,4 +470,24 @@ impl Profile {
         }
         self.routing.validate()
     }
+}
+
+pub fn normalize_tags(tags: Vec<String>) -> Result<Vec<String>, String> {
+    if tags.len() > 20 {
+        return Err("每个节点最多 20 个标签".into());
+    }
+    let mut out = Vec::new();
+    for tag in tags {
+        let tag = tag.trim();
+        if tag.is_empty() {
+            continue;
+        }
+        if tag.chars().count() > 32 || tag.chars().any(char::is_control) {
+            return Err("标签最多 32 个字符，不能包含控制字符".into());
+        }
+        if !out.iter().any(|t| t == tag) {
+            out.push(tag.to_string());
+        }
+    }
+    Ok(out)
 }

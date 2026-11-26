@@ -4,114 +4,428 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
-    <link rel="icon" type="image/svg+xml" href="../assets/icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <title>Sing Shell</title>
     <script type="module" src="/main.ts"></script>
   </head>
   <body>
-    <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      class="icon-definitions"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
-        <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M4 7h8m4 0h4M4 17h3m4 0h9"/><circle cx="14" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
-        <symbol id="icon-runtime" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7zM4 5v14"/></symbol>
-        <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol>
-        <symbol id="icon-core" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3M20 9h3m-3 6h3"/></symbol>
-        <symbol id="icon-log" viewBox="0 0 24 24"><path d="M7 3h10l3 3v15H4V3zM8 10h8M8 14h8M8 18h5"/></symbol>
-        <symbol id="icon-network" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18"/></symbol>
-        <symbol id="icon-import" viewBox="0 0 24 24"><path d="M14 3h5v18H5v-4M3 10h11m-4-4 4 4-4 4"/></symbol>
-        <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
-        <symbol id="icon-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+          <path d="M4 7h8m4 0h4M4 17h3m4 0h9" />
+          <circle cx="14" cy="7" r="2" />
+          <circle cx="9" cy="17" r="2" />
+        </symbol>
+        <symbol id="icon-runtime" viewBox="0 0 24 24">
+          <path d="m9 5 11 7-11 7zM4 5v14" />
+        </symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24">
+          <path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5" />
+        </symbol>
+        <symbol id="icon-core" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <path
+            d="M9 9h6v6H9zM9 1v3m6-3v3M9 20v3m6-3v3M1 9h3m-3 6h3M20 9h3m-3 6h3"
+          />
+        </symbol>
+        <symbol id="icon-log" viewBox="0 0 24 24">
+          <path d="M7 3h10l3 3v15H4V3zM8 10h8M8 14h8M8 18h5" />
+        </symbol>
+        <symbol id="icon-network" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18" />
+        </symbol>
+        <symbol id="icon-import" viewBox="0 0 24 24">
+          <path d="M14 3h5v18H5v-4M3 10h11m-4-4 4 4-4 4" />
+        </symbol>
+        <symbol id="icon-play" viewBox="0 0 24 24">
+          <path d="m8 5 11 7-11 7z" />
+        </symbol>
+        <symbol id="icon-stop" viewBox="0 0 24 24">
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+        </symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
       </defs>
     </svg>
-    <main>
-      <header>
-        <div class="brand"><img class="brand-mark" src="../assets/icon.svg" width="50" height="50" alt="" /><div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div></div>
-        <span id="status" role="status">正在读取状态</span>
-      </header>
-      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-nodes" type="button">节点</button><button id="nav-routing" type="button">分流</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span id="update-notice">设置</span></button></nav>
-      <p id="desktop-error" role="alert" hidden></p>
-      <div id="runtime-panel">
-      <section aria-labelledby="connection-title">
-        <div class="section-heading"><h2 id="connection-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>运行配置</h2><span id="pid"></span></div>
-        <div class="setting-row"><div class="setting-label"><h3 id="connection-node">选择节点后开始</h3><p id="connection-summary">默认 TUN，未命中规则的流量走代理。</p></div><button id="apply-connection" class="primary" type="button" hidden>应用并重启</button></div>
-        <div class="setting-row"><div class="setting-label"><h3>sing-box 核心</h3><p id="home-core-version">正在准备核心</p><p id="home-core-state" role="status"></p><p id="home-core-error" role="alert" hidden></p><progress id="home-core-progress" aria-label="核心下载进度" hidden></progress></div></div>
-        <div class="actions core-actions"><button id="home-core-retry" type="button" hidden>重试准备核心</button><button id="home-core-cancel" type="button" hidden>取消下载</button></div>
-        <details><summary>高级：核心来源</summary><p class="hint">默认由应用管理官方核心。本机核心由你手动维护。</p><div class="actions"><button id="choose-core" type="button" disabled>使用本机核心</button><button id="home-core-managed" type="button">使用应用管理核心</button></div></details>
-        <div class="setting-row" id="external-config-row">
-          <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
-          <button id="choose-config" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-import"/></svg>导入配置</button>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="/icon.svg" width="32" height="32" alt="" /><strong
+            >Sing Shell</strong
+          >
         </div>
-        <p id="runtime-hint" class="hint">启动前自动校验；关闭窗口后继续运行，退出应用才会停止并释放网络。</p>
-        <div class="actions">
-          <button id="start" class="primary" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg>启动 sing-box</button>
-          <button id="stop" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-stop"/></svg>停止</button>
-          <button id="check" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>校验配置</button>
-          <span id="activity" role="status"></span>
+        <nav aria-label="主导航">
+          <button id="nav-nodes" type="button" aria-current="page">
+            <svg class="icon"><use href="#icon-network" /></svg>节点</button
+          ><button id="nav-routing" type="button">
+            <svg class="icon"><use href="#icon-settings" /></svg>分流</button
+          ><button id="nav-activity" type="button">
+            <svg class="icon"><use href="#icon-log" /></svg>活动</button
+          ><button
+            id="nav-settings"
+            type="button"
+            aria-expanded="false"
+            aria-controls="settings-nav"
+          >
+            <svg class="icon"><use href="#icon-core" /></svg
+            ><span id="update-notice">设置</span
+            ><svg class="icon chevron"><path d="m8 10 4 4 4-4" /></svg>
+          </button>
+          <div id="settings-nav" hidden>
+            <button type="button" data-setting="general">通用</button
+            ><button type="button" data-setting="network">网络</button
+            ><button type="button" data-setting="core">核心与更新</button
+            ><button type="button" data-setting="advanced">高级</button>
+          </div>
+        </nav>
+        <div class="sidebar-foot">
+          <span id="status" role="status">正在读取状态</span
+          ><span id="version">Sing Shell</span>
         </div>
+      </aside>
+      <main>
+        <div class="connection-bar">
+          <div class="connection-copy">
+            <strong id="connection-node">尚未连接</strong>
+            <p id="connection-summary">从节点列表连接，默认使用 TUN。</p>
+          </div>
+          <div class="actions">
+            <button id="apply-connection" type="button" hidden>
+              应用并重连</button
+            ><button id="start" type="button" hidden>启动原始配置</button
+            ><button id="check" type="button" hidden>校验配置</button
+            ><button id="stop" type="button" disabled>断开</button>
+          </div>
+        </div>
+        <p id="desktop-error" role="alert" hidden></p>
         <p id="error" role="alert" hidden></p>
-      </section>
-      <section class="log-section" aria-labelledby="logs-title">
-        <div class="section-heading"><h2 id="logs-title"><svg class="icon" aria-hidden="true"><use href="#icon-log"/></svg>运行日志</h2><label><input id="follow" type="checkbox" checked /> 跟随最新</label></div>
-        <p class="hint">显示本次打开应用后的最近 1,000 条记录。</p>
-        <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">导入配置后，等待核心就绪并点击「启动 sing-box」。</pre>
-      </section>
-      </div>
-      <div id="nodes-panel" hidden>
-        <section aria-labelledby="nodes-title"><div class="section-heading"><h2 id="nodes-title">节点</h2><span id="nodes-count"></span></div>
-          <p class="hint">粘贴一行或多行节点链接，预览无误后一次导入。导入不会自动启动。</p>
-          <label for="node-input">节点链接或 sing-box 节点 JSON</label><textarea id="node-input" rows="7" spellcheck="false" placeholder="ss://、trojan://、vless://、vmess://、hysteria2:// 或 tuic://"></textarea>
-          <label for="node-file">或导入本地文件</label><input id="node-file" type="file" accept=".txt,.json,.jsonc" />
-          <div class="actions"><button id="node-preview" class="primary" type="button">预览导入</button><button id="node-commit" type="button" disabled>导入预览中的节点</button></div><p id="node-import-result" role="status"></p>
-          <div id="node-list"></div>
-        </section>
-      </div>
-      <div id="routing-panel" hidden>
-        <section aria-labelledby="routing-title"><div class="section-heading"><h2 id="routing-title">分流</h2><span id="routing-state"></span></div>
-          <label>未命中规则：<select id="routing-default"><option value="proxy">走代理</option><option value="direct">走直连</option></select></label>
-          <div class="section-heading"><h3>常用站点</h3><button id="update-site-rules" type="button">更新站点列表</button></div><p id="site-rules-version" class="hint"></p><div id="site-rules"></div>
-          <h3>自定义规则</h3><div id="custom-rules"></div>
-          <div class="actions"><input id="rule-value" aria-label="域名或 IP/CIDR" placeholder="域名或 IP/CIDR" /><select id="rule-kind" aria-label="规则类型"><option value="domain">域名</option><option value="ip">IP / 网段</option></select><select id="rule-action" aria-label="规则动作"><option value="direct">直连</option><option value="proxy">代理</option></select><button id="add-rule" type="button">添加规则</button></div><label><input id="rule-subdomains" type="checkbox" checked /> 域名规则包含子域名</label>
-          <div class="actions"><button id="save-routing" class="primary" type="button">保存分流设置</button></div><p class="hint">保存后下次启动生效；运行中请在运行页点击应用并重启。</p>
-        </section>
-      </div>
-      <div id="updates-panel" hidden>
-        <section aria-labelledby="startup-title">
-          <h2 id="startup-title"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg>启动与窗口</h2>
-          <label for="profile-mode">运行方式</label><select id="profile-mode"><option value="generated">节点与 TUN（推荐）</option><option value="externalConfig">原始 sing-box 配置</option></select><p class="hint">切换前需要停止连接。原始配置的网络行为由配置文件决定。</p>
+        <div id="storage-recovery" hidden>
+          <p>
+            设置原件已保留。初始化前会另存备份，原始配置和外部核心不受影响。
+          </p>
+          <button id="reset-settings" type="button">备份并重新初始化</button>
+          <p id="reset-result" role="status"></p>
+        </div>
+        <div id="nodes-panel">
+          <div class="page-head">
+            <div>
+              <h1>节点</h1>
+              <p id="nodes-count">你的连接，从这里开始</p>
+            </div>
+            <button id="import-nodes" class="primary" type="button">
+              导入节点
+            </button>
+          </div>
+          <div class="toolbar">
+            <div id="node-tags" class="chips" aria-label="按标签筛选"></div>
+            <input
+              id="node-search"
+              type="search"
+              aria-label="搜索节点"
+              placeholder="搜索名称或地址"
+            />
+          </div>
+          <p id="nodes-mode-hint" class="hint" hidden>
+            当前使用原始配置。停止后在高级设置切换为节点模式即可连接。
+          </p>
+          <div id="node-list" class="list"></div>
+          <button id="more-nodes" type="button" hidden>显示更多节点</button>
+        </div>
+        <div id="routing-panel" hidden>
+          <div class="page-head">
+            <div>
+              <h1>分流</h1>
+              <p>从上到下首次匹配，未命中使用默认规则</p>
+            </div>
+            <div class="actions">
+              <button id="add-source" type="button">添加开源规则</button
+              ><button id="add-custom" class="primary" type="button">
+                新建规则
+              </button>
+            </div>
+          </div>
+          <div class="toolbar">
+            <div id="routing-filter" class="chips">
+              <button type="button" data-filter="all" aria-pressed="true">
+                全部</button
+              ><button type="button" data-filter="source">开源规则</button
+              ><button type="button" data-filter="custom">自定义</button
+              ><button type="button" data-filter="default">默认规则</button>
+            </div>
+            <span id="routing-state" role="status"></span>
+          </div>
+          <p class="hint">
+            本机、局域网和必要的系统连接优先保护；保存后下次连接生效。
+          </p>
+          <div id="policy-list" class="list"></div>
+          <div id="default-policy" class="default-policy">
+            <div class="row-info">
+              <strong>默认规则</strong>
+              <p>所有已启用规则均未命中时使用</p>
+            </div>
+            <select id="routing-default" aria-label="默认规则出口">
+              <option value="proxy">代理</option>
+              <option value="direct">直连</option></select
+            ><span class="tag">始终生效</span>
+          </div>
+          <div class="save-bar">
+            <span id="routing-result" role="status"></span
+            ><button id="reload-routing" type="button" hidden>
+              载入最新规则</button
+            ><button id="save-routing" class="primary" type="button" disabled>
+              保存规则
+            </button>
+          </div>
+        </div>
+        <div id="activity-panel" hidden>
+          <div class="page-head">
+            <div>
+              <h1>活动</h1>
+              <p>查看本次会话的连接与状态</p>
+            </div>
+            <button id="show-logs" type="button">原始日志</button>
+          </div>
+          <div id="activity-stats" class="activity-stats"></div>
+          <p id="activity-state" role="status" class="hint"></p>
+          <div class="toolbar">
+            <select id="connection-filter" aria-label="连接状态">
+              <option value="all">已观测连接</option>
+              <option value="active">当前连接</option>
+              <option value="ended">已结束</option></select
+            ><input
+              id="connection-search"
+              type="search"
+              aria-label="搜索目标或规则"
+              placeholder="搜索目标或规则"
+            />
+          </div>
+          <div id="connection-list" class="list"></div>
+          <button id="more-connections" type="button" hidden>加载更多</button>
+          <details class="events">
+            <summary>会话事件</summary>
+            <div id="event-list"></div>
+          </details>
+          <details id="raw-logs">
+            <summary>诊断日志</summary>
+            <p class="hint">
+              短连接可能未被采样；连接消失不代表失败。日志和凭据保留本机。
+            </p>
+            <label
+              ><input id="follow" type="checkbox" checked /> 跟随最新</label
+            >
+            <pre id="logs" tabindex="0" aria-label="原始日志">暂无日志</pre>
+          </details>
+        </div>
+        <div id="settings-panel" hidden>
+          <div class="page-head">
+            <div>
+              <h1 id="settings-title">通用设置</h1>
+              <p>连接、核心与桌面行为</p>
+            </div>
+          </div>
+          <div id="settings-general">
+            <section aria-labelledby="startup-title">
+              <h2 id="startup-title">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-settings" /></svg
+                >启动与窗口
+              </h2>
 
-          <label><input id="login-startup" type="checkbox" disabled aria-describedby="login-status" /> 登录后自动启动应用</label>
-          <p id="login-status" role="status">正在读取系统登录项…</p>
-          <label><input id="restore-core" type="checkbox" disabled aria-describedby="restore-hint" /> 应用启动时恢复核心运行状态</label>
-          <p id="restore-hint">上次成功运行且未主动停止时恢复。两个开关独立、立即保存，不改变当前运行状态。</p>
-          <p id="startup-error" role="alert" hidden></p>
-          <p class="hint">关闭窗口会收起并保留设置草稿。通过托盘或系统窗口入口返回，退出时才处理草稿并停止核心。</p>
-          <div class="actions"><button id="refresh-login" type="button">重新读取登录项</button><button id="quit-app" type="button">退出应用</button></div>
-        </section>
-        <section aria-labelledby="updates-title">
-          <div class="section-heading"><h2 id="updates-title"><svg class="icon" aria-hidden="true"><use href="#icon-download"/></svg>软件更新</h2><button id="check-updates" type="button">检查应用更新</button></div>
-          <p id="checked-at">尚未完成全量检查</p>
-          <p id="update-error" role="alert" hidden></p>
-          <div id="update-items"></div>
-          <div class="actions"><button id="download-selected" type="button">下载应用更新</button><button id="apply-updates" class="primary" type="button">重启并更新应用</button></div>
-          <p id="pending-updates" class="hint"></p>
-        </section>
-        <section aria-labelledby="core-updates-title"><h2 id="core-updates-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>sing-box 核心</h2><p id="update-core-version"></p><p id="update-core-state" role="status"></p><p id="update-core-error" role="alert" hidden></p><progress id="update-core-progress" aria-label="核心下载进度" hidden></progress><div class="actions"><button id="core-check" type="button">检查核心</button><button id="update-core-retry" type="button">更新核心</button><button id="update-core-cancel" type="button" hidden>取消下载</button><button id="update-core-managed" type="button" hidden>使用应用管理核心</button></div><p class="hint">运行中保持当前核心，新版下次启动生效，无需重启应用。</p></section>
-        <section aria-labelledby="network-title">
-          <h2 id="network-title"><svg class="icon" aria-hidden="true"><use href="#icon-network"/></svg>检查与下载网络</h2>
-          <p class="hint">设置保存后用于新任务，在途下载继续使用原设置。</p>
-          <label><input id="automatic" type="checkbox" /> 每天检查应用更新</label>
-          <label><input id="automatic-core" type="checkbox" /> 自动更新核心</label>
-          <label><input id="fallback" type="checkbox" /> 原始地址失败时尝试备用地址</label>
-          <details><summary>内置备用地址</summary><div id="builtin-mirrors"></div></details>
-          <h3 class="network-heading">自定义 HTTPS 前缀</h3><div id="custom-mirrors"></div>
-          <button id="add-mirror" type="button">添加地址</button>
-          <div class="actions"><button id="save-network" class="primary" type="button" disabled>保存设置</button><button id="reload-network" type="button">载入最新设置</button></div>
-          <label class="diagnostic-label" for="diagnostic-prefix">诊断地址（留空测试原始地址）</label><div class="actions"><input id="diagnostic-prefix" type="url" placeholder="https://" /><button id="diagnose-mirror" type="button">诊断地址</button></div><pre id="diagnostics" aria-live="polite"></pre>
-        </section>
+              <label
+                ><input
+                  id="login-startup"
+                  type="checkbox"
+                  disabled
+                  aria-describedby="login-status"
+                />
+                登录后自动启动应用</label
+              >
+              <p id="login-status" role="status">正在读取系统登录项…</p>
+              <label
+                ><input
+                  id="restore-core"
+                  type="checkbox"
+                  disabled
+                  aria-describedby="restore-hint"
+                />
+                应用启动时恢复核心运行状态</label
+              >
+              <p id="restore-hint">
+                上次成功运行且未主动停止时恢复。两个开关独立、立即保存，不改变当前运行状态。
+              </p>
+              <p id="startup-error" role="alert" hidden></p>
+              <p class="hint">
+                关闭窗口会收起并保留设置草稿。通过托盘或系统窗口入口返回，退出时才处理草稿并停止核心。
+              </p>
+              <div class="actions">
+                <button id="refresh-login" type="button">重新读取登录项</button
+                ><button id="quit-app" type="button">退出应用</button>
+              </div>
+            </section>
+          </div>
+          <div id="settings-network" hidden>
+            <section aria-labelledby="network-title">
+              <h2 id="network-title">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-network" /></svg
+                >检查与下载网络
+              </h2>
+              <p class="hint">设置保存后用于新任务，在途下载继续使用原设置。</p>
+
+              <label
+                ><input id="fallback" type="checkbox" />
+                原始地址失败时尝试备用地址</label
+              >
+              <details>
+                <summary>内置备用地址</summary>
+                <div id="builtin-mirrors"></div>
+              </details>
+              <h3 class="network-heading">自定义 HTTPS 前缀</h3>
+              <div id="custom-mirrors"></div>
+              <button id="add-mirror" type="button">添加地址</button>
+              <div class="actions">
+                <button
+                  id="save-network"
+                  class="primary"
+                  type="button"
+                  disabled
+                >
+                  保存设置</button
+                ><button id="reload-network" type="button">载入最新设置</button>
+              </div>
+              <label class="diagnostic-label" for="diagnostic-prefix"
+                >诊断地址（留空测试原始地址）</label
+              >
+              <div class="actions">
+                <input
+                  id="diagnostic-prefix"
+                  type="url"
+                  placeholder="https://"
+                /><button id="diagnose-mirror" type="button">诊断地址</button>
+              </div>
+              <pre id="diagnostics" aria-live="polite"></pre>
+            </section>
+          </div>
+          <div id="settings-core" hidden>
+            <section aria-labelledby="core-updates-title">
+              <h2 id="core-updates-title">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#icon-core" /></svg
+                >sing-box 核心
+              </h2>
+              <p id="update-core-version"></p>
+              <p id="update-core-state" role="status"></p>
+              <p id="update-core-error" role="alert" hidden></p>
+              <progress
+                id="update-core-progress"
+                aria-label="核心下载进度"
+                hidden
+              ></progress>
+              <div class="actions">
+                <button id="core-check" type="button">检查核心</button
+                ><button id="update-core-retry" type="button">更新核心</button
+                ><button id="update-core-cancel" type="button" hidden>
+                  取消下载</button
+                ><button id="update-core-managed" type="button" hidden>
+                  使用应用管理核心
+                </button>
+              </div>
+              <p class="hint">
+                运行中保持当前核心，新版下次启动生效，无需重启应用。
+              </p>
+            </section>
+            <section aria-labelledby="updates-title">
+              <div class="section-heading">
+                <h2 id="updates-title">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#icon-download" /></svg
+                  >软件更新
+                </h2>
+                <button id="check-updates" type="button">检查应用更新</button>
+              </div>
+              <label
+                ><input id="automatic" type="checkbox" />
+                每天检查应用更新</label
+              ><label
+                ><input id="automatic-core" type="checkbox" />
+                自动更新核心</label
+              >
+              <p id="checked-at">尚未完成全量检查</p>
+              <p id="update-error" role="alert" hidden></p>
+              <div id="update-items"></div>
+              <div class="actions">
+                <button id="download-selected" type="button">
+                  下载应用更新</button
+                ><button id="apply-updates" class="primary" type="button">
+                  重启并更新应用
+                </button>
+              </div>
+              <p id="pending-updates" class="hint"></p>
+            </section>
+            <section>
+              <h2>核心来源</h2>
+              <p class="hint">
+                受控 TUN 使用经过验证的官方核心。外部核心仅用于原始配置。
+              </p>
+              <button id="choose-core" type="button">选择本机核心</button>
+            </section>
+          </div>
+          <div id="settings-advanced" hidden>
+            <section>
+              <h2>运行方式</h2>
+              <label for="profile-mode">配置来源</label
+              ><select id="profile-mode">
+                <option value="generated">节点与 TUN</option>
+                <option value="externalConfig">原始 sing-box 配置</option>
+              </select>
+              <p class="hint">
+                切换前先断开。原始配置保持在原位置，由核心负责语义校验。
+              </p>
+              <div id="external-config-row">
+                <p id="config-path"></p>
+                <button id="choose-config" type="button">导入原始配置</button>
+              </div>
+            </section>
+            <section>
+              <h2>诊断</h2>
+              <p>原始日志保留在本机，最多显示最近 1,000 条。</p>
+              <button id="open-diagnostics" type="button">查看原始日志</button>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+    <dialog id="workspace-modal" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button
+          id="modal-close"
+          class="icon-button"
+          type="button"
+          aria-label="关闭"
+        >
+          <svg class="icon"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
       </div>
-      <dialog id="dirty-dialog" aria-labelledby="dirty-title"><h2 id="dirty-title">下载网络设置尚未保存</h2><p>请选择保存、放弃本次修改或取消退出。</p><p id="dirty-error" role="alert" hidden></p><div class="actions"><button id="dirty-save" type="button">保存并继续</button><button id="dirty-discard" type="button">放弃并继续</button><button id="dirty-cancel" type="button">取消</button></div></dialog>
-      <dialog id="profile-dirty-dialog" aria-labelledby="profile-dirty-title"><h2 id="profile-dirty-title">节点导入或分流修改尚未保存</h2><p>有未处理的节点输入时，请返回预览并导入；也可以放弃本次修改。</p><div class="actions"><button id="profile-dirty-save" type="button">保存分流并继续</button><button id="profile-dirty-discard" type="button">放弃并继续</button><button id="profile-dirty-cancel" type="button">返回处理</button></div></dialog>
-      <footer><span id="version">Sing Shell</span><span>由 sing-box 处理网络连接</span></footer>
-    </main>
+      <div id="modal-content" class="modal-content"></div>
+      <p id="modal-error" role="alert" hidden></p>
+      <div id="modal-actions" class="modal-actions"></div>
+    </dialog>
+    <dialog id="dirty-dialog" aria-labelledby="dirty-title">
+      <h2 id="dirty-title">下载网络设置尚未保存</h2>
+      <p>请选择保存、放弃本次修改或取消退出。</p>
+      <p id="dirty-error" role="alert" hidden></p>
+      <div class="actions">
+        <button id="dirty-save" type="button">保存并继续</button
+        ><button id="dirty-discard" type="button">放弃并继续</button
+        ><button id="dirty-cancel" type="button">取消</button>
+      </div>
+    </dialog>
   </body>
 </html>

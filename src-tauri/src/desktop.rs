@@ -84,7 +84,11 @@ impl Projection {
             } else {
                 "启动核心"
             },
-            enabled: s.can_start || s.can_stop,
+            enabled: s.can_start
+                || s.can_stop
+                || (s.mode == crate::profile::Mode::Generated
+                    && s.core.initialized
+                    && !storage_error),
             icon,
         }
     }
@@ -167,7 +171,7 @@ impl Desktop {
     pub fn install(&self, handle: &tauri::AppHandle) -> Result<(), String> {
         let app = handle.state::<Arc<Application>>();
         let projection =
-            Projection::for_session(&app.session.snapshot(), app.store.error.is_some());
+            Projection::for_session(&app.session.snapshot(), app.store.error().is_some());
         let status = MenuItem::with_id(handle, "status", projection.status, true, None::<&str>)
             .map_err(|e| e.to_string())?;
         let show = MenuItem::with_id(handle, "show", "显示主窗口", true, None::<&str>)
@@ -196,18 +200,24 @@ impl Desktop {
                 let app = handle.state::<Arc<Application>>();
                 let result = match event.id.as_ref() {
                     "quit" => lifecycle::request(app.inner().clone(), handle.clone(), Target::Quit),
-                    "settings" => app.desktop.navigate(handle, "updates"),
+                    "settings" => app.desktop.navigate(handle, "settings"),
                     "core" => {
                         let s = app.session.snapshot();
-                        app.session
-                            .action(if s.can_stop {
-                                Action::Stop
+                        if s.can_stop {
+                            app.session.action(Action::Stop).map(|_| ())
+                        } else if app.store.snapshot().profile.mode
+                            == crate::profile::Mode::Generated
+                        {
+                            if let Some(id) = app.store.snapshot().profile.selected_node {
+                                app.session.connect(id).map(|_| ())
                             } else {
-                                Action::Start
-                            })
-                            .map(|_| ())
+                                app.desktop.navigate(handle, "nodes")
+                            }
+                        } else {
+                            app.session.action(Action::Start).map(|_| ())
+                        }
                     }
-                    _ => app.desktop.navigate(handle, "runtime"),
+                    _ => app.desktop.navigate(handle, "nodes"),
                 };
                 if let Err(e) = result {
                     app.desktop.report(handle, e);
@@ -241,7 +251,7 @@ impl Desktop {
         Ok(())
     }
     pub fn refresh(&self, app: &Application) -> Result<(), String> {
-        let next = Projection::for_session(&app.session.snapshot(), app.store.error.is_some());
+        let next = Projection::for_session(&app.session.snapshot(), app.store.error().is_some());
         let mut s = self.state.lock().unwrap();
         if let Some(tray) = &mut s.tray {
             if tray.projection != next {

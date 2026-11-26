@@ -81,6 +81,7 @@ pub fn preview(input: &str, existing: &[Node]) -> Result<Preview, String> {
             Ok((name, spec)) => {
                 let duplicate = !fingerprints.insert(spec.fingerprint());
                 let node = Node {
+                    tags: vec![],
                     id: format!("import-{line}"),
                     name,
                     source: "本地导入".into(),

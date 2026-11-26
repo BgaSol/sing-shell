@@ -12,11 +12,11 @@ web
 
 ## Product Purpose
 
-Sing Shell 是 Tauri 桌面应用，管理官方 sing-box 核心、节点、TUN 连接和域名/IP 分流。未命中规则默认代理；用户的自定义规则优先于社区站点集合。
+Sing Shell 是 Tauri 桌面应用，管理官方 sing-box 核心、节点、TUN 连接和域名/IP 分流。未命中规则默认代理；用户策略依列表顺序首次匹配，一条规则可包含多个域名和 IP。
 
 ## Operating Context
 
-Windows x86_64/ARM64、Linux x86_64/ARM64、macOS Apple Silicon。macOS 受控 TUN 使用 13+ 的受限 SMAppService helper，旧系统保留原始配置运行。关闭窗口继续运行，真正退出停止连接并清理资源。
+Windows x86_64/ARM64、Linux x86_64/ARM64、macOS Apple Silicon。macOS 通过系统管理员授权启动短期 worker，不登记持久网络服务。关闭窗口继续运行，真正退出停止连接并清理资源。
 
 ## Capabilities and Constraints
 

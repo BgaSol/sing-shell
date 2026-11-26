@@ -32,7 +32,7 @@ try {
   if(runningCore){
     const listener=net.createServer();await new Promise(resolve=>listener.listen(0,'127.0.0.1',resolve));port=listener.address().port;await new Promise(resolve=>listener.close(resolve));
     const config=path.join(directory,'running core.json');await fs.writeFile(config,JSON.stringify({inbounds:[{type:'socks',listen:'127.0.0.1',listen_port:port}],outbounds:[{type:'direct'}]}));
-    await fs.writeFile(path.join(directory,'settings.json'),JSON.stringify({schemaVersion:3,coreRevision:0,preferencesRevision:0,coreSource:{mode:'external',path:runningCore},managed:{active:null,previous:null,trial:null,blocked:null},configPath:config,pendingConfigPath:null,updatePreferences:{automatic:false,automaticCore:false,network:{revision:0,fallbackEnabled:false,disabledBuiltins:[],customMirrors:[]}},startup:{restoreCoreOnLaunch:true,resumeCore:true},desktop:{backgroundNoticeShown:true}}));
+    await fs.writeFile(path.join(directory,'settings.json'),JSON.stringify({schemaVersion:5,nodesRevision:0,routingRevision:0,rulePreferences:[],profile:{mode:'externalConfig',nodes:[],selectedNode:null,routing:{defaultExit:'proxy',policies:[]}},coreRevision:0,preferencesRevision:0,coreSource:{mode:'external',path:runningCore},managed:{active:null,previous:null,trial:null,blocked:null},configPath:config,pendingConfigPath:null,updatePreferences:{automatic:false,automaticCore:false,network:{revision:0,fallbackEnabled:false,disabledBuiltins:[],customMirrors:[]}},startup:{restoreCoreOnLaunch:true,resumeCore:true,lastConnection:null},desktop:{backgroundNoticeShown:true}}));
   }
   if(installInput){
     const cache=path.join(directory,'updates/app');await fs.mkdir(cache,{recursive:true});const bytes=await fs.readFile(installInput.package);await fs.writeFile(path.join(cache,'package.bin'),bytes);
@@ -64,10 +64,11 @@ try {
   assert.equal(report.frontendReady, true);
   assert.equal(report.closeRequestIntercepted, true);
   if(runningCore){assert.equal(report.restoredPid,hiddenPid);assert.equal(report.reactivated,true);assert.equal(report.restartArgsNormalized,true);assert.equal(report.settings.startup.resumeCore,true);const deadline=Date.now()+25_000;for(;;){const listener=net.createServer();try{await new Promise((resolve,reject)=>{listener.once('error',reject);listener.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>listener.close(resolve));break;}catch(e){if(e.code!=='EADDRINUSE')throw e;assert.ok(Date.now()<deadline,'core port did not release after native exit');await delay(50);}}}
-  if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,4);
+  if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,5);
   if(!process.env.EXPECTED_LEGACY){assert.equal(report.draftRetained,true);assert.equal(report.loginIO,true);if(process.platform!=='linux')assert.ok(report.trayAvailable||report.backgroundFallback);}
   if(process.env.EXPECTED_VERSION) assert.equal(report.version,process.env.EXPECTED_VERSION);
   if(process.env.EXPECTED_RUST_TARGET) assert.equal(report.target,process.env.EXPECTED_RUST_TARGET);
+  if(process.env.EXPECTED_INCOMPATIBLE)assert.ok(report.storageError);
   if(process.env.EXPECTED_CONFIG) assert.equal(report.settings.configPath,process.env.EXPECTED_CONFIG);
   if(process.env.SING_SHELL_SMOKE_REPORT)await fs.appendFile(process.env.SING_SHELL_SMOKE_REPORT,JSON.stringify(report)+'\n');
   console.log(JSON.stringify(report));

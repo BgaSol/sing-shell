@@ -137,7 +137,7 @@ fn generated_mode_rejects_an_unvalidated_core_before_importing_nodes() {
     let d = Directory::new();
     let c = TestCore::open(d.0.join("data")).unwrap();
     c.store
-        .profile(c.store.snapshot().profile_revision, |p| {
+        .profile(c.store.snapshot().nodes_revision, |p| {
             p.mode = sing_shell::profile::Mode::Generated;
             Ok(())
         })
@@ -429,7 +429,7 @@ fn incomplete_trial_recovers_previous_without_starting_or_reviving_ready_cache()
     assert!(restored.store.snapshot().managed.blocked.is_some());
 }
 #[test]
-fn migrated_v1_managed_has_legacy_evidence_and_respects_disabled_preference() {
+fn unsupported_managed_schema_is_preserved_without_adoption() {
     let d = Directory::new();
     let version = "1.14.4";
     let path =
@@ -452,12 +452,13 @@ fn migrated_v1_managed_has_legacy_evidence_and_respects_disabled_preference() {
     fs::write(d.0.join("settings.json"), old.to_string()).unwrap();
     let core = TestCore::open(d.0.clone()).unwrap();
     let s = core.store.snapshot();
-    assert_eq!(s.schema_version, 4);
-    assert!(!s.update_preferences.automatic_core);
-    let r = s.managed.active.unwrap();
-    assert!(r.hash.is_some());
-    assert!(r.source.is_none());
-    assert!(d.0.join("settings.v1.backup.json").exists());
+    assert_eq!(s.schema_version, 5);
+    assert!(core.store.error().is_some());
+    assert!(s.managed.active.is_none());
+    assert_eq!(
+        fs::read_to_string(d.0.join("settings.json")).unwrap(),
+        old.to_string()
+    );
 }
 #[test]
 fn cancelled_hash_and_archive_do_not_publish_ready() {

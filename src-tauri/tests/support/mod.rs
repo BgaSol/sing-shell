@@ -27,11 +27,11 @@ impl TestCore {
     pub fn open(root: PathBuf) -> Result<Self, String> {
         let store = Arc::new(SettingsStore::open(root)?);
         // Existing lifecycle fixtures exercise raw-config sessions with synthetic core versions.
-        if store.error.is_none()
+        if store.error().is_none()
             && store.snapshot().profile.nodes.is_empty()
             && store.snapshot().profile.mode == sing_shell::profile::Mode::Generated
         {
-            store.profile(store.snapshot().profile_revision, |p| {
+            store.profile(store.snapshot().nodes_revision, |p| {
                 p.mode = sing_shell::profile::Mode::ExternalConfig;
                 Ok(())
             })?;
@@ -74,13 +74,13 @@ impl TestCore {
     pub fn snapshot(&self) -> Result<Snapshot, String> {
         let r = self.runtime.snapshot();
         Ok(Snapshot {
-            status: if self.store.error.is_some() {
+            status: if self.store.error().is_some() {
                 "failed".into()
             } else {
                 r.status
             },
             pid: r.pid,
-            error: self.store.error.clone().or(r.error),
+            error: self.store.error().clone().or(r.error),
             settings: self.store.snapshot(),
             logs: self.runtime.logs.snapshot(),
         })

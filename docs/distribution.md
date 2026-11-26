@@ -32,7 +32,7 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 - macOS 挂载 DMG及解包 app 归档；复制到可写位置后经官方 updater 更新，确认版本与配置。
 - 五个平台下载固定官方 sing-box 1.14.4，核对上游摘要，验证 SOCKS5 回环、启停和端口释放，以及生产用例驱动的受管准备/采用、架构/版本/配置检查和篡改拒绝；同源托管集成覆盖首次自动下载、更新、取消、一次回退及恢复。核心仅测试使用，不进入壳包。
 
-实际包验证已发布签名 v0.2.0 / v0.3.0 / v0.4.0 → 本版的原生 updater 和旧 schema→4 迁移，另以 v0.5.0 的 schema 4 验证已有 VLESS 节点、TLS/传输、选择和分流保留，并验证本版→隔离高版本候选；外部选择和关闭的核心更新偏好必须保留。
+0.6 实际包验证已发布签名 v0.5.4 → 本版的原生 updater，确认旧 schema 4 原字节保留、阻止隐式恢复并要求显式初始化；不再要求旧数据迁移。本代 → 隔离高版本候选继续验证设置、恢复和安装范围保留。
 
 测试源、测试公钥及升级夹具由 test-fixtures 限定、不发行。生产包的隔离 smoke 入口只在显式参数/环境和已提权条件下执行同一网络 worker，不接受任意管理员核心或配置路径。普通 smoke 禁止生产调度，核对实际版本、目标、前端及 IPC；新包能启动不等于升级已通过。
 
@@ -52,6 +52,6 @@ Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统
 
 macOS GUI 从 Applications 内的完整安装请求按需网络授权，helper 与 GUI 必须来自同一安装且运行相同构建。升级前先断开、收束 worker 与临时 DNS，再由官方 updater 替换 bundle。协议不兼容或旧副本身份失败不会自动注销/登记系统服务；系统授权、身份和网络就绪错误分别呈现。
 
-每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL COPYING 与 NOTICE；下载的核心不进入应用包。
+每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL / CC-BY-SA 许可与 NOTICE；下载的核心不进入应用包。
 
 卸载前停止连接并真正退出，macOS 当前不保留网络 helper 登记。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。

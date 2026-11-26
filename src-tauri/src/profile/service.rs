@@ -17,6 +17,7 @@ use std::{
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
     pub revision: u64,
+    pub routing_revision: u64,
     #[serde(flatten)]
     pub profile: PublicProfile,
 }
@@ -76,7 +77,8 @@ impl Service {
     pub fn snapshot(&self) -> Snapshot {
         let s = self.store.snapshot();
         Snapshot {
-            revision: s.profile_revision,
+            revision: s.nodes_revision,
+            routing_revision: s.routing_revision,
             profile: s.profile.public(),
         }
     }
@@ -84,7 +86,7 @@ impl Service {
         let _op = self.gate.begin(Kind::Profile)?;
         let id = self.preview.lock().unwrap().invalidate();
         let settings = self.store.snapshot();
-        if self.store.error.is_some() {
+        if self.store.error().is_some() {
             return Err("设置无法读取，请先处理存储错误".into());
         }
         if input.len() > import::MAX_BYTES {
@@ -171,29 +173,27 @@ impl Service {
         state.pending = None;
         Ok(self.snapshot())
     }
-    pub fn select(&self, id: String, expected: u64) -> Result<Snapshot, String> {
-        let _op = self.gate.begin(Kind::Profile)?;
-        self.store.profile(expected, |p| {
-            if p.nodes.iter().all(|n| n.id != id) {
-                return Err("节点不存在".into());
-            }
-            p.selected_node = Some(id);
-            Ok(())
-        })?;
-        Ok(self.snapshot())
-    }
-    pub fn rename(&self, id: String, name: String, expected: u64) -> Result<Snapshot, String> {
+    pub fn rename(
+        &self,
+        id: String,
+        name: String,
+        tags: Vec<String>,
+        expected: u64,
+    ) -> Result<Snapshot, String> {
         let _op = self.gate.begin(Kind::Profile)?;
         let name = name.trim();
         if name.is_empty() || name.len() > 256 || name.chars().any(char::is_control) {
             return Err("节点名称为空、过长或包含控制字符".into());
         }
+        let tags = super::normalize_tags(tags)?;
         self.store.profile(expected, |p| {
-            p.nodes
+            let node = p
+                .nodes
                 .iter_mut()
                 .find(|n| n.id == id)
-                .ok_or("节点不存在")?
-                .name = name.into();
+                .ok_or("节点不存在")?;
+            node.name = name.into();
+            node.tags = tags;
             Ok(())
         })?;
         Ok(self.snapshot())
@@ -215,10 +215,7 @@ impl Service {
     }
     pub fn routing(&self, routing: Routing, expected: u64) -> Result<Snapshot, String> {
         let _op = self.gate.begin(Kind::Profile)?;
-        self.store.profile(expected, |p| {
-            p.routing = routing;
-            Ok(())
-        })?;
+        self.store.routing(expected, routing)?;
         Ok(self.snapshot())
     }
 }
@@ -267,7 +264,7 @@ mod tests {
             .created = Instant::now() - Duration::from_secs(600);
         assert!(service.commit(preview.ticket, 0).is_err());
         assert!(service.preview.lock().unwrap().pending.is_none());
-        assert_eq!(store.snapshot().profile_revision, 0);
+        assert_eq!(store.snapshot().nodes_revision, 0);
         drop(service);
         drop(store);
         std::fs::remove_dir_all(root).unwrap();
