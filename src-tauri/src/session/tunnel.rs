@@ -176,7 +176,10 @@ impl Tunnel {
                     let mut s = state.lock().unwrap();
                     s.error = Some(error.clone());
                     s.runtime.error = Some(error);
-                    s.phase = if s.runtime.pid.is_some() || network::require_clear().is_err() {
+                    s.phase = if s.phase == Phase::CleanupRequired
+                        || s.runtime.pid.is_some()
+                        || network::require_clear().is_err()
+                    {
                         Phase::CleanupRequired
                     } else {
                         Phase::Failed
@@ -235,7 +238,9 @@ impl Tunnel {
             let mut guard = self.client.lock().unwrap();
             if guard.as_ref().is_some_and(|c| c.thread.is_finished()) {
                 let _ = guard.take().unwrap().thread.join();
-                if network::require_clear().is_ok() {
+                if self.snapshot().phase != Phase::CleanupRequired
+                    && network::require_clear().is_ok()
+                {
                     *self.state.lock().unwrap() = Snapshot::default();
                     self.released();
                     return Ok(());

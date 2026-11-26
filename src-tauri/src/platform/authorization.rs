@@ -54,17 +54,16 @@ impl Process {
             #[cfg(windows)]
             Process::Windows(handle) => {
                 use std::os::windows::io::AsRawHandle;
-                let mut code = 259;
-                if unsafe {
-                    windows_sys::Win32::System::Threading::GetExitCodeProcess(
+                match unsafe {
+                    windows_sys::Win32::System::Threading::WaitForSingleObject(
                         handle.as_raw_handle(),
-                        &mut code,
+                        0,
                     )
-                } == 0
-                {
-                    return Err(std::io::Error::last_os_error().to_string());
+                } {
+                    0 => Ok(true),
+                    258 => Ok(false),
+                    _ => Err(std::io::Error::last_os_error().to_string()),
                 }
-                Ok(code != 259)
             }
             #[cfg(unix)]
             Process::Child(child) => child
