@@ -28,7 +28,26 @@ mod native {
         },
     };
 
-    pub struct ProcessGroup(OwnedHandle);
+    pub struct ProcessGroup(OwnedHandle, u32, bool);
+    static NETWORK_WORKER: std::sync::atomic::AtomicBool =
+        std::sync::atomic::AtomicBool::new(false);
+    pub fn network_worker() -> io::Result<()> {
+        use windows_sys::Win32::{
+            System::Console::{AllocConsole, GetConsoleWindow},
+            UI::WindowsAndMessaging::{ShowWindow, SW_HIDE},
+        };
+        unsafe {
+            if GetConsoleWindow().is_null() && AllocConsole() == 0 {
+                return Err(io::Error::last_os_error());
+            }
+            let console = GetConsoleWindow();
+            if !console.is_null() {
+                ShowWindow(console, SW_HIDE);
+            }
+        }
+        NETWORK_WORKER.store(true, std::sync::atomic::Ordering::Release);
+        Ok(())
+    }
 
     fn owned(handle: HANDLE) -> io::Result<OwnedHandle> {
         if handle.is_null() || handle == INVALID_HANDLE_VALUE {
@@ -75,10 +94,14 @@ mod native {
         {
             return Err(io::Error::last_os_error());
         }
-        let mut child = command
-            .creation_flags(CREATE_NO_WINDOW | CREATE_SUSPENDED)
-            .spawn()?;
-        let group = ProcessGroup(job);
+        let network = NETWORK_WORKER.load(std::sync::atomic::Ordering::Acquire);
+        let flags = if network {
+            windows_sys::Win32::System::Threading::CREATE_NEW_PROCESS_GROUP
+        } else {
+            CREATE_NO_WINDOW
+        };
+        let mut child = command.creation_flags(flags | CREATE_SUSPENDED).spawn()?;
+        let group = ProcessGroup(job, child.id(), network);
         let assigned =
             unsafe { AssignProcessToJobObject(group.0.as_raw_handle(), child.as_raw_handle()) }
                 != 0;
@@ -96,6 +119,22 @@ mod native {
     }
 
     impl ProcessGroup {
+        pub fn request_shutdown(&self) -> io::Result<bool> {
+            if !self.2 {
+                return Ok(false);
+            }
+            if unsafe {
+                windows_sys::Win32::System::Console::GenerateConsoleCtrlEvent(
+                    windows_sys::Win32::System::Console::CTRL_BREAK_EVENT,
+                    self.1,
+                )
+            } == 0
+            {
+                Err(io::Error::last_os_error())
+            } else {
+                Ok(true)
+            }
+        }
         pub fn terminate(&self) -> io::Result<()> {
             if unsafe { TerminateJobObject(self.0.as_raw_handle(), 1) } == 0 {
                 Err(io::Error::last_os_error())
@@ -133,6 +172,18 @@ mod native {
     }
 
     impl ProcessGroup {
+        pub fn request_shutdown(&self) -> io::Result<bool> {
+            if unsafe { libc::kill(-self.0, libc::SIGTERM) } == 0 {
+                Ok(true)
+            } else {
+                let error = io::Error::last_os_error();
+                if error.raw_os_error() == Some(libc::ESRCH) {
+                    Ok(false)
+                } else {
+                    Err(error)
+                }
+            }
+        }
         pub fn terminate(&self) -> io::Result<()> {
             if unsafe { libc::kill(-self.0, libc::SIGKILL) } == 0 {
                 Ok(())
@@ -174,4 +225,10 @@ mod native {
     }
 }
 
+#[cfg(windows)]
+pub use native::network_worker;
 pub use native::{spawn, ProcessGroup};
+#[cfg(unix)]
+pub fn network_worker() -> io::Result<()> {
+    Ok(())
+}

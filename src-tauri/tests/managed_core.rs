@@ -437,7 +437,7 @@ fn migrated_v1_managed_has_legacy_evidence_and_respects_disabled_preference() {
     fs::write(d.0.join("settings.json"), old.to_string()).unwrap();
     let core = TestCore::open(d.0.clone()).unwrap();
     let s = core.store.snapshot();
-    assert_eq!(s.schema_version, 3);
+    assert_eq!(s.schema_version, 4);
     assert!(!s.update_preferences.automatic_core);
     let r = s.managed.active.unwrap();
     assert!(r.hash.is_some());
@@ -613,7 +613,7 @@ fn failed_start_confirmation_never_leaves_an_unrecorded_proxy_running() {
         .action(sing_shell::session::Action::Start)
         .unwrap();
     wait(|| core.runtime.snapshot().pid.is_some());
-    fs::create_dir(core.store.root.join("settings.json.tmp")).unwrap();
+    fs::create_dir(core.store.root.join("settings.private-tmp")).unwrap();
     wait(|| !core.core.gate.runtime_busy());
     assert!(core.runtime.snapshot().pid.is_none());
     assert!(core

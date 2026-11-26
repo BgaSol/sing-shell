@@ -144,6 +144,7 @@ pub fn decision(
 }
 fn finish(app: Arc<Application>, handle: tauri::AppHandle, target: Target) -> Result<(), String> {
     app.gate.close()?;
+    app.profiles.cancel();
     app.session.invalidate_restore();
     tauri::async_runtime::spawn_blocking(move || {
         let result = (|| {

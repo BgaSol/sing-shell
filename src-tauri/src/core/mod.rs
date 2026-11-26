@@ -231,6 +231,8 @@ impl CoreService {
                 self.store.core(s.core_revision, |v| {
                     v.config_path = Some(path);
                     v.pending_config_path = None;
+                    v.profile.mode = crate::profile::Mode::ExternalConfig;
+                    v.profile_revision += 1;
                     if v.managed
                         .blocked
                         .as_ref()
@@ -245,6 +247,8 @@ impl CoreService {
             Err(_) if s.managed() => {
                 self.store.core(s.core_revision, |v| {
                     v.pending_config_path = Some(path);
+                    v.profile.mode = crate::profile::Mode::ExternalConfig;
+                    v.profile_revision += 1;
                     Ok(())
                 })?;
                 self.notify("配置路径已保存，等待核心校验");

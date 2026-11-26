@@ -173,7 +173,7 @@ impl Desktop {
         Ok(())
     }
     pub fn refresh(&self, app: &Application) -> Result<(), String> {
-        let r = app.runtime.snapshot();
+        let r = app.session.runtime_snapshot();
         let c = app.session.snapshot_for(&app.store.snapshot(), &r);
         let issue = r.error.is_some()
             || c.core.config_error.is_some()

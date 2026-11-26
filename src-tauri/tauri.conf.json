@@ -46,7 +46,10 @@
     "category": "Utility",
     "shortDescription": "A desktop shell for sing-box",
     "macOS": {
-      "signingIdentity": "-"
+      "signingIdentity": "-",
+      "files": {
+        "Library/LaunchDaemons/com.bgasol.singshell.network.plist": "resources/com.bgasol.singshell.network.plist"
+      }
     },
     "windows": {
       "nsis": {

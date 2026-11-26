@@ -5,6 +5,7 @@ use crate::{
     runtime::{self, RuntimeService, StartSpec},
     settings::{self, SettingsStore, Trial},
 };
+pub mod tunnel;
 use serde::{Deserialize, Serialize};
 use std::{
     path::Path,
@@ -17,6 +18,7 @@ pub enum Action {
     Start,
     Stop,
     Check,
+    Apply,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,6 +45,11 @@ pub struct Snapshot {
     pub can_start: bool,
     pub can_stop: bool,
     pub can_import: bool,
+    pub runtime: runtime::RuntimeSnapshot,
+    pub network: crate::platform::network::Observation,
+    pub running_node: Option<crate::profile::NodeSummary>,
+    pub pending_changes: bool,
+    pub phase: String,
 }
 pub struct SessionService {
     pub engine: Arc<CoreService>,
@@ -51,10 +58,14 @@ pub struct SessionService {
     pub gate: Arc<Admission>,
     wake: Arc<tokio::sync::Notify>,
     intent: Mutex<Intent>,
+    tunnel: tunnel::Tunnel,
+    applied: Mutex<Option<tunnel::Connection>>,
 }
 impl SessionService {
     pub fn new(engine: Arc<CoreService>, wake: Arc<tokio::sync::Notify>) -> Arc<Self> {
         Arc::new(Self {
+            tunnel: tunnel::Tunnel::new(engine.store.root.clone()),
+            applied: Mutex::new(None),
             store: engine.store.clone(),
             runtime: engine.runtime.clone(),
             gate: engine.gate.clone(),
@@ -71,21 +82,58 @@ impl SessionService {
     pub fn snapshot(&self) -> Snapshot {
         self.snapshot_for(&self.store.snapshot(), &self.runtime.snapshot())
     }
+    pub fn runtime_snapshot(&self) -> runtime::RuntimeSnapshot {
+        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
+            let s = self.tunnel.snapshot();
+            let mut r = s.runtime;
+            r.error = s.error.or(r.error).or(self.runtime.snapshot().error);
+            r.status = match s.phase.as_str() {
+                "authorizing" | "preparing" | "starting" => "starting",
+                "cleanupRequired" => "failed",
+                phase => phase,
+            }
+            .into();
+            r.cleanup_pending = s.phase == "cleanupRequired";
+            r
+        } else {
+            self.runtime.snapshot()
+        }
+    }
+    pub fn logs(&self) -> Vec<crate::logs::Log> {
+        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
+            self.tunnel.snapshot().logs
+        } else {
+            self.runtime.logs.snapshot()
+        }
+    }
     pub fn snapshot_for(
         &self,
         settings: &settings::Settings,
-        r: &runtime::RuntimeSnapshot,
+        _r: &runtime::RuntimeSnapshot,
     ) -> Snapshot {
+        let actual = self.runtime_snapshot();
+        let r = &actual;
         let core = self.engine.snapshot();
         let busy = self.gate.runtime_busy() || self.gate.closing() || !core.initialized;
         let restore = self.intent.lock().unwrap().restore;
+        let generated = settings.profile.mode == crate::profile::Mode::Generated;
+        let tunnel = self.tunnel.snapshot();
+        let applied = self.applied.lock().unwrap();
+        let desired = settings.profile.selected().map(|node| tunnel::Connection {
+            node: node.clone(),
+            routing: settings.profile.routing.clone(),
+        });
         Snapshot {
             can_start: !busy
                 && r.pid.is_none()
                 && !r.cleanup_pending
                 && self.store.error.is_none()
                 && core.usable
-                && settings.config_path.is_some(),
+                && if generated {
+                    settings.profile.selected_node.is_some()
+                } else {
+                    settings.config_path.is_some()
+                },
             can_stop: !self.gate.closing()
                 && (r.pid.is_some()
                     || r.cleanup_pending
@@ -98,18 +146,32 @@ impl SessionService {
                 && self.store.error.is_none(),
             core,
             restore,
+            runtime: r.clone(),
+            network: tunnel.network,
+            running_node: applied.as_ref().map(|c| c.node.summary()),
+            pending_changes: r.pid.is_some()
+                && desired.as_ref().map(tunnel::Connection::fingerprint)
+                    != applied.as_ref().map(tunnel::Connection::fingerprint),
+            phase: if generated {
+                tunnel.phase
+            } else {
+                r.status.clone()
+            },
         }
     }
     pub fn select_core(&self, path: &Path) -> Result<(), String> {
         self.invalidate_restore();
+        self.ensure_stopped()?;
         self.engine.select(path)
     }
     pub fn import_config(&self, path: &Path) -> Result<(), String> {
         self.invalidate_restore();
+        self.ensure_stopped()?;
         self.engine.import(path)
     }
     pub fn use_managed(self: &Arc<Self>) -> Result<Receipt, String> {
         self.invalidate_restore();
+        self.ensure_stopped()?;
         self.engine.use_managed()
     }
     pub fn cancel_core(&self) {
@@ -123,7 +185,39 @@ impl SessionService {
     }
     pub fn stop_internal(&self) -> Result<(), String> {
         self.invalidate_restore();
+        self.tunnel.close()?;
+        self.runtime.network_owned(false);
         self.runtime.stop()
+    }
+    pub fn ensure_stopped(&self) -> Result<(), String> {
+        let s = self.runtime_snapshot();
+        if s.pid.is_some()
+            || s.cleanup_pending
+            || ["starting", "stopping"].contains(&s.status.as_str())
+        {
+            Err("请先停止连接并完成网络清理".into())
+        } else {
+            Ok(())
+        }
+    }
+    pub fn mode(
+        &self,
+        mode: crate::profile::Mode,
+        expected: u64,
+    ) -> Result<crate::profile::service::Snapshot, String> {
+        let _op = self.gate.begin(Kind::Selection)?;
+        self.ensure_stopped()?;
+        self.invalidate_restore();
+        self.store.profile(expected, |p| {
+            p.mode = mode;
+            Ok(())
+        })?;
+        self.store.resume(false)?;
+        let s = self.store.snapshot();
+        Ok(crate::profile::service::Snapshot {
+            revision: s.profile_revision,
+            profile: s.profile.public(),
+        })
     }
     pub fn action(self: &Arc<Self>, action: Action) -> Result<Receipt, String> {
         let op = self.gate.begin(if matches!(action, Action::Stop) {
@@ -131,7 +225,7 @@ impl SessionService {
         } else {
             Kind::Runtime
         })?;
-        if matches!(action, Action::Start | Action::Stop) {
+        if matches!(action, Action::Start | Action::Stop | Action::Apply) {
             self.invalidate_restore();
         }
         let receipt = op.receipt();
@@ -140,7 +234,8 @@ impl SessionService {
             let result = match action {
                 Action::Start => core.start_owned(&op),
                 Action::Stop => core.stop_owned(&op),
-                Action::Check => core.engine.check_local(&op.cancel),
+                Action::Check => core.check_owned(&op),
+                Action::Apply => core.apply_owned(&op),
             };
             if let Err(e) = result {
                 core.runtime.report(e);
@@ -156,6 +251,9 @@ impl SessionService {
         self.start_owned(&op)
     }
     fn start_owned(&self, op: &Operation) -> Result<(), String> {
+        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
+            return self.start_tunnel_owned(op, None);
+        }
         let epoch = self.intent.lock().unwrap().epoch;
         self.start_process(op)?;
         let intent = self.intent.lock().unwrap();
@@ -184,6 +282,120 @@ impl SessionService {
         }
         Ok(())
     }
+    fn desired_connection(&self) -> Result<tunnel::Connection, String> {
+        let s = self.store.snapshot();
+        let node = s
+            .profile
+            .selected()
+            .ok_or("请先导入并选择一个节点")?
+            .clone();
+        Ok(tunnel::Connection {
+            node,
+            routing: s.profile.routing,
+        })
+    }
+    fn check_owned(&self, op: &Operation) -> Result<(), String> {
+        let s = self.store.snapshot();
+        if s.profile.mode == crate::profile::Mode::Generated {
+            let config = crate::profile::config::build(&s.profile, &self.store.root)?;
+            self.runtime.validate(
+                &s.selected_path(&self.store.root)?,
+                &config.path,
+                &op.cancel,
+            )
+        } else {
+            self.engine.check_local(&op.cancel)
+        }
+    }
+    fn start_tunnel_owned(
+        &self,
+        op: &Operation,
+        input: Option<tunnel::Connection>,
+    ) -> Result<(), String> {
+        self.ensure_stopped()?;
+        let epoch = self.intent.lock().unwrap().epoch;
+        let s = self.store.snapshot();
+        if !s.managed() {
+            return Err("受控 TUN 仅使用官方受管核心，请在核心来源中切换为应用管理".into());
+        }
+        let core = s.managed.active.as_ref().ok_or("请等待官方核心准备完成")?;
+        let version = core.version.clone();
+        self.engine.verify(core, &op.cancel)?;
+        let input = match input {
+            Some(input) => input,
+            None => self.desired_connection()?,
+        };
+        input.profile().validate()?;
+        let generated = crate::profile::config::build(&input.profile(), &self.store.root)?;
+        self.runtime.validate(
+            &s.selected_path(&self.store.root)?,
+            &generated.path,
+            &op.cancel,
+        )?;
+        self.runtime.clear_error();
+        self.runtime.network_owned(true);
+        if let Err(error) = self.tunnel.start(input.clone(), version, &op.cancel) {
+            if self.tunnel.snapshot().runtime.pid.is_none()
+                && self.tunnel.snapshot().phase != "cleanupRequired"
+            {
+                self.runtime.network_owned(false);
+            }
+            return Err(error);
+        }
+        let intent = self.intent.lock().unwrap();
+        if intent.epoch != epoch || op.cancel.load(Ordering::Acquire) || self.gate.closing() {
+            drop(intent);
+            self.tunnel.stop()?;
+            return Err("TUN 启动已取消".into());
+        }
+        let result = self
+            .store
+            .confirm_connection(s.core_revision, Some(input.clone()));
+        drop(intent);
+        if let Err(error) = result {
+            let cleanup = self.tunnel.stop();
+            return Err(format!("启动确认保存失败：{error}；停止结果：{cleanup:?}"));
+        }
+        *self.applied.lock().unwrap() = Some(input);
+        Ok(())
+    }
+    fn apply_owned(&self, op: &Operation) -> Result<(), String> {
+        if self.store.snapshot().profile.mode != crate::profile::Mode::Generated {
+            return Err("原始配置模式请停止后重新启动".into());
+        }
+        let candidate = self.desired_connection()?;
+        let saved = self.store.snapshot();
+        let config = crate::profile::config::build(&candidate.profile(), &self.store.root)?;
+        self.runtime.validate(
+            &saved.selected_path(&self.store.root)?,
+            &config.path,
+            &op.cancel,
+        )?;
+        let old = self.applied.lock().unwrap().clone();
+        self.tunnel.stop()?;
+        crate::core::package::cancelled(&op.cancel)?;
+        match self.start_tunnel_owned(op, Some(candidate)) {
+            Ok(()) => Ok(()),
+            Err(error) => {
+                if op.cancel.load(Ordering::Acquire) || self.gate.closing() {
+                    return Err(error);
+                }
+                if let Some(old) = old {
+                    self.tunnel.stop()?;
+                    match self.start_tunnel_owned(op, Some(old)) {
+                        Ok(()) => Err(format!(
+                            "应用失败，已恢复上一运行节点；新设置未生效：{error}"
+                        )),
+                        Err(restore) => {
+                            Err(format!("应用失败：{error}；上一连接恢复也失败：{restore}"))
+                        }
+                    }
+                } else {
+                    Err(error)
+                }
+            }
+        }
+    }
     fn start_process(&self, op: &Operation) -> Result<(), String> {
         if self.runtime.snapshot().pid.is_some() {
             return Err("sing-box 已在运行".into());
@@ -193,9 +405,18 @@ impl SessionService {
         if let Err(e) = self.engine.adopt_owned(op) {
             self.engine.managed.error(e);
         }
-        self.engine.validate_pending(&op.cancel)?;
         let s = self.store.snapshot();
-        let config = s.config_path.clone().ok_or("请先导入有效配置")?;
+        let generated = s.profile.mode == crate::profile::Mode::Generated;
+        if !generated {
+            self.engine.validate_pending(&op.cancel)?;
+        }
+        let s = self.store.snapshot();
+        let config = if generated {
+            Some(crate::profile::config::build(&s.profile, &self.store.root)?.path)
+        } else {
+            s.config_path.clone()
+        }
+        .ok_or("请先导入有效配置")?;
         let spec = StartSpec {
             executable: s.selected_path(&self.store.root)?,
             config: config.clone(),
@@ -213,9 +434,11 @@ impl SessionService {
             })?;
         }
         let result = (|| {
-            if let Err(e) = self.engine.selected(&op.cancel) {
-                self.engine.usable.store(false, Ordering::Release);
-                return Err(e);
+            if !generated {
+                if let Err(e) = self.engine.selected(&op.cancel) {
+                    self.engine.usable.store(false, Ordering::Release);
+                    return Err(e);
+                }
             }
             self.runtime.start(&spec, op.cancel.clone())
         })();
@@ -288,7 +511,10 @@ impl SessionService {
         if self.gate.runtime_other(op.id) {
             self.gate.wait_runtime(op.id)?;
         }
-        let stopped = self.runtime.stop();
+        let stopped = self.tunnel.stop().and_then(|_| {
+            self.runtime.network_owned(false);
+            self.runtime.stop()
+        });
         if let Err(e) = saved {
             return Err(format!(
                 "恢复状态保存失败，下次启动仍可能恢复：{e}；实际停止结果：{stopped:?}"
@@ -339,6 +565,8 @@ impl SessionService {
         let s = self.store.snapshot();
         let fail = if !s.startup.restore_core_on_launch || !s.startup.resume_core {
             Some("自动恢复已取消".into())
+        } else if s.profile.mode == crate::profile::Mode::Generated {
+            Some("TUN 自动恢复需要手动确认系统授权，请点击启动；不会在后台反复请求权限".into())
         } else if s.config_path.is_none() && s.pending_config_path.is_none() {
             Some("自动恢复失败：请先导入配置".into())
         } else if !s.managed() && !self.engine.usable.load(Ordering::Acquire) {

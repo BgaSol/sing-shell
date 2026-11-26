@@ -3,7 +3,7 @@ use crate::{
     platform::{self, ProcessGroup},
     settings,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
@@ -15,7 +15,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeSnapshot {
     pub status: String,
@@ -41,6 +41,7 @@ pub struct StartSpec {
     pub version: Option<String>,
 }
 pub struct RuntimeService {
+    network_owned: AtomicBool,
     state: Arc<Mutex<RuntimeSnapshot>>,
     stop: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
@@ -78,6 +79,17 @@ impl Process {
     }
     fn terminate(&mut self) -> Result<(), String> {
         if !self.terminated {
+            if self.child.try_wait().map_err(|e| e.to_string())?.is_none()
+                && self.group.request_shutdown().unwrap_or(false)
+            {
+                let graceful = Instant::now() + Duration::from_secs(3);
+                while Instant::now() < graceful {
+                    if self.child.try_wait().map_err(|e| e.to_string())?.is_some() {
+                        break;
+                    }
+                    thread::sleep(Duration::from_millis(20));
+                }
+            }
             self.group.terminate().map_err(|e| e.to_string())?;
             self.terminated = true;
         }
@@ -109,6 +121,7 @@ impl Drop for Process {
 impl Default for RuntimeService {
     fn default() -> Self {
         Self {
+            network_owned: AtomicBool::new(false),
             state: Arc::new(Mutex::new(Default::default())),
             stop: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
@@ -118,6 +131,9 @@ impl Default for RuntimeService {
     }
 }
 impl RuntimeService {
+    pub fn network_owned(&self, value: bool) {
+        self.network_owned.store(value, Ordering::Release);
+    }
     pub fn clear_error(&self) {
         let mut state = self.state.lock().unwrap();
         state.error = None;
@@ -141,6 +157,7 @@ impl RuntimeService {
     pub fn stopped(&self) -> Result<(), String> {
         let s = self.snapshot();
         if s.pid.is_some()
+            || self.network_owned.load(Ordering::Acquire)
             || s.cleanup_pending
             || ["checking", "starting", "stopping"].contains(&s.status.as_str())
         {
@@ -327,7 +344,7 @@ impl RuntimeService {
         if self.snapshot().pid.is_some() {
             self.state.lock().unwrap().status = "stopping".into();
             self.stop.store(true, Ordering::Release);
-            let deadline = Instant::now() + Duration::from_secs(7);
+            let deadline = Instant::now() + Duration::from_secs(12);
             while self.snapshot().pid.is_some() {
                 if Instant::now() >= deadline {
                     return Err("sing-box 尚未完成停止，请重试".into());

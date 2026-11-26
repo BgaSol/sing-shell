@@ -8,6 +8,11 @@ on:
       - scripts/network-preflight.mjs
       - scripts/macos-service-preflight.mjs
       - scripts/macos-service-preflight.swift
+      - scripts/network-integration.mjs
+      - src-tauri/src/**
+      - src-tauri/tests/fixtures/network.rs
+      - src-tauri/Cargo.toml
+      - src-tauri/Cargo.lock
 permissions:
   contents: read
 concurrency:
@@ -31,7 +36,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 10
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -54,6 +59,30 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SING_SHELL_NETWORK_PREFLIGHT: '1'
         run: sudo -E "$(which node)" scripts/network-preflight.mjs ${{ matrix.target }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          workspaces: src-tauri -> target
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf
+      - run: npm ci
+      - run: npm run web:build
+      - run: cargo build --release --manifest-path src-tauri/Cargo.toml --features test-fixtures --bin network-fixture --locked
+      - name: Production worker and generated TUN integration (Windows)
+        if: runner.os == 'Windows'
+        env:
+          SING_SHELL_NETWORK_PREFLIGHT: '1'
+        run: node scripts/network-integration.mjs ${{ matrix.target }}
+      - name: Production worker and generated TUN integration (Unix)
+        if: runner.os != 'Windows'
+        env:
+          SING_SHELL_NETWORK_PREFLIGHT: '1'
+        run: sudo -E "$(which node)" scripts/network-integration.mjs ${{ matrix.target }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:

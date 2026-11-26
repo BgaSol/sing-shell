@@ -13,4 +13,7 @@ pub mod instance;
 pub mod login_startup;
 pub mod startup;
 
+mod private_files;
+pub mod profile;
+pub mod rulesets;
 pub mod session;

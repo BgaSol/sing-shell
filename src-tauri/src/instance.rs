@@ -203,6 +203,16 @@ async fn exchange<S: AsyncRead + AsyncWrite + Unpin>(
 }
 
 #[cfg(windows)]
+pub(crate) fn current_user_sid() -> Result<String, String> {
+    windows::sid()
+}
+#[cfg(windows)]
+pub(crate) fn network_pipe(
+    path: &Path,
+) -> Result<tokio::net::windows::named_pipe::NamedPipeServer, String> {
+    windows::pipe(path, true).map_err(|e| e.to_string())
+}
+#[cfg(windows)]
 mod windows {
     use super::*;
     use windows_sys::Win32::{

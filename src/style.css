@@ -40,7 +40,7 @@ nav { display: flex; gap: 8px; flex-wrap: wrap; }
 nav button { background: transparent; border-color: transparent; }
 nav button[aria-current="page"] { color: #20211f; background: var(--navigation); border-color: var(--border); }
 nav button[aria-current="page"]:hover:enabled { background: #ffc9db; }
-#runtime-panel, #updates-panel { display: flex; flex-direction: column; gap: 18px; flex: 1; min-width: 0; }
+#runtime-panel, #nodes-panel, #routing-panel, #updates-panel { display: flex; flex-direction: column; gap: 18px; flex: 1; min-width: 0; }
 section { min-width: 0; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); padding: 18px 22px; }
 .section-heading { margin-bottom: 8px; flex-wrap: wrap; }
 .setting-row { padding: 12px 0; border-bottom: 1px solid var(--separator); flex-wrap: wrap; }
@@ -74,6 +74,14 @@ input { accent-color: var(--accent); caret-color: var(--accent); }
 input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin: 0; }
 input:not([type="checkbox"]) { font: inherit; font-size: 13px; min-height: 36px; padding: 8px 10px; border: 2px solid var(--border); border-radius: 8px; background: var(--subtle); color: inherit; min-width: 0; }
 input::placeholder { color: var(--muted); opacity: 1; }
+textarea, select {font:inherit;font-size:13px;min-height:36px;border:2px solid var(--border);border-radius:8px;background:var(--subtle);color:inherit;padding:8px 10px;max-width:100%;}
+textarea {display:block;width:100%;margin-top:8px;resize:vertical;caret-color:var(--accent);}
+textarea::placeholder {color:var(--muted);opacity:1;}
+#nodes-panel label, #routing-panel label {margin:12px 0;white-space:normal;}
+#routing-panel h3 {margin-top:24px;}
+#site-rules {display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 24px;}
+.site-rule {justify-content:space-between;}
+#node-import-result {white-space:pre-wrap;overflow-wrap:anywhere;}
 pre { flex: 1; min-height: 150px; max-height: 55vh; margin: 14px 0 0; padding: 14px; background: var(--subtle); border: 1px solid var(--separator); border-radius: 8px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.8 "Cascadia Code", "SFMono-Regular", Consolas, monospace; font-variant-numeric: tabular-nums; }
 footer { font-size: 11px; color: var(--muted); flex-wrap: wrap; }
 .update-row { border-bottom: 1px solid var(--separator); padding: 18px 0; }

@@ -40,7 +40,7 @@ function upgrade(executable,isImage=false,destination=candidate,destinationRoot=
   let result;const deadline=Date.now()+60_000;
   do{result=spawnSync(process.execPath,['scripts/smoke.mjs',executable],{encoding:'utf8',windowsHide:true,timeout:35_000,env:{...process.env,...env,EXPECTED_VERSION:destination.version,EXPECTED_LEGACY:'',APPIMAGE_EXTRACT_AND_RUN:'1',WEBKIT_DISABLE_DMABUF_RENDERER:'1'}});if(result.status===0)break;Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,500);}while(Date.now()<deadline);
   assert.equal(result.status,0,`upgraded executable did not confirm ${destination.version}: ${result.stdout}\n${result.stderr}`);
-  const saved=JSON.parse(fs.readFileSync(path.join(data,'settings.json')));assert.equal(saved.configPath,config);assert.equal(saved.schemaVersion,3);assert.deepEqual(saved.coreSource,{mode:'external',path:official});assert.equal(saved.updatePreferences.automaticCore,false);assert.equal(fs.readFileSync(config,'utf8'),'{"outbounds":[{"type":"direct"}]}');
+  const saved=JSON.parse(fs.readFileSync(path.join(data,'settings.json')));assert.equal(saved.configPath,config);assert.equal(saved.schemaVersion,4);assert.deepEqual(saved.coreSource,{mode:'external',path:official});assert.equal(saved.updatePreferences.automaticCore,false);assert.equal(fs.readFileSync(config,'utf8'),'{"outbounds":[{"type":"direct"}]}');
   (report.previousUpgrades??=[]).push({from,to:destination.version,signatureVerified:true,actualVersionConfirmed:true,settingsPreserved:true,candidateFiles:destination.files});report.verified.push('official updater installs the higher signed candidate; actual version and user settings confirmed');
 }
 function windowsLogin(action,executable){

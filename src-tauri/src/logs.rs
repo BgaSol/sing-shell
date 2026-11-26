@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
     io::Read,
@@ -14,7 +14,7 @@ pub fn now() -> u64 {
         .as_millis() as u64
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Log {
     pub received_at: u64,
@@ -23,9 +23,16 @@ pub struct Log {
 }
 
 #[derive(Clone, Default)]
-pub struct Logs(Arc<Mutex<VecDeque<Log>>>);
+pub struct Logs(Arc<Mutex<VecDeque<Log>>>, Arc<Mutex<Vec<String>>>);
 impl Logs {
+    pub fn redact(&self, secrets: Vec<String>) {
+        *self.1.lock().unwrap() = secrets.into_iter().filter(|s| !s.is_empty()).collect();
+    }
     pub fn push(&self, source: &str, message: impl Into<String>) {
+        let mut message = message.into();
+        for secret in self.1.lock().unwrap().iter() {
+            message = message.replace(secret, "[已隐藏]");
+        }
         let mut logs = self.0.lock().unwrap();
         if logs.len() == 1000 {
             logs.pop_front();
@@ -33,7 +40,7 @@ impl Logs {
         logs.push_back(Log {
             received_at: now(),
             source: source.into(),
-            message: message.into(),
+            message,
         });
     }
     pub fn snapshot(&self) -> Vec<Log> {

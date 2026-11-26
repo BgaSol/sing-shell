@@ -1,8 +1,7 @@
 use crate::updates::{network, release::Candidate};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{self, File, OpenOptions},
-    io::Write,
+    fs,
     path::{Path, PathBuf},
     sync::Mutex,
 };
@@ -96,6 +95,8 @@ pub struct Settings {
     pub schema_version: u32,
     pub core_revision: u64,
     pub preferences_revision: u64,
+    pub profile_revision: u64,
+    pub profile: crate::profile::Profile,
     pub core_source: CoreSource,
     pub managed: ManagedState,
     pub config_path: Option<PathBuf>,
@@ -109,6 +110,8 @@ pub struct Settings {
 pub struct Startup {
     pub restore_core_on_launch: bool,
     pub resume_core: bool,
+    #[serde(default)]
+    pub last_connection: Option<crate::session::tunnel::Connection>,
 }
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -118,9 +121,11 @@ pub struct Desktop {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            schema_version: 3,
+            schema_version: 4,
             core_revision: 0,
             preferences_revision: 0,
+            profile_revision: 0,
+            profile: Default::default(),
             core_source: Default::default(),
             managed: Default::default(),
             config_path: None,
@@ -132,6 +137,9 @@ impl Default for Settings {
     }
 }
 impl Settings {
+    pub fn public(&self) -> serde_json::Value {
+        serde_json::json!({"schemaVersion":self.schema_version,"coreRevision":self.core_revision,"profileRevision":self.profile_revision,"preferencesRevision":self.preferences_revision,"profile":self.profile.public(),"coreSource":self.core_source,"managed":self.managed,"configPath":self.config_path,"pendingConfigPath":self.pending_config_path,"updatePreferences":self.update_preferences,"startup":{"restoreCoreOnLaunch":self.startup.restore_core_on_launch,"resumeCore":self.startup.resume_core},"desktop":self.desktop})
+    }
     pub fn managed(&self) -> bool {
         self.core_source == CoreSource::Managed
     }
@@ -162,13 +170,9 @@ pub fn managed_path(root: &Path, reference: &ManagedRef) -> Result<PathBuf, Stri
         }))
 }
 pub fn write_json(path: &Path, value: &impl Serialize) -> Result<(), String> {
-    let temporary = path.with_extension("json.tmp");
-    let mut file = File::create(&temporary).map_err(|e| e.to_string())?;
-    serde_json::to_writer_pretty(&mut file, value).map_err(|e| e.to_string())?;
-    file.write_all(b"\n")
-        .and_then(|_| file.sync_all())
-        .map_err(|e| e.to_string())?;
-    fs::rename(&temporary, path).map_err(|e| format!("保存 {} 失败：{e}", path.display()))
+    let mut bytes = serde_json::to_vec_pretty(value).map_err(|e| e.to_string())?;
+    bytes.push(b'\n');
+    crate::private_files::write(path, &bytes)
 }
 pub struct SettingsStore {
     pub root: PathBuf,
@@ -183,6 +187,7 @@ impl SettingsStore {
         Self::with_lease(root, lease)
     }
     pub fn with_lease(root: PathBuf, lease: crate::instance::Lease) -> Result<Self, String> {
+        crate::private_files::directory(&root)?;
         let path = root.join("settings.json");
         let read = (|| -> Result<Settings, String> {
             let bytes = match fs::read(&path) {
@@ -198,7 +203,7 @@ impl SettingsStore {
                 .get("schemaVersion")
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0);
-            let settings = match schema {
+            let mut settings = match schema {
                 0 => {
                     #[derive(Deserialize)]
                     #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -265,31 +270,38 @@ impl SettingsStore {
                     }
                     s
                 }
-                2 => {
-                    if raw.get("startup").is_some() || raw.get("desktop").is_some() {
+                2 | 3 => {
+                    if raw.get("profile").is_some()
+                        || raw.get("profileRevision").is_some()
+                        || (schema == 2
+                            && (raw.get("startup").is_some() || raw.get("desktop").is_some()))
+                    {
                         return Err("旧设置包含不属于此版本的字段，已保留原文件".into());
                     }
                     let mut raw = raw;
-                    raw["schemaVersion"] = serde_json::json!(3);
-                    raw["startup"] = serde_json::to_value(Startup::default()).unwrap();
-                    raw["desktop"] = serde_json::to_value(Desktop::default()).unwrap();
+                    raw["schemaVersion"] = serde_json::json!(4);
+                    raw["profileRevision"] = serde_json::json!(0);
+                    raw["profile"] =
+                        serde_json::to_value(crate::profile::Profile::default()).unwrap();
+                    if schema == 2 {
+                        raw["startup"] = serde_json::to_value(Startup::default()).unwrap();
+                        raw["desktop"] = serde_json::to_value(Desktop::default()).unwrap();
+                    }
                     serde_json::from_value(raw).map_err(|e| e.to_string())?
                 }
-                3 => serde_json::from_value(raw).map_err(|e| e.to_string())?,
+                4 => serde_json::from_value(raw).map_err(|e| e.to_string())?,
                 _ => return Err("不支持此设置版本".into()),
             };
+            if schema < 4
+                && (settings.config_path.is_some() || settings.pending_config_path.is_some())
+            {
+                settings.profile.mode = crate::profile::Mode::ExternalConfig;
+            }
             Self::validate(&settings)?;
-            if schema < 3 {
+            if schema < 4 {
                 let backup = root.join(format!("settings.v{schema}.backup.json"));
                 if !backup.exists() {
-                    let mut f = OpenOptions::new()
-                        .write(true)
-                        .create_new(true)
-                        .open(backup)
-                        .map_err(|e| e.to_string())?;
-                    f.write_all(&bytes)
-                        .and_then(|_| f.sync_all())
-                        .map_err(|e| e.to_string())?;
+                    crate::private_files::write(&backup, &bytes)?;
                 }
                 write_json(&path, &settings)?;
             }
@@ -311,10 +323,14 @@ impl SettingsStore {
         })
     }
     fn validate(s: &Settings) -> Result<(), String> {
-        if s.schema_version != 3 {
+        if s.schema_version != 4 {
             return Err("不支持此设置版本".into());
         }
         s.update_preferences.network.clone().validated()?;
+        s.profile.validate()?;
+        if let Some(last) = &s.startup.last_connection {
+            last.profile().validate()?;
+        }
         for r in [&s.managed.active, &s.managed.previous]
             .into_iter()
             .flatten()
@@ -361,6 +377,30 @@ impl SettingsStore {
             Ok(())
         })
     }
+    pub fn profile(
+        &self,
+        expected: u64,
+        change: impl FnOnce(&mut crate::profile::Profile) -> Result<(), String>,
+    ) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.profile_revision != expected {
+                return Err("节点或分流已改变，请载入最新设置后重试".into());
+            }
+            change(&mut s.profile)?;
+            s.profile.routing = s.profile.routing.normalized()?;
+            if s.startup.last_connection.as_ref().is_some_and(|last| {
+                s.profile
+                    .nodes
+                    .iter()
+                    .all(|node| node.id != last.node.id || node.spec != last.node.spec)
+            }) {
+                s.startup.last_connection = None;
+                s.startup.resume_core = false;
+            }
+            s.profile_revision += 1;
+            Ok(())
+        })
+    }
     pub fn restore_preference(&self, enabled: bool) -> Result<Settings, String> {
         self.write(|s| {
             s.startup.restore_core_on_launch = enabled;
@@ -374,6 +414,13 @@ impl SettingsStore {
         })
     }
     pub fn confirm_start(&self, expected: u64) -> Result<Settings, String> {
+        self.confirm_connection(expected, None)
+    }
+    pub fn confirm_connection(
+        &self,
+        expected: u64,
+        input: Option<crate::session::tunnel::Connection>,
+    ) -> Result<Settings, String> {
         self.write(|s| {
             if s.core_revision != expected {
                 return Err("核心选择已改变".into());
@@ -383,6 +430,7 @@ impl SettingsStore {
                 s.core_revision += 1;
             }
             s.startup.resume_core = true;
+            s.startup.last_connection = input;
             Ok(())
         })
     }

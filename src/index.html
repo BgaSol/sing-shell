@@ -28,15 +28,16 @@
         <div class="brand"><img class="brand-mark" src="../assets/icon.svg" width="50" height="50" alt="" /><div><h1>Sing Shell</h1><p>sing-box 桌面客户端</p></div></div>
         <span id="status" role="status">正在读取状态</span>
       </header>
-      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span id="update-notice">设置</span></button></nav>
+      <nav aria-label="主导航"><button id="nav-runtime" type="button" aria-current="page"><svg class="icon" aria-hidden="true"><use href="#icon-runtime"/></svg>运行</button><button id="nav-nodes" type="button">节点</button><button id="nav-routing" type="button">分流</button><button id="nav-updates" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg><span id="update-notice">设置</span></button></nav>
       <p id="desktop-error" role="alert" hidden></p>
       <div id="runtime-panel">
       <section aria-labelledby="connection-title">
         <div class="section-heading"><h2 id="connection-title"><svg class="icon" aria-hidden="true"><use href="#icon-core"/></svg>运行配置</h2><span id="pid"></span></div>
+        <div class="setting-row"><div class="setting-label"><h3 id="connection-node">选择节点后开始</h3><p id="connection-summary">默认 TUN，未命中规则的流量走代理。</p></div><button id="apply-connection" class="primary" type="button" hidden>应用并重启</button></div>
         <div class="setting-row"><div class="setting-label"><h3>sing-box 核心</h3><p id="home-core-version">正在准备核心</p><p id="home-core-state" role="status"></p><p id="home-core-error" role="alert" hidden></p><progress id="home-core-progress" aria-label="核心下载进度" hidden></progress></div></div>
         <div class="actions core-actions"><button id="home-core-retry" type="button" hidden>重试准备核心</button><button id="home-core-cancel" type="button" hidden>取消下载</button></div>
         <details><summary>高级：核心来源</summary><p class="hint">默认由应用管理官方核心。本机核心由你手动维护。</p><div class="actions"><button id="choose-core" type="button" disabled>使用本机核心</button><button id="home-core-managed" type="button">使用应用管理核心</button></div></details>
-        <div class="setting-row">
+        <div class="setting-row" id="external-config-row">
           <div class="setting-label"><h3>配置文件</h3><p id="config-path">选择现有的 JSON 或 JSONC 配置文件</p></div>
           <button id="choose-config" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-import"/></svg>导入配置</button>
         </div>
@@ -55,9 +56,28 @@
         <pre id="logs" tabindex="0" aria-label="sing-box 运行日志">导入配置后，等待核心就绪并点击「启动 sing-box」。</pre>
       </section>
       </div>
+      <div id="nodes-panel" hidden>
+        <section aria-labelledby="nodes-title"><div class="section-heading"><h2 id="nodes-title">节点</h2><span id="nodes-count"></span></div>
+          <p class="hint">粘贴一行或多行节点链接，预览无误后一次导入。导入不会自动启动。</p>
+          <label for="node-input">节点链接或 sing-box 节点 JSON</label><textarea id="node-input" rows="7" spellcheck="false" placeholder="ss://、trojan://、vless://、vmess://、hysteria2:// 或 tuic://"></textarea>
+          <label for="node-file">或导入本地文件</label><input id="node-file" type="file" accept=".txt,.json" />
+          <div class="actions"><button id="node-preview" class="primary" type="button">预览导入</button><button id="node-commit" type="button" disabled>导入预览中的节点</button></div><p id="node-import-result" role="status"></p>
+          <div id="node-list"></div>
+        </section>
+      </div>
+      <div id="routing-panel" hidden>
+        <section aria-labelledby="routing-title"><div class="section-heading"><h2 id="routing-title">分流</h2><span id="routing-state"></span></div>
+          <label>未命中规则：<select id="routing-default"><option value="proxy">走代理</option><option value="direct">走直连</option></select></label>
+          <h3>常用站点</h3><div id="site-rules"></div>
+          <h3>自定义规则</h3><div id="custom-rules"></div>
+          <div class="actions"><input id="rule-value" aria-label="域名或 IP/CIDR" placeholder="域名或 IP/CIDR" /><select id="rule-kind" aria-label="规则类型"><option value="domain">域名</option><option value="ip">IP / 网段</option></select><select id="rule-action" aria-label="规则动作"><option value="direct">直连</option><option value="proxy">代理</option></select><button id="add-rule" type="button">添加规则</button></div><label><input id="rule-subdomains" type="checkbox" checked /> 域名规则包含子域名</label>
+          <div class="actions"><button id="save-routing" class="primary" type="button">保存分流设置</button></div><p class="hint">保存后下次启动生效；运行中请在运行页点击应用并重启。</p>
+        </section>
+      </div>
       <div id="updates-panel" hidden>
         <section aria-labelledby="startup-title">
           <h2 id="startup-title"><svg class="icon" aria-hidden="true"><use href="#icon-settings"/></svg>启动与窗口</h2>
+          <label for="profile-mode">运行方式</label><select id="profile-mode"><option value="generated">节点与 TUN（推荐）</option><option value="externalConfig">原始 sing-box 配置</option></select><p class="hint">切换前需要停止连接。原始配置的网络行为由配置文件决定。</p>
           <label><input id="login-startup" type="checkbox" disabled aria-describedby="login-status" /> 登录后自动启动应用</label>
           <p id="login-status" role="status">正在读取系统登录项…</p>
           <label><input id="restore-core" type="checkbox" disabled aria-describedby="restore-hint" /> 应用启动时恢复核心运行状态</label>
@@ -89,6 +109,7 @@
         </section>
       </div>
       <dialog id="dirty-dialog" aria-labelledby="dirty-title"><h2 id="dirty-title">下载网络设置尚未保存</h2><p>请选择保存、放弃本次修改或取消退出。</p><p id="dirty-error" role="alert" hidden></p><div class="actions"><button id="dirty-save" type="button">保存并继续</button><button id="dirty-discard" type="button">放弃并继续</button><button id="dirty-cancel" type="button">取消</button></div></dialog>
+      <dialog id="profile-dirty-dialog" aria-labelledby="profile-dirty-title"><h2 id="profile-dirty-title">节点导入或分流修改尚未保存</h2><p>有未处理的节点输入时，请返回预览并导入；也可以放弃本次修改。</p><div class="actions"><button id="profile-dirty-save" type="button">保存分流并继续</button><button id="profile-dirty-discard" type="button">放弃并继续</button><button id="profile-dirty-cancel" type="button">返回处理</button></div></dialog>
       <footer><span id="version">Sing Shell</span><span>由 sing-box 处理网络连接</span></footer>
     </main>
   </body>

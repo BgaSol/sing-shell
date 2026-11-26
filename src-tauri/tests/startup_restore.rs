@@ -143,7 +143,7 @@ fn migration_preserves_backup_and_independent_writes_preserve_network_draft_revi
         let store = Arc::new(SettingsStore::open(data.clone()).unwrap());
         assert!(store.error.is_none());
         let baseline = store.snapshot();
-        assert_eq!(baseline.schema_version, 3);
+        assert_eq!(baseline.schema_version, 4);
         assert!(!baseline.startup.resume_core);
         store.restore_preference(true).unwrap();
         store.resume(true).unwrap();
@@ -169,7 +169,7 @@ fn failed_intent_save_still_stops_real_process() {
     let d = Directory::new();
     let c = d.configured(serde_json::json!({}));
     c.start().unwrap();
-    fs::create_dir(c.store.root.join("settings.json.tmp")).unwrap();
+    fs::create_dir(c.store.root.join("settings.private-tmp")).unwrap();
     assert!(c.stop().unwrap_err().contains("下次启动仍可能恢复"));
     assert!(c.runtime.snapshot().pid.is_none());
 }

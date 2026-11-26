@@ -1,0 +1,54 @@
+{
+  "repository": "SagerNet/sing-geosite",
+  "commit": "8b8788649349cf73fcd12fc81a5cae580e60360c",
+  "rules": [
+    {
+      "id": "github",
+      "file": "geosite-github.srs",
+      "sha256": "ed1f4ab72e375af86630d9797bcc533ac0026435da8649a888fd2eaf54d58886",
+      "size": 816
+    },
+    {
+      "id": "google",
+      "file": "geosite-google.srs",
+      "sha256": "67de78f83e73f406b7afa9c043797954d0e3c00b906a05d86b406a35f38a72d7",
+      "size": 7817
+    },
+    {
+      "id": "youtube",
+      "file": "geosite-youtube.srs",
+      "sha256": "f83d78439f04b59796f51e16183be70b4e3af1bc8e38991791d90ac8940d0dfd",
+      "size": 1272
+    },
+    {
+      "id": "telegram",
+      "file": "geosite-telegram.srs",
+      "sha256": "df9790ad68a8e9f9f586ce3658e0b68c1f06486af110f777988ff438d72f8001",
+      "size": 262
+    },
+    {
+      "id": "microsoft",
+      "file": "geosite-microsoft.srs",
+      "sha256": "feba59479cab227978615709697a7bac7900d4b074ad82a57a1d0d0642ece541",
+      "size": 7303
+    },
+    {
+      "id": "apple",
+      "file": "geosite-apple.srs",
+      "sha256": "cbf248a8e4bcf7969d1ebc463ae004f920ee64d939406711a2ce2752a9ca0d79",
+      "size": 16228
+    },
+    {
+      "id": "openai",
+      "file": "geosite-openai.srs",
+      "sha256": "4a9a90192a42a577d0156f16a2e43973382010699ec2ce9b4e1919bdba988fd5",
+      "size": 472
+    },
+    {
+      "id": "cn",
+      "file": "geosite-cn.srs",
+      "sha256": "8a413ef2a1e3eef6a59197c9bc5c4646cc224d8c833d877ebf8993a131b2a7d1",
+      "size": 60367
+    }
+  ]
+}

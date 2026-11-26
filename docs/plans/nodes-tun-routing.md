@@ -29,7 +29,7 @@
 | [core/mod.rs](../../src-tauri/src/core/mod.rs) | 一个服务管理下载采用、配置检查、启停、版本回退与恢复意图 | 保留二进制维护；把连接准备、启动、重启、恢复和收尾集中到 SessionService，不能再向原大类追加节点/TUN 分支 |
 | `compatible/adopt_owned/rollback` | 均直接读取 `config_path`；采用时核对配置摘要；回退复用该文件 | 全部改为针对固定的运行输入生成/校验配置；上一核心可能需要重新生成兼容配置，不能复用新版本 JSON |
 | [runtime.rs](../../src-tauri/src/runtime.rs) | `StartSpec` 只有程序、配置、版本；工作目录是配置父目录；存活 2 秒即报告运行 | 保留普通进程监督、检查超时和日志回收；TUN 成功增加真实网络状态验证，分开进程存活与网络可用性 |
-| [platform.rs](../../src-tauri/src/platform.rs) | Windows Job Object；Unix 进程组；停止直接 TerminateJobObject / SIGKILL | 增加有界优雅终止与强杀后清理；系统授权、网络观察和资源恢复集中在平台目录 |
+| [platform/](../../src-tauri/src/platform/) | Windows Job Object；Unix 进程组；停止直接 TerminateJobObject / SIGKILL | 增加有界优雅终止与强杀后清理；系统授权、网络观察和资源恢复集中在平台目录 |
 | [lifecycle.rs](../../src-tauri/src/lifecycle.rs) 的 `finish` | 关闭接纳、等任务、验应用包、直接 `runtime.stop()`、交给安装器 | 改为统一会话收尾；所有 TUN 和授权进程必须在安装器可能终止应用前结束 |
 | [app.rs](../../src-tauri/src/app.rs) | Admission 管理真实操作票据；后台每 60 秒维护/恢复，独立于前端 | 沿用票据、取消和唤醒；引入会话操作与规则准备的明确冲突关系，不让定时循环承担守护重连 |
 | [desktop.rs](../../src-tauri/src/desktop.rs)、[main.ts](../../src/main.ts) | 托盘和页面分别由 PID/核心快照推导状态；前端每 700ms 拉完整 settings/logs | 共享后端会话投影；运行轮询不携带节点密码；新页面不能被轮询覆盖未提交表单 |

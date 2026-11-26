@@ -13,7 +13,7 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 - `core/managed.rs` 的 ManagedCore 拥有候选、下载准备、核心维护周期和缓存，不自行改当前选择或运行代理。
 - `core/package.rs` 核对/解包核心文件和受管路径，提供可取消的散列与清理，不读取当前配置或决定来源。
 - `runtime.rs` 拥有临时校验进程、运行 Child、日志 reader、启动观察和真实退出结果；使用固定 StartSpec，不保存用户设置。supervisor 独占运行 Child，启动调用等待其有界结果。
-- `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform.rs` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
+- `settings.rs` 是设置的唯一串行写入者，分别校对核心与偏好修订；`platform/` 适配 Windows Job / Unix 进程组，`logs.rs` 保存有界内存日志。
 - `updates/service.rs` 只负责应用检查、下载和准备，仅持有 Logs，不拥有核心运行服务；`application.rs` 调用 Tauri 官方 updater。`release.rs/network.rs` 复用两个具体发行适配与传输，不提供通用更新框架。
 - `lifecycle.rs` 封闭接纳、取消维护、等待所有者、停止核心，再处理退出或应用安装；不采用核心版本。
 
