@@ -147,6 +147,14 @@ impl Worker {
         }
         result
     }
+    pub(super) fn finish(&mut self) -> Result<(), String> {
+        self.cancel.store(true, Ordering::Release);
+        // A caller may time out, but the resource owner cannot abandon its start task.
+        while self.start.as_ref().is_some_and(|t| !t.is_finished()) {
+            thread::sleep(Duration::from_millis(25));
+        }
+        self.stop()
+    }
     fn stop_inner(&mut self) -> Result<(), String> {
         self.cancel.store(true, Ordering::Release);
         let deadline = Instant::now() + Duration::from_secs(30);

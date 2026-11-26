@@ -58,6 +58,9 @@ jobs:
       - run: npm run scripts:test
       - run: npm run web:build
       - run: npm run test
+      - name: Authenticate launchd socket activation with production Rust verifier
+        if: runner.os == 'macOS'
+        run: cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --lib launchd_socket_activation_authenticates_production_peer_verifier -- --ignored --nocapture
       - if: runner.os == 'Linux'
         run: npm run build -- --no-bundle -- --locked
       - if: runner.os == 'Windows'

@@ -30,7 +30,7 @@ pub fn bundle(executable: &Path, installed: bool) -> Result<Bundle, String> {
             || std::fs::canonicalize(&binary).map_err(|e| e.to_string())?
                 != std::fs::canonicalize(executable).map_err(|e| e.to_string())?
         {
-            return Err("当前程序不是完整的 Sing Shell.app，无法修改登录项".into());
+            return Err("当前程序不是完整的 Sing Shell.app，无法登记系统服务".into());
         }
         let icon = main
             .objectForInfoDictionaryKey(&NSString::from_str("CFBundleIconFile"))

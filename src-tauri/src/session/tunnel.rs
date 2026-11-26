@@ -85,6 +85,9 @@ impl Tunnel {
             let _ = client.take().unwrap().thread.join();
         }
         if let Some(client) = client.as_ref() {
+            if client.disconnect.load(Ordering::Acquire) {
+                return Err("上一授权会话仍在结束，请重试停止并等待收尾".into());
+            }
             self.state.lock().unwrap().phase = Phase::Preparing;
             client.tx.send(request).map_err(|_| "授权进程已断开")?;
         } else {
@@ -204,12 +207,6 @@ impl Tunnel {
         let deadline = Instant::now() + Duration::from_secs(180);
         loop {
             let snapshot = self.snapshot();
-            if snapshot.phase == Phase::Running && snapshot.network.ready() {
-                return Ok(());
-            }
-            if matches!(snapshot.phase.as_str(), "failed" | "cleanupRequired") {
-                return Err(snapshot.error.unwrap_or("TUN 启动失败".into()));
-            }
             if cancel.load(Ordering::Acquire) {
                 if let Some(client) = self.client.lock().unwrap().as_ref() {
                     client.cancel.store(true, Ordering::Release);
@@ -217,6 +214,12 @@ impl Tunnel {
                 }
                 self.wait_closed(Duration::from_secs(45))?;
                 return Err("TUN 启动已取消".into());
+            }
+            if snapshot.phase == Phase::Running && snapshot.network.ready() {
+                return Ok(());
+            }
+            if matches!(snapshot.phase.as_str(), "failed" | "cleanupRequired") {
+                return Err(snapshot.error.unwrap_or("TUN 启动失败".into()));
             }
             if Instant::now() >= deadline {
                 self.stop()?;
@@ -502,7 +505,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                     return Ok(());
                 }
             };
-            let cleaned = worker.stop();
+            let cleaned = worker.finish();
             cleaned?;
             result
         })

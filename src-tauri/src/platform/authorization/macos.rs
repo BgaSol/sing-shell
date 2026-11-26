@@ -26,9 +26,32 @@ pub fn already_allowed() -> bool {
         status == 1
     })
 }
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum ServiceState {
+    NotRegistered,
+    Enabled,
+    RequiresApproval,
+    NotFound,
+}
+fn service_state(value: usize) -> Result<ServiceState, String> {
+    match value {
+        0 => Ok(ServiceState::NotRegistered),
+        1 => Ok(ServiceState::Enabled),
+        2 => Ok(ServiceState::RequiresApproval),
+        3 => Ok(ServiceState::NotFound),
+        _ => Err(format!("macOS 返回未知网络授权状态：{value}")),
+    }
+}
 pub fn ensure_registered() -> Result<(), String> {
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
     crate::platform::macos_bundle::bundle(&executable, true)?;
+    let real = std::fs::canonicalize(&executable).map_err(|e| e.to_string())?;
+    let user_apps = std::env::var_os("HOME").map(|p| PathBuf::from(p).join("Applications"));
+    if !real.starts_with("/Applications") && !user_apps.is_some_and(|p| real.starts_with(p)) {
+        return Err(
+            "请将完整的 Sing Shell.app 安装到 Applications（应用程序）后再请求网络授权".into(),
+        );
+    }
     let bundle = executable
         .parent()
         .and_then(std::path::Path::parent)
@@ -47,10 +70,10 @@ pub fn ensure_registered() -> Result<(), String> {
         let service: Retained<AnyObject> =
             unsafe { msg_send![class,daemonServiceWithPlistName:&*name] };
         let status: usize = unsafe { msg_send![&*service, status] };
-        if status == 1 {
+        if service_state(status)? == ServiceState::Enabled {
             return Ok(());
         }
-        if status == 2 {
+        if service_state(status)? == ServiceState::RequiresApproval {
             return Err(
                 "请在系统设置 → 通用 → 登录项与扩展中允许 Sing Shell 网络 helper，再重试连接"
                     .into(),
@@ -59,13 +82,13 @@ pub fn ensure_registered() -> Result<(), String> {
         let mut error: *mut NSError = std::ptr::null_mut();
         let ok: bool = unsafe { msg_send![&*service,registerAndReturnError:&mut error] };
         let status: usize = unsafe { msg_send![&*service, status] };
-        if status == 2 {
+        if service_state(status)? == ServiceState::RequiresApproval {
             return Err(
                 "请在系统设置 → 通用 → 登录项与扩展中允许 Sing Shell 网络 helper，再重试连接"
                     .into(),
             );
         }
-        if ok && status == 1 {
+        if ok && service_state(status)? == ServiceState::Enabled {
             Ok(())
         } else {
             let reason = unsafe { error.as_ref() }
@@ -267,6 +290,80 @@ pub fn verify(stream: &tokio::net::UnixStream, pid: u32, root: bool) -> Result<(
 mod tests {
     use super::*;
     use std::os::fd::FromRawFd;
+    #[test]
+    #[ignore = "launchd integration runs on a disposable native macOS runner"]
+    fn launchd_socket_activation_authenticates_production_peer_verifier() {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        if std::env::var_os("SING_SHELL_TEST_LAUNCHD").is_some() {
+            runtime.block_on(async {
+                let mut channel = super::super::native::daemon().await.unwrap();
+                use tokio::io::AsyncWriteExt;
+                channel.write_all(b"authenticated").await.unwrap();
+            });
+            return;
+        }
+        let directory = std::env::temp_dir().join(format!(
+            "ss-launchd-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let endpoint = directory.join("control.sock");
+        let label = format!("com.bgasol.singshell.test.{}", std::process::id());
+        let domain = format!("gui/{}", unsafe { libc::getuid() });
+        let executable = std::env::current_exe().unwrap();
+        let xml = |s: &str| {
+            s.replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
+        };
+        let plist = directory.join("test.plist");
+        std::fs::write(&plist, format!(r#"<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>{label}</string><key>ProgramArguments</key><array><string>{}</string><string>--ignored</string><string>--exact</string><string>platform::authorization::macos::tests::launchd_socket_activation_authenticates_production_peer_verifier</string><string>--nocapture</string></array><key>EnvironmentVariables</key><dict><key>SING_SHELL_TEST_LAUNCHD</key><string>1</string></dict><key>Sockets</key><dict><key>Control</key><dict><key>SockPathName</key><string>{}</string><key>SockType</key><string>stream</string></dict></dict></dict></plist>"#, xml(executable.to_str().unwrap()), xml(endpoint.to_str().unwrap()))).unwrap();
+        let status = std::process::Command::new("/bin/launchctl")
+            .args(["bootstrap", &domain])
+            .arg(&plist)
+            .status()
+            .unwrap();
+        assert!(status.success(), "launchd test job must bootstrap");
+        struct Cleanup(String, PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = std::process::Command::new("/bin/launchctl")
+                    .args(["bootout", &self.0])
+                    .status();
+                let _ = std::fs::remove_dir_all(&self.1);
+            }
+        }
+        let _cleanup = Cleanup(format!("{domain}/{label}"), directory);
+        runtime.block_on(async {
+            let mut stream = tokio::net::UnixStream::connect(&endpoint).await.unwrap();
+            super::super::handshake::bounded(
+                &std::sync::atomic::AtomicBool::new(false),
+                super::super::handshake::ACTIVATION,
+                super::super::handshake::client(&mut stream, |stream| {
+                    let peer = token(stream)?;
+                    assert_ne!(peer[5], 1, "authenticate helper, not launchd");
+                    assert_ne!(peer[5], std::process::id());
+                    verify(stream, peer[5], false)
+                }),
+            )
+            .await
+            .unwrap();
+            use tokio::io::AsyncReadExt;
+            let mut message = [0; 13];
+            tokio::time::timeout(
+                std::time::Duration::from_secs(5),
+                stream.read_exact(&mut message),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            assert_eq!(&message, b"authenticated");
+        });
+    }
     #[test]
     fn inherited_listener_authenticates_accepting_process_after_ready() {
         let runtime = tokio::runtime::Builder::new_current_thread()
