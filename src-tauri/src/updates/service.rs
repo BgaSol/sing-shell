@@ -166,7 +166,7 @@ impl UpdateService {
     }
     pub fn tick(self: &Arc<Self>) {
         if self.snapshot().initialized
-            && self.store.error.is_none()
+            && self.store.error().is_none()
             && self.store.snapshot().update_preferences.automatic
             && self.snapshot().next_check_at <= now()
             && !self.gate.closing()

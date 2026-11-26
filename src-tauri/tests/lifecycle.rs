@@ -214,24 +214,18 @@ fn a_second_instance_cannot_manage_the_same_data_directory() {
 }
 
 #[test]
-fn legacy_settings_migrate_without_claiming_the_external_engine() {
+fn legacy_settings_are_preserved_and_never_started_implicitly() {
     let directory = Directory::new();
-    let config = directory.config(serde_json::json!({}));
-    let legacy = serde_json::json!({"corePath":fixture(),"configPath":config});
-    fs::write(directory.0.join("settings.json"), legacy.to_string()).unwrap();
+    let original = br#"{"corePath":"external.exe","configPath":"private.json"}"#;
+    fs::write(directory.0.join("settings.json"), original).unwrap();
     let core = Core::open(directory.0.clone()).unwrap();
-    assert!(matches!(
-        core.store.snapshot().core_source,
-        sing_shell::settings::CoreSource::External { .. }
-    ));
-    let backup: serde_json::Value =
-        serde_json::from_slice(&fs::read(directory.0.join("settings.v0.backup.json")).unwrap())
-            .unwrap();
-    assert_eq!(backup, legacy);
-    assert!(core.store.snapshot().update_preferences.automatic);
-    assert_eq!(core.snapshot().unwrap().status, "stopped");
+    assert!(core.store.error().is_some());
+    assert!(core.runtime.snapshot().pid.is_none());
+    assert_eq!(
+        fs::read(directory.0.join("settings.json")).unwrap(),
+        original
+    );
 }
-
 #[test]
 fn slow_validation_can_be_cancelled_without_blocking_snapshots_or_preferences() {
     use std::sync::{
@@ -304,7 +298,7 @@ fn unknown_settings_schema_is_preserved() {
     let original = r#"{"schemaVersion":99,"important":"preserve"}"#;
     fs::write(directory.0.join("settings.json"), original).unwrap();
     let core = Core::open(directory.0.clone()).unwrap();
-    assert!(core.store.error.is_some());
+    assert!(core.store.error().is_some());
     assert!(core.store.core(0, |_| Ok(())).is_err());
     assert_eq!(
         fs::read_to_string(directory.0.join("settings.json")).unwrap(),

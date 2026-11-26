@@ -37,7 +37,7 @@ fn deletion_cannot_race_a_start_or_an_authorized_connection() {
         .unwrap();
     service.commit(preview.ticket, 0).unwrap();
     let id = store.snapshot().profile.nodes[0].id.clone();
-    let revision = store.snapshot().profile_revision;
+    let revision = store.snapshot().nodes_revision;
     let starting = gate.begin(sing_shell::app::Kind::Runtime).unwrap();
     assert!(service.delete(id.clone(), revision).is_err());
     drop(starting);
@@ -54,7 +54,7 @@ fn deletion_cannot_race_a_start_or_an_authorized_connection() {
 #[ignore = "requires official core; measures generated routing through two controlled encrypted exits without changing system networking"]
 fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     use sing_shell::{
-        profile::routing::{Action, Rule, SiteRule},
+        profile::routing::{Action, Domain, Match, Policy},
         runtime::{RuntimeService, StartSpec},
     };
     use std::{
@@ -76,6 +76,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     let proxy_port = port();
     let direct_port = port();
     let mixed_port = port();
+    let controller_port = port();
     let stopped = Arc::new(AtomicBool::new(false));
     let mut echoes = Vec::new();
     let mut echo_ports = Vec::new();
@@ -137,52 +138,66 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     };
     let mut profile = Profile::default();
     profile.nodes.push(Node {
+        tags: vec![],
         id: "n".into(),
         name: "test".into(),
         source: "fixture".into(),
         spec: spec(proxy_port),
     });
     profile.selected_node = Some("n".into());
-    profile.routing.custom_rules = vec![
-        Rule::Domain {
-            value: "example.test".into(),
-            include_subdomains: true,
-            action: Action::Direct,
+    let domain = |id: &str, value: &str, suffix: bool, exit| Policy {
+        id: id.into(),
+        name: id.into(),
+        enabled: true,
+        exit,
+        r#match: Match::Custom {
+            domains: vec![Domain {
+                value: value.into(),
+                include_subdomains: suffix,
+            }],
+            ip_cidrs: vec![],
         },
-        Rule::Domain {
-            value: "www.example.test".into(),
-            include_subdomains: false,
-            action: Action::Proxy,
+    };
+    let ip = |id: &str, value: &str, exit| Policy {
+        id: id.into(),
+        name: id.into(),
+        enabled: true,
+        exit,
+        r#match: Match::Custom {
+            domains: vec![],
+            ip_cidrs: vec![value.into()],
         },
-        Rule::Domain {
-            value: "deep.example.test".into(),
-            include_subdomains: true,
-            action: Action::Proxy,
-        },
-        Rule::Domain {
-            value: "github.com".into(),
-            include_subdomains: false,
-            action: Action::Proxy,
-        },
-        Rule::Ip {
-            value: "198.18.20.0/24".into(),
-            action: Action::Direct,
-        },
-        Rule::Ip {
-            value: "198.18.20.1/32".into(),
-            action: Action::Proxy,
-        },
+    };
+    profile.routing.policies = vec![
+        domain("www", "www.example.test", false, Action::Proxy),
+        domain("deep", "deep.example.test", true, Action::Proxy),
+        domain("github-custom", "github.com", false, Action::Proxy),
+        domain("example", "example.test", true, Action::Direct),
+        ip("specific", "198.18.20.1/32", Action::Proxy),
+        ip("range", "198.18.20.0/24", Action::Direct),
     ];
-    profile.routing.site_rules = vec![
-        SiteRule {
-            site: "github".into(),
-            action: Action::Direct,
-        },
-        SiteRule {
-            site: "google".into(),
-            action: Action::Proxy,
-        },
-    ];
+    if let Match::Custom { domains, ip_cidrs } = &mut profile.routing.policies[5].r#match {
+        domains.push(Domain {
+            value: "or.example.net".into(),
+            include_subdomains: false,
+        });
+        ip_cidrs.push("2001:db8::/32".into());
+    }
+    for id in ["github", "google"] {
+        profile.routing.policies.push(Policy {
+            id: id.into(),
+            name: id.into(),
+            enabled: true,
+            exit: if id == "github" {
+                Action::Direct
+            } else {
+                Action::Proxy
+            },
+            r#match: Match::Source {
+                source_id: id.into(),
+            },
+        });
+    }
     let generated = profile::config::build(&profile, &root).unwrap();
     let mut config: serde_json::Value =
         serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
@@ -192,9 +207,11 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     let mut direct = spec(direct_port).outbound();
     direct["tag"] = serde_json::json!("direct");
     config["outbounds"][1] = direct;
-    let hosts = serde_json::json!({"example.test":["198.18.20.1"],"www.example.test":["198.18.20.1"],"a.example.test":["198.18.20.1"],"a.deep.example.test":["198.18.20.2"],"github.com":["198.18.77.1"],"api.github.com":["198.18.77.1"],"google.com":["198.18.77.1"],"unmatched.test":["198.18.77.1"]});
+    let hosts = serde_json::json!({"example.test":["198.18.20.1"],"www.example.test":["198.18.20.1"],"a.example.test":["198.18.20.1"],"a.deep.example.test":["198.18.20.2"],"github.com":["198.18.77.1"],"api.github.com":["198.18.77.1"],"google.com":["198.18.77.1"],"unmatched.test":["198.18.77.1"],"or.example.net":["198.18.77.1"]});
     config["dns"]["servers"] = serde_json::json!([{"type":"hosts","tag":"local","predefined":hosts},{"type":"hosts","tag":"proxy-dns","predefined":hosts}]);
+    config["experimental"] = serde_json::json!({"clash_api":{"external_controller":format!("127.0.0.1:{controller_port}"),"secret":"isolated-test-controller"}});
     run(&client, "client.json", &config);
+    let held = std::sync::Mutex::new(Vec::new());
     let request = |host: &str, expected: u8| {
         let mut stream = TcpStream::connect(("127.0.0.1", mixed_port)).unwrap();
         stream
@@ -205,9 +222,17 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
         stream.read_exact(&mut greeting).unwrap();
         assert_eq!(greeting, [5, 0]);
         let mut address = vec![5, 1, 0];
-        if let Ok(ip) = host.parse::<std::net::Ipv4Addr>() {
-            address.push(1);
-            address.extend(ip.octets());
+        if let Ok(ip) = host.parse::<std::net::IpAddr>() {
+            match ip {
+                std::net::IpAddr::V4(ip) => {
+                    address.push(1);
+                    address.extend(ip.octets());
+                }
+                std::net::IpAddr::V6(ip) => {
+                    address.push(4);
+                    address.extend(ip.octets());
+                }
+            }
         } else {
             address.extend([3, host.len() as u8]);
             address.extend(host.as_bytes());
@@ -239,11 +264,14 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
             )
         });
         assert_eq!(marker[0], expected, "wrong exit for {host}");
+        held.lock().unwrap().push(stream);
     };
     for (host, expected) in [
         ("127.0.0.1", b'D'),
         ("198.18.77.1", b'P'),
         ("198.18.20.2", b'D'),
+        ("2001:db8::5", b'D'),
+        ("or.example.net", b'D'),
         ("198.18.20.1", b'P'),
         ("example.test", b'D'),
         ("a.example.test", b'D'),
@@ -256,11 +284,55 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     ] {
         request(host, expected);
     }
+    let api = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    api.block_on(async {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let http = reqwest::Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(3))
+            .build()
+            .unwrap();
+        let url = format!("http://127.0.0.1:{controller_port}/connections");
+        assert_eq!(http.get(&url).send().await.unwrap().status(), 401);
+        let data: serde_json::Value = http
+            .get(&url)
+            .bearer_auth("isolated-test-controller")
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        let connections = data["connections"].as_array().unwrap();
+        assert!(connections.iter().any(|c| c["rule"]
+            .as_str()
+            .is_some_and(|r| r.starts_with("rule_set=policy-range => route("))));
+        assert!(connections.iter().any(|c| c["rule"] == "final"));
+        assert!(connections
+            .iter()
+            .any(|c| c["download"].as_u64().unwrap_or(0) > 0));
+    });
     client.stop().unwrap();
     config["route"]["final"] = serde_json::json!("direct");
     run(&client, "client.json", &config);
     request("unmatched.test", b'D');
     client.stop().unwrap();
+    profile.routing.policies.swap(0, 3);
+    let reversed = profile::config::compile(
+        &profile,
+        &sing_shell::rulesets::selected(&root, &profile.routing).unwrap(),
+        &root,
+    )
+    .unwrap();
+    config["route"] = reversed["route"].clone();
+    run(&client, "client.json", &config);
+    request("www.example.test", b'D');
+    request("unmatched.test", b'P');
+    client.stop().unwrap();
+    held.lock().unwrap().clear();
     server.stop().unwrap();
     stopped.store(true, Ordering::Release);
     for echo in echoes {
@@ -269,29 +341,26 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     fs::remove_dir_all(root).unwrap();
 }
 #[test]
-fn profile_revision_is_independent_and_migration_preserves_original_bytes() {
+fn revisions_are_independent_and_old_settings_require_explicit_backup_reset() {
     let root = directory();
-    let original=serde_json::json!({"schemaVersion":3,"coreRevision":0,"preferencesRevision":0,"coreSource":{"mode":"managed"},"managed":{"active":null,"previous":null,"trial":null,"blocked":null},"configPath":"C:/old/config.json","pendingConfigPath":null,"updatePreferences":{"automatic":false,"automaticCore":false,"network":{"revision":0,"fallbackEnabled":false,"disabledBuiltins":[],"customMirrors":[]}},"startup":{"restoreCoreOnLaunch":true,"resumeCore":true},"desktop":{"backgroundNoticeShown":true}}).to_string();
-    fs::write(root.join("settings.json"), &original).unwrap();
-    {
-        let store = sing_shell::settings::SettingsStore::open(root.clone()).unwrap();
-        assert!(store.error.is_none(), "{:?}", store.error);
-        assert_eq!(store.snapshot().schema_version, 4);
-        assert!(store.snapshot().profile.mode == profile::Mode::ExternalConfig);
-        assert_eq!(
-            fs::read(root.join("settings.v3.backup.json")).unwrap(),
-            original.as_bytes()
-        );
-        store
-            .profile(0, |p| {
-                p.routing.default_action = profile::routing::Action::Direct;
-                Ok(())
-            })
-            .unwrap();
-        assert_eq!(store.snapshot().core_revision, 0);
-        assert_eq!(store.snapshot().preferences_revision, 0);
-        assert!(store.profile(0, |_| Ok(())).is_err());
-    }
+    let original = br#"{"schemaVersion":4,"private":"preserve exact bytes"}"#;
+    fs::write(root.join("settings.json"), original).unwrap();
+    let store = sing_shell::settings::SettingsStore::open(root.clone()).unwrap();
+    assert!(store.error().is_some());
+    assert!(store.profile(0, |_| Ok(())).is_err());
+    assert_eq!(fs::read(root.join("settings.json")).unwrap(), original);
+    let backup = store.backup_reset().unwrap();
+    assert_eq!(fs::read(backup).unwrap(), original);
+    assert_eq!(store.snapshot().schema_version, 5);
+    store.profile(0, |_| Ok(())).unwrap();
+    let mut routing = store.snapshot().profile.routing;
+    routing.default_exit = profile::routing::Action::Direct;
+    store.routing(0, routing).unwrap();
+    assert_eq!(store.snapshot().nodes_revision, 1);
+    assert_eq!(store.snapshot().routing_revision, 1);
+    assert_eq!(store.snapshot().preferences_revision, 0);
+    assert!(store.routing(0, Default::default()).is_err());
+    drop(store);
     fs::remove_dir_all(root).unwrap();
 }
 #[test]
@@ -324,17 +393,23 @@ fn official_core_checks_every_supported_protocol_and_site_assets() {
         let (name, spec) = profile::import::link(&sample).unwrap();
         let mut profile = Profile::default();
         profile.nodes = vec![Node {
+            tags: vec![],
             id: "n".into(),
             name,
             source: "test".into(),
             spec,
         }];
         profile.selected_node = Some("n".into());
-        profile.routing.site_rules = profile::routing::SITE_IDS
+        profile.routing.policies = sing_shell::rulesets::CATALOG
             .iter()
-            .map(|site| profile::routing::SiteRule {
-                site: (*site).into(),
-                action: profile::routing::Action::Direct,
+            .map(|source| profile::routing::Policy {
+                id: source.id.into(),
+                name: source.name.into(),
+                enabled: true,
+                exit: profile::routing::Action::Direct,
+                r#match: profile::routing::Match::Source {
+                    source_id: source.id.into(),
+                },
             })
             .collect();
         let config = profile::config::build(&profile, &root).unwrap();
@@ -375,8 +450,7 @@ fn imports_are_atomic_replay_safe_and_public_settings_hide_credentials() {
     service.commit(second.ticket, 1).unwrap();
     let second = service.snapshot();
     assert_ne!(id, second.profile.nodes[1].id);
-    assert!(service.select("missing".into(), 2).is_err());
-    assert_eq!(store.snapshot().profile_revision, 2);
+    assert_eq!(store.snapshot().nodes_revision, 2);
     assert!(!store
         .snapshot()
         .public()
@@ -385,14 +459,21 @@ fn imports_are_atomic_replay_safe_and_public_settings_hide_credentials() {
     assert!(!serde_json::to_string(&second)
         .unwrap()
         .contains("another-password"));
-    service.select(id, 2).unwrap();
+    store
+        .profile(2, |p| {
+            p.selected_node = Some(id);
+            Ok(())
+        })
+        .unwrap();
     store
         .confirm_connection(
             0,
             Some(sing_shell::session::tunnel::Connection {
                 node: store.snapshot().profile.selected().unwrap().clone(),
                 routing: Default::default(),
-                rule_commit: sing_shell::rulesets::bundled_commit(),
+                versions: sing_shell::rulesets::selected(&root, &store.snapshot().profile.routing)
+                    .unwrap(),
+                core_version: "1.14.4".into(),
             }),
         )
         .unwrap();
@@ -432,8 +513,11 @@ fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
     let snapshot = store.snapshot();
     assert_eq!(snapshot.profile.nodes.len(), 1);
     assert!(snapshot.profile.selected_node.is_none());
-    service
-        .select(snapshot.profile.nodes[0].id.clone(), 1)
+    store
+        .profile(1, |p| {
+            p.selected_node = Some(snapshot.profile.nodes[0].id.clone());
+            Ok(())
+        })
         .unwrap();
     let spec = snapshot.profile.nodes[0].spec.clone();
     for equivalent in [
@@ -443,7 +527,7 @@ fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
         let duplicate = service.preview(&equivalent).unwrap();
         assert!(duplicate.items[0].duplicate);
         service
-            .commit(duplicate.ticket, store.snapshot().profile_revision)
+            .commit(duplicate.ticket, store.snapshot().nodes_revision)
             .unwrap();
         assert_eq!(store.snapshot().profile.nodes.len(), 1);
     }
@@ -453,7 +537,7 @@ fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
     drop(service);
     drop(store);
     let reopened = sing_shell::settings::SettingsStore::open(root.clone()).unwrap();
-    assert!(reopened.error.is_none());
+    assert!(reopened.error().is_none());
     let selected = reopened.snapshot();
     assert_eq!(selected.profile.selected().unwrap().name, "zzz");
     assert!(selected.profile.selected().unwrap().spec == spec);
@@ -493,7 +577,7 @@ fn new_previews_and_cancellation_invalidate_old_tickets_but_write_failures_allow
         let old = service.preview(link).unwrap();
         assert!(service.preview(&failed).is_err());
         assert!(service.commit(old.ticket, 0).is_err());
-        assert_eq!(store.snapshot().profile_revision, 0);
+        assert_eq!(store.snapshot().nodes_revision, 0);
     }
     let old = service.preview(link).unwrap();
     let current = service.preview(link).unwrap();
@@ -502,14 +586,14 @@ fn new_previews_and_cancellation_invalidate_old_tickets_but_write_failures_allow
     assert!(service.commit(current.ticket, 0).is_err());
     let current = service.preview(link).unwrap();
     assert!(service.commit(current.ticket, 1).is_err());
-    assert_eq!(store.snapshot().profile_revision, 0);
+    assert_eq!(store.snapshot().nodes_revision, 0);
     let settings = root.join("settings.json");
     // A directory at the destination makes the atomic replacement fail on every platform.
     fs::create_dir(&settings).unwrap();
     assert!(service.commit(current.ticket, 0).is_err());
     assert!(store.snapshot().profile.nodes.is_empty());
     assert!(store.snapshot().profile.selected_node.is_none());
-    assert_eq!(store.snapshot().profile_revision, 0);
+    assert_eq!(store.snapshot().nodes_revision, 0);
     fs::remove_dir(&settings).unwrap();
     service.commit(current.ticket, 0).unwrap();
     assert_eq!(store.snapshot().profile.nodes.len(), 1);

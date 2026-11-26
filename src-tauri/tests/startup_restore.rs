@@ -8,10 +8,7 @@ use sing_shell::{
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc,
-    },
+    sync::atomic::{AtomicU64, Ordering},
     thread,
     time::{Duration, Instant},
 };
@@ -133,36 +130,20 @@ fn failed_restore_is_consumed_and_does_not_retry_changed_configuration() {
     assert!(c.runtime.snapshot().pid.is_none());
 }
 #[test]
-fn migration_preserves_backup_and_independent_writes_preserve_network_draft_revision() {
+fn independent_writes_preserve_network_draft_revision() {
     let d = Directory::new();
-    let data = d.0.join("data");
-    fs::create_dir(&data).unwrap();
-    let old = serde_json::json!({"schemaVersion":2,"coreRevision":8,"preferencesRevision":5,"coreSource":{"mode":"external","path":"old core"},"managed":{"active":null,"previous":null,"trial":null,"blocked":null},"configPath":"old config","pendingConfigPath":null,"updatePreferences":{"automatic":false,"automaticCore":false,"network":{"revision":0,"fallbackEnabled":true,"disabledBuiltins":[],"customMirrors":[]}}});
-    fs::write(data.join("settings.json"), old.to_string()).unwrap();
-    {
-        let store = Arc::new(SettingsStore::open(data.clone()).unwrap());
-        assert!(store.error.is_none());
-        let baseline = store.snapshot();
-        assert_eq!(baseline.schema_version, 4);
-        assert!(!baseline.startup.resume_core);
-        store.restore_preference(true).unwrap();
-        store.resume(true).unwrap();
-        store.background_notice().unwrap();
-        store.preferences(5, baseline.update_preferences).unwrap();
-        assert!(store.snapshot().startup.resume_core);
-        assert_eq!(store.snapshot().core_revision, 8);
-    }
-    let backup = fs::read(data.join("settings.v2.backup.json")).unwrap();
+    let store = SettingsStore::open(d.0.join("data")).unwrap();
+    let baseline = store.snapshot();
+    store.restore_preference(true).unwrap();
+    store.background_notice().unwrap();
+    store.profile(0, |_| Ok(())).unwrap();
+    store.routing(0, Default::default()).unwrap();
     assert_eq!(
-        serde_json::from_slice::<serde_json::Value>(&backup).unwrap(),
-        old
+        store.snapshot().preferences_revision,
+        baseline.preferences_revision
     );
-    let store = SettingsStore::open(data.clone()).unwrap();
     assert!(store.snapshot().startup.restore_core_on_launch);
-    assert_eq!(
-        fs::read(data.join("settings.v2.backup.json")).unwrap(),
-        backup
-    );
+    assert!(store.snapshot().desktop.background_notice_shown);
 }
 #[test]
 fn failed_intent_save_still_stops_real_process() {
@@ -185,7 +166,7 @@ fn migration_does_not_replace_unrecognized_legacy_fields() {
         let bytes = value.to_string();
         fs::write(d.0.join("settings.json"), &bytes).unwrap();
         let store = SettingsStore::open(d.0.clone()).unwrap();
-        assert!(store.error.is_some());
+        assert!(store.error().is_some());
         assert!(store.resume(false).is_err());
         assert_eq!(
             fs::read_to_string(d.0.join("settings.json")).unwrap(),

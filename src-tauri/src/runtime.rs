@@ -48,6 +48,7 @@ pub struct RuntimeService {
     worker: Mutex<Option<JoinHandle<()>>>,
     pending_checks: Mutex<Vec<Process>>,
     pub logs: Logs,
+    pub events: crate::activity::Events,
 }
 struct Process {
     child: Child,
@@ -129,6 +130,7 @@ impl Default for RuntimeService {
             worker: Mutex::new(None),
             pending_checks: Mutex::new(Vec::new()),
             logs: Default::default(),
+            events: Default::default(),
         }
     }
 }
@@ -151,6 +153,7 @@ impl RuntimeService {
         }
     }
     pub fn report(&self, error: String) {
+        self.events.push("operation", "failed", error.clone());
         self.logs.push("shell", error.clone());
         let mut state = self.state.lock().unwrap();
         state.error = Some(error);
@@ -185,6 +188,14 @@ impl RuntimeService {
             .ok_or("不是有效的 sing-box 版本输出")?;
         settings::stable(version)?;
         Ok(version.into())
+    }
+    pub fn supports_activity(&self, path: &Path, cancel: &AtomicBool) -> Result<bool, String> {
+        let details = self.command(path, None, "version", cancel)?;
+        Ok(details
+            .lines()
+            .filter_map(|line| line.strip_prefix("Tags:"))
+            .flat_map(|tags| tags.split(','))
+            .any(|tag| tag.trim() == "with_clash_api"))
     }
     fn command(
         &self,

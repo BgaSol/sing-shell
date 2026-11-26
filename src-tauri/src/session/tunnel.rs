@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     path::PathBuf,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc, Arc, Mutex,
     },
     thread::{self, JoinHandle},
@@ -24,29 +24,64 @@ use worker::Worker;
 pub struct Connection {
     pub node: Node,
     pub routing: Routing,
-    #[serde(default = "crate::rulesets::bundled_commit")]
-    pub rule_commit: String,
+    pub versions: Vec<crate::rulesets::Version>,
+    pub core_version: String,
 }
 impl Connection {
+    pub fn validate(&self) -> Result<(), String> {
+        self.profile().validate()?;
+        crate::profile::tun::require_version(&self.core_version)?;
+        let expected: Vec<_> = self
+            .routing
+            .policies
+            .iter()
+            .filter(|p| p.enabled)
+            .filter_map(|p| {
+                if let crate::profile::routing::Match::Source { source_id } = &p.r#match {
+                    Some(source_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        if expected.len() != self.versions.len() {
+            return Err("固定来源数量不符".into());
+        }
+        for v in &self.versions {
+            v.validate()?;
+            if !expected.contains(&&v.source_id) {
+                return Err("固定来源不符".into());
+            }
+        }
+        let unique: std::collections::BTreeSet<_> =
+            self.versions.iter().map(|v| &v.source_id).collect();
+        if unique.len() != self.versions.len() {
+            return Err("固定来源重复".into());
+        }
+        Ok(())
+    }
     pub fn profile(&self) -> Profile {
         Profile {
             mode: crate::profile::Mode::Generated,
             nodes: vec![self.node.clone()],
             selected_node: Some(self.node.id.clone()),
             routing: self.routing.clone(),
-            rule_commit: self.rule_commit.clone(),
         }
     }
     pub fn fingerprint(&self) -> String {
         crate::rulesets::digest(
-            &serde_json::to_vec(&(&self.node.spec, &self.routing, &self.rule_commit))
+            &serde_json::to_vec(&(&self.node.spec, self.routing.effective(), &self.versions))
                 .expect("connection serialization"),
         )
     }
 }
 
+struct Command {
+    request: Request,
+    reply: Option<mpsc::Sender<Snapshot>>,
+}
 struct Client {
-    tx: mpsc::Sender<Request>,
+    tx: mpsc::SyncSender<Command>,
     cancel: Arc<AtomicBool>,
     thread: JoinHandle<()>,
     disconnect: Arc<AtomicBool>,
@@ -57,6 +92,8 @@ pub struct Tunnel {
     occupation: Arc<AtomicBool>,
     state: Arc<Mutex<Snapshot>>,
     client: Mutex<Option<Client>>,
+    next: AtomicU64,
+    history: Arc<Mutex<Vec<crate::logs::Log>>>,
 }
 impl Tunnel {
     pub fn new(root: PathBuf) -> Self {
@@ -65,6 +102,8 @@ impl Tunnel {
             occupation: Arc::new(AtomicBool::new(false)),
             state: Arc::new(Mutex::new(Snapshot::default())),
             client: Mutex::new(None),
+            next: AtomicU64::new(0),
+            history: Arc::new(Mutex::new(Vec::new())),
         }
     }
     pub(crate) fn with_occupation(root: PathBuf, occupation: Arc<AtomicBool>) -> Self {
@@ -91,6 +130,13 @@ impl Tunnel {
             failure: state.failure,
             authorization_stage: state.authorization_stage,
             logs: vec![],
+            session_id: state.session_id.clone(),
+            running_node: state.running_node.clone(),
+            operation_id: state.operation_id,
+            operation: state.operation.clone(),
+            operation_error: state.operation_error.clone(),
+            activity_summary: state.activity_summary.clone(),
+            activity_page: None,
         }
     }
     fn request(&self, request: Request) -> Result<(), String> {
@@ -103,11 +149,26 @@ impl Tunnel {
             if client.disconnect.load(Ordering::Acquire) {
                 return Err("上一授权会话仍在结束，请重试停止并等待收尾".into());
             }
-            self.state.lock().unwrap().phase = Phase::Preparing;
-            client.tx.send(request).map_err(|_| "授权进程已断开")?;
+            {
+                let mut s = self.state.lock().unwrap();
+                if s.phase != Phase::Running {
+                    s.phase = Phase::Preparing;
+                }
+            }
+            client
+                .tx
+                .try_send(Command {
+                    request,
+                    reply: None,
+                })
+                .map_err(|_| "授权进程已断开")?;
         } else {
-            let (tx, rx) = mpsc::channel();
-            tx.send(request).map_err(|e| e.to_string())?;
+            let (tx, rx) = mpsc::sync_channel(8);
+            tx.try_send(Command {
+                request,
+                reply: None,
+            })
+            .map_err(|e| e.to_string())?;
             let root = self.root.clone();
             let state = self.state.clone();
             let actor_cancel = Arc::new(AtomicBool::new(false));
@@ -118,6 +179,8 @@ impl Tunnel {
                 phase: Phase::Authorizing,
                 ..Default::default()
             };
+            self.history.lock().unwrap().clear();
+            let history = self.history.clone();
             let worker = thread::spawn(move || {
                 let result = (|| {
                     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -133,23 +196,48 @@ impl Tunnel {
                         let result = async {
                             let channel = &mut connection.channel;
                             loop {
-                                let request = if actor_disconnect.load(Ordering::Acquire) {
-                                    Request::Quit
+                                let command = if actor_disconnect.load(Ordering::Acquire) {
+                                    Command {
+                                        request: Request::Quit,
+                                        reply: None,
+                                    }
                                 } else {
                                     match rx.try_recv() {
-                                        Ok(request) => request,
-                                        Err(mpsc::TryRecvError::Disconnected) => Request::Quit,
-                                        Err(mpsc::TryRecvError::Empty) => Request::Poll,
+                                        Ok(c) => c,
+                                        Err(mpsc::TryRecvError::Disconnected) => Command {
+                                            request: Request::Quit,
+                                            reply: None,
+                                        },
+                                        Err(mpsc::TryRecvError::Empty) => Command {
+                                            request: Request::Poll,
+                                            reply: None,
+                                        },
                                     }
                                 };
+                                let request = command.request;
                                 if matches!(request, Request::Start { .. })
                                     && actor_signal.load(Ordering::Acquire)
                                 {
-                                    return Err("TUN 启动已取消".into());
+                                    return Err("连接已取消".into());
                                 }
                                 let quit = matches!(request, Request::Quit);
                                 let snapshot = exchange(channel, &request).await?;
-                                *state.lock().unwrap() = snapshot;
+                                if !snapshot.logs.is_empty() {
+                                    let mut logs = history.lock().unwrap();
+                                    for l in &snapshot.logs {
+                                        if !logs.iter().any(|old| old.sequence == l.sequence) {
+                                            logs.push(l.clone());
+                                        }
+                                    }
+                                    logs.sort_by_key(|l| l.sequence);
+                                    let excess = logs.len().saturating_sub(1000);
+                                    logs.drain(..excess);
+                                }
+                                if let Some(reply) = command.reply {
+                                    let _ = reply.send(snapshot);
+                                } else {
+                                    *state.lock().unwrap() = snapshot;
+                                }
                                 if quit {
                                     confirm_closed(channel).await?;
                                     break;
@@ -204,10 +292,18 @@ impl Tunnel {
         if self.snapshot().phase == Phase::CleanupRequired {
             return Err("网络资源尚未清理，请先停止连接".into());
         }
-        input.profile().validate()?;
+        input.validate()?;
+        let operation_id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
+        {
+            let mut s = self.state.lock().unwrap();
+            s.operation = Some("queued".into());
+            s.operation_id = operation_id;
+            s.operation_error = None;
+        }
         self.request(Request::Start {
             input,
             core_version,
+            operation_id,
         })?;
         let deadline = Instant::now() + Duration::from_secs(180);
         loop {
@@ -220,8 +316,13 @@ impl Tunnel {
                 self.wait_closed(DISCONNECT_BUDGET)?;
                 return Err("TUN 启动已取消".into());
             }
-            if snapshot.phase == Phase::Running && snapshot.network.ready() {
-                return Ok(());
+            if snapshot.operation_id == operation_id && snapshot.operation.is_none() {
+                if let Some(e) = snapshot.operation_error {
+                    return Err(e);
+                }
+                if snapshot.phase == Phase::Running && snapshot.network.ready() {
+                    return Ok(());
+                }
             }
             if matches!(snapshot.phase.as_str(), "failed" | "cleanupRequired") {
                 return Err(snapshot.error.unwrap_or("TUN 启动失败".into()));
@@ -232,6 +333,54 @@ impl Tunnel {
             }
             thread::sleep(Duration::from_millis(50));
         }
+    }
+    fn query(&self, request: Request) -> Result<Snapshot, String> {
+        let (tx, rx) = mpsc::channel();
+        {
+            let guard = self.client.lock().unwrap();
+            let client = guard.as_ref().ok_or("当前没有活动会话")?;
+            if client.disconnect.load(Ordering::Acquire) {
+                return Err("会话正在结束".into());
+            }
+            client
+                .tx
+                .try_send(Command {
+                    request,
+                    reply: Some(tx),
+                })
+                .map_err(|_| "授权进程已断开")?;
+        }
+        rx.recv_timeout(Duration::from_secs(5))
+            .map_err(|_| "活动查询超时".into())
+    }
+    pub fn activity(&self, query: crate::activity::Query) -> Result<crate::activity::Page, String> {
+        query.validate()?;
+        self.query(Request::Activity { query })?
+            .activity_page
+            .ok_or("活动数据不可用".into())
+    }
+    pub fn logs(&self, after: u64, limit: usize) -> Result<Vec<crate::logs::Log>, String> {
+        if limit == 0 || limit > 100 {
+            return Err("日志分页超限".into());
+        }
+        if self
+            .client
+            .lock()
+            .unwrap()
+            .as_ref()
+            .is_none_or(|c| c.thread.is_finished())
+        {
+            return Ok(self
+                .history
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|l| l.sequence > after)
+                .take(limit)
+                .cloned()
+                .collect());
+        }
+        Ok(self.query(Request::Logs { after, limit })?.logs)
     }
     pub fn stop(&self) -> Result<(), String> {
         {
@@ -280,7 +429,13 @@ impl Tunnel {
             cancel.store(true, Ordering::Release);
         }
         self.state.lock().unwrap().phase = Phase::Stopping;
-        if tx.send(Request::Stop).is_err() {
+        if tx
+            .try_send(Command {
+                request: Request::Stop,
+                reply: None,
+            })
+            .is_err()
+        {
             self.state.lock().unwrap().phase = Phase::CleanupRequired;
             return Err("授权进程已断开，请重试清理".into());
         }
@@ -371,7 +526,7 @@ mod tests {
     fn close_timeout_preserves_owner_and_retry_joins_the_same_thread() {
         let tunnel = Tunnel::new(std::env::temp_dir());
         let (release, wait) = mpsc::channel();
-        let (tx, _rx) = mpsc::channel();
+        let (tx, _rx) = mpsc::sync_channel(8);
         *tunnel.client.lock().unwrap() = Some(Client {
             tx,
             cancel: Arc::new(AtomicBool::new(false)),
@@ -391,7 +546,8 @@ mod tests {
     fn reading_worker_status_does_not_rewrite_or_clean_resources() {
         let worker = Worker::new(std::env::temp_dir());
         worker.state.lock().unwrap().phase = Phase::Running;
-        assert_eq!(worker.snapshot().phase, Phase::Running);
+        assert_eq!(worker.snapshot().phase, Phase::Failed);
+        assert!(worker.snapshot().running_node.is_none());
         assert!(!worker.cancel.load(Ordering::Acquire));
         assert_eq!(worker.state.lock().unwrap().phase, Phase::Running);
     }
@@ -465,12 +621,24 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                     Err(_) => break Err("网络控制端已失去联系".into()),
                 };
                 let quit = matches!(request, Request::Quit);
+                let stopping = matches!(request, Request::Stop | Request::Quit);
+                let activity = if let Request::Activity { query } = &request {
+                    Some(worker.activity(query))
+                } else {
+                    None
+                };
+                let logs = if let Request::Logs { after, limit } = &request {
+                    Some(worker.runtime.logs.page(*after, *limit))
+                } else {
+                    None
+                };
                 let outcome = match request {
                     Request::Start {
                         input,
                         core_version,
-                    } => worker.start(input, core_version),
-                    Request::Poll => Ok(()),
+                        operation_id,
+                    } => worker.start(input, core_version, operation_id),
+                    Request::Poll | Request::Activity { .. } | Request::Logs { .. } => Ok(()),
                     Request::Stop | Request::Quit => worker.stop(),
                 };
                 if let Err(error) = outcome {
@@ -482,13 +650,37 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                         state.phase = Phase::Failed;
                     }
                 }
-                if let Err(error) = tokio::time::timeout(
-                    Duration::from_secs(10),
-                    write(&mut channel, &worker.snapshot()),
-                )
-                .await
-                .map_err(|_| "网络控制端未读取状态".to_string())
-                .and_then(|r| r)
+                let mut response = worker.snapshot();
+                if stopping {
+                    let mut size = 0;
+                    response.logs = worker
+                        .runtime
+                        .logs
+                        .snapshot()
+                        .into_iter()
+                        .rev()
+                        .take_while(|l| {
+                            size += l.message.len();
+                            size < 256 * 1024
+                        })
+                        .take(100)
+                        .collect();
+                    response.logs.reverse();
+                }
+                if let Some(page) = activity {
+                    match page {
+                        Ok(page) => response.activity_page = Some(page),
+                        Err(e) => response.operation_error = Some(e),
+                    }
+                }
+                if let Some(logs) = logs {
+                    response.logs = logs;
+                }
+                if let Err(error) =
+                    tokio::time::timeout(Duration::from_secs(10), write(&mut channel, &response))
+                        .await
+                        .map_err(|_| "网络控制端未读取状态".to_string())
+                        .and_then(|r| r)
                 {
                     break Err(error);
                 }
@@ -581,17 +773,87 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
     let input: Input = serde_json::from_slice(&std::fs::read(file).map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
     crate::private_files::directory(&input.control)?;
-    let tunnel = Tunnel::new(input.control.clone());
-    let cancel = AtomicBool::new(false);
-    tunnel.start(
-        Connection {
-            node: input.node,
-            routing: input.routing,
-            rule_commit: crate::rulesets::bundled_commit(),
-        },
-        input.core_version,
-        &cancel,
+    let application = Arc::new(crate::app::Application::open(
+        input.control.join("app"),
+        "0.0.0".into(),
+    )?);
+    application.session.initialize()?;
+    if !application.core.snapshot().usable {
+        application
+            .core
+            .maintain(Some(crate::core::Maintenance::Retry))?;
+        let deadline = Instant::now() + Duration::from_secs(160);
+        while !application.core.snapshot().usable {
+            let state = application.core.snapshot();
+            if state.maintenance.phase == crate::core::managed::Phase::Error {
+                return Err(state
+                    .maintenance
+                    .error
+                    .unwrap_or("fixture core preparation failed".into()));
+            }
+            if Instant::now() >= deadline {
+                return Err("fixture core preparation timed out".into());
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+    }
+    if application
+        .store
+        .snapshot()
+        .managed
+        .active
+        .as_ref()
+        .map(|r| r.version.as_str())
+        != Some(input.core_version.as_str())
+    {
+        return Err("fixture requires its pinned official core version".into());
+    }
+    fn import_node(app: &crate::app::Application, node: &Node) -> Result<String, String> {
+        let preview = app.profiles.preview(&node.spec.outbound().to_string())?;
+        app.profiles
+            .commit(preview.ticket, app.store.snapshot().nodes_revision)?;
+        app.store
+            .snapshot()
+            .profile
+            .nodes
+            .iter()
+            .find(|n| n.spec == node.spec)
+            .map(|n| n.id.clone())
+            .ok_or("fixture node import failed".into())
+    }
+    fn wait_connect(app: &Arc<crate::app::Application>, id: String) -> Result<(), String> {
+        let admission_deadline = Instant::now() + Duration::from_secs(30);
+        while app.gate.runtime_busy() {
+            if Instant::now() >= admission_deadline {
+                return Err("fixture admission timed out".into());
+            }
+            thread::sleep(Duration::from_millis(25));
+        }
+        app.session.connect(id.clone())?;
+        let deadline = Instant::now() + Duration::from_secs(180);
+        while app.gate.runtime_busy() {
+            if Instant::now() >= deadline {
+                return Err("fixture connection timed out".into());
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        let state = app.session.snapshot();
+        if state.phase != "running" || state.running_node.as_ref().map(|n| &n.id) != Some(&id) {
+            return Err(state
+                .runtime
+                .error
+                .unwrap_or("fixture connection was not confirmed".into()));
+        }
+        Ok(())
+    }
+    let id = import_node(&application, &input.node)?;
+    application.profiles.routing(
+        input.routing.clone(),
+        application.store.snapshot().routing_revision,
     )?;
+    wait_connect(&application, id)?;
+    let tunnel = &application.session.tunnel;
+    let cancel = AtomicBool::new(false);
     crate::settings::write_json(&input.control.join("started.json"), &tunnel.snapshot())?;
     let deadline = Instant::now() + Duration::from_secs(60);
     while !input.control.join("stop").exists() {
@@ -599,9 +861,42 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
             tunnel.close()?;
             return Err("fixture controller timed out".into());
         }
+        let command = input.control.join("replace.json");
+        if command.exists() {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Replace {
+                id: u64,
+                input: Connection,
+            }
+            let request: Replace =
+                serde_json::from_slice(&std::fs::read(&command).map_err(|e| e.to_string())?)
+                    .map_err(|e| e.to_string())?;
+            std::fs::remove_file(command).map_err(|e| e.to_string())?;
+            let result = if request.id == 1 {
+                tunnel.start(request.input.clone(), request.input.core_version, &cancel)
+            } else {
+                let id = import_node(&application, &request.input.node)?;
+                application.profiles.routing(
+                    request.input.routing,
+                    application.store.snapshot().routing_revision,
+                )?;
+                wait_connect(&application, id)
+            };
+            crate::settings::write_json(
+                &input.control.join(format!("replace-{}.json", request.id)),
+                &serde_json::json!({"succeeded":result.is_ok(),"error":result.err(),"snapshot":tunnel.snapshot(),"session":application.session.snapshot(),"settings":application.store.snapshot().public()}),
+            )?;
+        }
+        let query = input.control.join("query-activity");
+        if query.exists() {
+            std::fs::remove_file(query).map_err(|e| e.to_string())?;
+            let page = tunnel.activity(crate::activity::Query::default())?;
+            crate::settings::write_json(&input.control.join("activity.json"), &page)?;
+        }
         thread::sleep(Duration::from_millis(50));
     }
-    tunnel.close()?;
+    application.session.stop()?;
     crate::settings::write_json(&input.control.join("stopped.json"), &tunnel.snapshot())?;
     Ok(())
 }

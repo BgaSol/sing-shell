@@ -202,6 +202,7 @@ fn preview_deduplicates_share_declarations_and_keeps_source_lines_and_safe_error
         assert!(!public.contains(secret));
     }
     let node = Node {
+        tags: vec![],
         id: "existing".into(),
         name: "existing".into(),
         source: "test".into(),

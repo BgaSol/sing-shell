@@ -15,8 +15,16 @@ pub(super) enum Request {
     Start {
         input: Connection,
         core_version: String,
+        operation_id: u64,
     },
     Poll,
+    Activity {
+        query: crate::activity::Query,
+    },
+    Logs {
+        after: u64,
+        limit: usize,
+    },
     Stop,
     Quit,
 }
@@ -30,6 +38,13 @@ pub struct Snapshot {
     pub logs: Vec<Log>,
     pub failure: Option<Failure>,
     pub authorization_stage: Option<authorization::Stage>,
+    pub session_id: Option<String>,
+    pub running_node: Option<crate::profile::NodeSummary>,
+    pub operation_id: u64,
+    pub operation: Option<String>,
+    pub operation_error: Option<String>,
+    pub activity_summary: Option<crate::activity::Summary>,
+    pub activity_page: Option<crate::activity::Page>,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -83,6 +98,13 @@ impl Default for Snapshot {
             logs: vec![],
             failure: None,
             authorization_stage: None,
+            session_id: None,
+            running_node: None,
+            operation_id: 0,
+            operation: None,
+            operation_error: None,
+            activity_summary: None,
+            activity_page: None,
         }
     }
 }

@@ -24,6 +24,7 @@ pub struct Application {
     pub exit: crate::lifecycle::Coordinator,
     background_started: AtomicBool,
     pub profiles: crate::profile::service::Service,
+    pub rules: Arc<crate::rulesets::service::Service>,
 }
 impl Application {
     pub fn open(root: std::path::PathBuf, version: String) -> Result<Self, String> {
@@ -53,7 +54,10 @@ impl Application {
         );
         let profiles =
             crate::profile::service::Service::new(store.clone(), gate.clone(), runtime.clone());
+        let rules =
+            crate::rulesets::service::Service::new(store.clone(), gate.clone(), core.clone());
         Self {
+            rules,
             core,
             session,
             wake,
@@ -106,6 +110,7 @@ impl Application {
                     }
                     if !app.gate.closing() && tokio::time::Instant::now() >= app_check_after {
                         app.updates.tick();
+                        app.rules.tick();
                     }
                     drop(app);
                     tokio::select! { _ = tokio::time::sleep(Duration::from_secs(60)) => {}, _ = wake.notified() => {} }

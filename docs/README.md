@@ -3,6 +3,8 @@
 - [首次使用](usage.md)
 - [节点管理](features/nodes.md)：协议支持、预览提交、选择与数据保护
 - [分流](features/routing.md)：域名/IP/站点优先级、DNS 与规则更新
+- [活动与诊断](features/activity.md)：结构化连接、命中归因、采样限制和本机日志
+- [大版本代码重构方案](plans/major-redesign.md)：节点直连操作、有序多条件分流、规则自动更新、结构化活动与紧凑界面
 - [核心与配置](features/core.md)：导入、校验、启停、日志及失败处理
 - [桌面与启动](features/desktop.md)：托盘、窗口、登录自启、核心恢复与退出
 - [软件更新](features/updates.md)：自动检查、下载网络、签名安装和受管核心

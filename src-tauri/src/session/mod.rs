@@ -39,6 +39,8 @@ struct Intent {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
+    pub mode: crate::profile::Mode,
+    pub session_id: Option<String>,
     #[serde(flatten)]
     pub core: core::Snapshot,
     pub restore: Restore,
@@ -49,6 +51,9 @@ pub struct Snapshot {
     pub network: crate::platform::network::Observation,
     pub running_node: Option<crate::profile::NodeSummary>,
     pub pending_changes: bool,
+    pub target: Option<crate::profile::NodeSummary>,
+    pub operation: Option<String>,
+    pub activity: Option<crate::activity::Summary>,
     pub phase: String,
     pub authorization_stage: Option<crate::platform::authorization::Stage>,
 }
@@ -61,6 +66,7 @@ pub struct SessionService {
     intent: Mutex<Intent>,
     tunnel: tunnel::Tunnel,
     applied: Mutex<Option<tunnel::Connection>>,
+    target: Mutex<Option<crate::profile::NodeSummary>>,
 }
 fn missing_restore_config(s: &settings::Settings) -> bool {
     s.profile.mode == crate::profile::Mode::ExternalConfig
@@ -75,6 +81,7 @@ impl SessionService {
                 engine.runtime.network_occupation(),
             ),
             applied: Mutex::new(None),
+            target: Mutex::new(None),
             store: engine.store.clone(),
             runtime: engine.runtime.clone(),
             gate: engine.gate.clone(),
@@ -121,13 +128,25 @@ impl SessionService {
         let desired = settings.profile.selected().map(|node| tunnel::Connection {
             node: node.clone(),
             routing: settings.profile.routing.clone(),
-            rule_commit: settings.profile.rule_commit.clone(),
+            versions: crate::rulesets::selected(&self.store.root, &settings.profile.routing)
+                .unwrap_or_default(),
+            core_version: settings
+                .managed
+                .active
+                .as_ref()
+                .map(|r| r.version.clone())
+                .unwrap_or_default(),
         });
         Snapshot {
+            mode: settings.profile.mode,
+            session_id: tunnel.session_id.clone(),
+            target: self.target.lock().unwrap().clone(),
+            operation: tunnel.operation.clone(),
+            activity: tunnel.activity_summary.clone(),
             can_start: !busy
                 && r.pid.is_none()
                 && !r.cleanup_pending
-                && self.store.error.is_none()
+                && self.store.error().is_none()
                 && core.usable
                 && if generated {
                     settings.profile.selected_node.is_some()
@@ -145,14 +164,16 @@ impl SessionService {
                 && r.pid.is_none()
                 && !r.cleanup_pending
                 && self.runtime.stopped().is_ok()
-                && self.store.error.is_none(),
+                && self.store.error().is_none(),
             core,
             restore,
             runtime: r.clone(),
             network: tunnel.network,
-            running_node: (r.pid.is_some())
-                .then(|| applied.as_ref().map(|c| c.node.summary()))
-                .flatten(),
+            running_node: if generated {
+                tunnel.running_node.clone()
+            } else {
+                None
+            },
             pending_changes: r.pid.is_some()
                 && desired.as_ref().map(tunnel::Connection::fingerprint)
                     != applied.as_ref().map(tunnel::Connection::fingerprint),
@@ -225,7 +246,8 @@ impl SessionService {
         self.store.resume(false)?;
         let s = self.store.snapshot();
         Ok(crate::profile::service::Snapshot {
-            revision: s.profile_revision,
+            revision: s.nodes_revision,
+            routing_revision: s.routing_revision,
             profile: s.profile.public(),
         })
     }
@@ -301,8 +323,15 @@ impl SessionService {
             .clone();
         Ok(tunnel::Connection {
             node,
-            routing: s.profile.routing,
-            rule_commit: s.profile.rule_commit,
+            routing: s.profile.routing.clone(),
+            versions: crate::rulesets::selected(&self.store.root, &s.profile.routing)?,
+            core_version: s
+                .managed
+                .active
+                .as_ref()
+                .ok_or("核心尚未就绪")?
+                .version
+                .clone(),
         })
     }
     fn check_owned(&self, op: &Operation) -> Result<(), String> {
@@ -318,124 +347,249 @@ impl SessionService {
             self.engine.check_local(&op.cancel)
         }
     }
+    pub fn connect(self: &Arc<Self>, node_id: String) -> Result<Receipt, String> {
+        self.invalidate_restore();
+        let op = self.gate.begin(Kind::Runtime)?;
+        let receipt = op.receipt();
+        let session = self.clone();
+        {
+            let settings = self.store.snapshot();
+            if settings.profile.mode != crate::profile::Mode::Generated {
+                return Err("请先停止并切换到节点模式".into());
+            }
+            let node = settings
+                .profile
+                .nodes
+                .iter()
+                .find(|n| n.id == node_id)
+                .ok_or("节点不存在")?;
+            *self.target.lock().unwrap() = Some(node.summary());
+        }
+        self.runtime.events.push(
+            "connection",
+            "started",
+            format!(
+                "连接节点：{}",
+                self.target.lock().unwrap().as_ref().unwrap().name
+            ),
+        );
+        tauri::async_runtime::spawn_blocking(move || {
+            let result = (|| {
+                let switching = session.tunnel.status().runtime.pid.is_some();
+                if !switching {
+                    session.ensure_stopped()?;
+                    if let Err(e) = session.engine.adopt_owned(&op) {
+                        session.engine.managed.error(e);
+                    }
+                }
+                let settings = session.store.snapshot();
+                let node = settings
+                    .profile
+                    .nodes
+                    .iter()
+                    .find(|n| n.id == node_id)
+                    .ok_or("节点不存在")?
+                    .clone();
+                let version = if switching {
+                    session
+                        .applied
+                        .lock()
+                        .unwrap()
+                        .as_ref()
+                        .ok_or("当前连接信息缺失")?
+                        .core_version
+                        .clone()
+                } else {
+                    settings
+                        .managed
+                        .active
+                        .as_ref()
+                        .ok_or("请等待官方核心就绪")?
+                        .version
+                        .clone()
+                };
+                let input = tunnel::Connection {
+                    node,
+                    routing: settings.profile.routing.clone(),
+                    versions: crate::rulesets::selected(
+                        &session.store.root,
+                        &settings.profile.routing,
+                    )?,
+                    core_version: version,
+                };
+                session.execute_connection(&op, input, !switching)
+            })();
+            if let Err(e) = result {
+                session.runtime.report(e);
+            }
+            session.target.lock().unwrap().take();
+            drop(op);
+            session.wake.notify_one();
+        });
+        Ok(receipt)
+    }
     fn start_tunnel_owned(
         &self,
         op: &Operation,
         input: Option<tunnel::Connection>,
     ) -> Result<(), String> {
         self.ensure_stopped()?;
-        let allow_core_rollback = input.is_none();
-        if input.is_none() {
-            if let Err(error) = self.engine.adopt_owned(op) {
-                self.engine.managed.error(error);
+        let explicit = input.is_some();
+        if !explicit {
+            if let Err(e) = self.engine.adopt_owned(op) {
+                self.engine.managed.error(e);
             }
         }
-        let epoch = self.intent.lock().unwrap().epoch;
-        let s = self.store.snapshot();
-        if !s.managed() {
-            return Err("受控 TUN 仅使用官方受管核心，请在核心来源中切换为应用管理".into());
-        }
-        let core = s.managed.active.as_ref().ok_or("请等待官方核心准备完成")?;
-        let version = core.version.clone();
-        self.engine.verify(core, &op.cancel)?;
         let input = match input {
             Some(input) => input,
             None => self.desired_connection()?,
         };
-        input.profile().validate()?;
-        self.runtime.logs.redact(input.node.spec.secrets());
-        let generated = crate::profile::config::build(&input.profile(), &self.store.root)?;
-        self.runtime.validate(
-            &s.selected_path(&self.store.root)?,
-            &generated.path,
-            &op.cancel,
-        )?;
-        self.runtime.clear_error();
-        let expected = if s.managed.trial.is_some() {
+        self.execute_connection(op, input, !explicit)
+    }
+    fn execute_connection(
+        &self,
+        op: &Operation,
+        mut input: tunnel::Connection,
+        allow_core_rollback: bool,
+    ) -> Result<(), String> {
+        if self.tunnel.status().phase == tunnel::Phase::CleanupRequired {
+            return Err("请先停止并完成网络清理".into());
+        }
+        let epoch = self.intent.lock().unwrap().epoch;
+        let saved = self.store.snapshot();
+        if !saved.managed() {
+            return Err("受控 TUN 仅使用官方受管核心".into());
+        }
+        input.validate()?;
+        let reference = [
+            saved.managed.active.as_ref(),
+            saved.managed.previous.as_ref(),
+        ]
+        .into_iter()
+        .flatten()
+        .find(|r| r.version == input.core_version)
+        .ok_or("固定核心材料缺失，请手动连接")?;
+        if let Err(error) = self.engine.verify(reference, &op.cancel) {
+            if allow_core_rollback
+                && saved.managed.trial.is_some()
+                && !op.cancel.load(Ordering::Acquire)
+                && !self.gate.closing()
+                && self.engine.rollback(&error, &op.cancel)?
+            {
+                input.core_version = self
+                    .store
+                    .snapshot()
+                    .managed
+                    .active
+                    .as_ref()
+                    .ok_or("没有上一核心")?
+                    .version
+                    .clone();
+                return self
+                    .execute_connection(op, input, false)
+                    .map_err(|previous| format!("核心验证失败：{error}；上一版本：{previous}"));
+            }
+            return Err(error);
+        }
+        let expected = if saved.managed.trial.is_some() && allow_core_rollback {
             self.store
-                .core(s.core_revision, |settings| {
-                    settings.managed.trial = Some(Trial::Starting);
+                .core(saved.core_revision, |s| {
+                    s.managed.trial = Some(Trial::Starting);
                     Ok(())
                 })?
                 .core_revision
         } else {
-            s.core_revision
+            saved.core_revision
         };
-        if let Err(error) = self.tunnel.start(input.clone(), version, &op.cancel) {
+        self.runtime.clear_error();
+        let result = self
+            .tunnel
+            .start(input.clone(), input.core_version.clone(), &op.cancel);
+        if let Err(error) = result {
             if allow_core_rollback
-                && s.managed.trial.is_some()
-                && self.tunnel.snapshot().failure == Some(tunnel::Failure::CoreStart)
+                && saved.managed.trial.is_some()
+                && self.tunnel.status().failure == Some(tunnel::Failure::CoreStart)
                 && !op.cancel.load(Ordering::Acquire)
                 && !self.gate.closing()
             {
                 self.tunnel.stop()?;
                 if self.engine.rollback(&error, &op.cancel)? {
+                    let previous = self.store.snapshot();
+                    input.core_version = previous
+                        .managed
+                        .active
+                        .as_ref()
+                        .ok_or("没有可回退核心")?
+                        .version
+                        .clone();
                     return self
-                        .start_tunnel_owned(op, Some(input))
-                        .map_err(|previous| {
-                            format!("新核心失败：{error}；上一核心失败：{previous}")
-                        });
+                        .execute_connection(op, input, false)
+                        .map_err(|e| format!("新核心失败：{error}；上一核心失败：{e}"));
                 }
-            }
-            if s.managed.trial.is_some() && self.tunnel.snapshot().runtime.pid.is_none() {
-                let current = self.store.snapshot();
-                let _ = self.store.core(current.core_revision, |settings| {
-                    settings.managed.trial = Some(Trial::AwaitingStart);
-                    Ok(())
-                });
             }
             return Err(error);
         }
         let intent = self.intent.lock().unwrap();
         if intent.epoch != epoch || op.cancel.load(Ordering::Acquire) || self.gate.closing() {
             drop(intent);
-            self.tunnel.stop()?;
-            return Err("TUN 启动已取消".into());
+            self.tunnel.close()?;
+            return Err("连接已取消".into());
         }
         let result = self.store.confirm_connection(expected, Some(input.clone()));
         drop(intent);
-        if let Err(error) = result {
-            let cleanup = self.tunnel.stop();
-            return Err(format!("启动确认保存失败：{error}；停止结果：{cleanup:?}"));
+        if let Err(e) = result {
+            let cleanup = self.tunnel.close();
+            return Err(format!("启动确认保存失败：{e}；停止结果：{cleanup:?}"));
         }
+        self.runtime.events.push(
+            "connection",
+            "succeeded",
+            format!(
+                "{} 已连接，TUN 双栈、路由和临时 DNS 已确认",
+                input.node.name
+            ),
+        );
         *self.applied.lock().unwrap() = Some(input);
         Ok(())
     }
     fn apply_owned(&self, op: &Operation) -> Result<(), String> {
         if self.store.snapshot().profile.mode != crate::profile::Mode::Generated {
-            return Err("原始配置模式请停止后重新启动".into());
+            return Err("原始配置请停止后重新启动".into());
         }
-        let candidate = self.desired_connection()?;
-        let saved = self.store.snapshot();
-        let config = crate::profile::config::build(&candidate.profile(), &self.store.root)?;
-        self.runtime.validate(
-            &saved.selected_path(&self.store.root)?,
-            &config.path,
-            &op.cancel,
-        )?;
-        let old = self.applied.lock().unwrap().clone();
-        self.tunnel.stop()?;
-        crate::core::package::cancelled(&op.cancel)?;
-        match self.start_tunnel_owned(op, Some(candidate)) {
-            Ok(()) => Ok(()),
-            Err(error) => {
-                if op.cancel.load(Ordering::Acquire) || self.gate.closing() {
-                    return Err(error);
-                }
-                if let Some(old) = old {
-                    self.tunnel.stop()?;
-                    match self.start_tunnel_owned(op, Some(old)) {
-                        Ok(()) => Err(format!(
-                            "应用失败，已恢复上一运行节点；新设置未生效：{error}"
-                        )),
-                        Err(restore) => {
-                            Err(format!("应用失败：{error}；上一连接恢复也失败：{restore}"))
-                        }
-                    }
-                } else {
-                    Err(error)
-                }
+        let mut candidate = self.desired_connection()?;
+        if let Some(actual) = self.applied.lock().unwrap().as_ref() {
+            candidate.core_version = actual.core_version.clone();
+        }
+        self.execute_connection(op, candidate, false)
+    }
+    pub fn activity(&self, query: crate::activity::Query) -> Result<crate::activity::Page, String> {
+        query.validate()?;
+        if self.store.snapshot().profile.mode != crate::profile::Mode::Generated
+            || !self.tunnel.occupied()
+        {
+            return Ok(crate::activity::Page {
+                summary: crate::activity::Summary {
+                    state: "unavailable".into(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+        }
+        self.tunnel.activity(query)
+    }
+    pub fn read_logs(&self, after: u64, limit: usize) -> Result<Vec<crate::logs::Log>, String> {
+        if limit == 0 || limit > 100 {
+            return Err("日志分页超限".into());
+        }
+        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
+            let logs = self.tunnel.logs(after, limit)?;
+            if logs.is_empty() && !self.tunnel.occupied() {
+                Ok(self.runtime.logs.page(after, limit))
+            } else {
+                Ok(logs)
             }
+        } else {
+            Ok(self.runtime.logs.page(after, limit))
         }
     }
     fn start_process(&self, op: &Operation) -> Result<(), String> {
@@ -536,6 +690,9 @@ impl SessionService {
         self.stop_owned(&op)
     }
     fn stop_owned(&self, op: &Operation) -> Result<(), String> {
+        self.runtime
+            .events
+            .push("connection", "started", "正在断开并释放网络");
         let saved = self.store.resume(false);
         self.gate.cancel_runtime();
         // When cancelling an in-flight start, its owner must release the runtime ticket first.
@@ -551,6 +708,11 @@ impl SessionService {
             return Err(format!(
                 "恢复状态保存失败，下次启动仍可能恢复：{e}；实际停止结果：{stopped:?}"
             ));
+        }
+        if stopped.is_ok() {
+            self.runtime
+                .events
+                .push("connection", "succeeded", "连接已断开，网络资源已释放");
         }
         stopped
     }
@@ -580,7 +742,7 @@ impl SessionService {
         let s = self.store.snapshot();
         let mut i = self.intent.lock().unwrap();
         if i.epoch == 0 && s.startup.restore_core_on_launch && s.startup.resume_core {
-            if self.engine.restore_safe.load(Ordering::Acquire) && self.store.error.is_none() {
+            if self.engine.restore_safe.load(Ordering::Acquire) && self.store.error().is_none() {
                 i.restore = Restore::Waiting;
             } else {
                 i.restore = Restore::Finished;

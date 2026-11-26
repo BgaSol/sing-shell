@@ -95,7 +95,9 @@ pub struct Settings {
     pub schema_version: u32,
     pub core_revision: u64,
     pub preferences_revision: u64,
-    pub profile_revision: u64,
+    pub nodes_revision: u64,
+    pub routing_revision: u64,
+    pub rule_preferences: Vec<crate::rulesets::service::Preference>,
     pub profile: crate::profile::Profile,
     pub core_source: CoreSource,
     pub managed: ManagedState,
@@ -121,10 +123,12 @@ pub struct Desktop {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            schema_version: 4,
+            schema_version: 5,
             core_revision: 0,
             preferences_revision: 0,
-            profile_revision: 0,
+            nodes_revision: 0,
+            routing_revision: 0,
+            rule_preferences: crate::rulesets::service::defaults(),
             profile: Default::default(),
             core_source: Default::default(),
             managed: Default::default(),
@@ -138,7 +142,7 @@ impl Default for Settings {
 }
 impl Settings {
     pub fn public(&self) -> serde_json::Value {
-        serde_json::json!({"schemaVersion":self.schema_version,"coreRevision":self.core_revision,"profileRevision":self.profile_revision,"preferencesRevision":self.preferences_revision,"profile":self.profile.public(),"coreSource":self.core_source,"managed":self.managed,"configPath":self.config_path,"pendingConfigPath":self.pending_config_path,"updatePreferences":self.update_preferences,"startup":{"restoreCoreOnLaunch":self.startup.restore_core_on_launch,"resumeCore":self.startup.resume_core},"desktop":self.desktop})
+        serde_json::json!({"schemaVersion":self.schema_version,"coreRevision":self.core_revision,"nodesRevision":self.nodes_revision,"routingRevision":self.routing_revision,"rulePreferences":self.rule_preferences,"preferencesRevision":self.preferences_revision,"profile":self.profile.public(),"coreSource":self.core_source,"managed":self.managed,"configPath":self.config_path,"pendingConfigPath":self.pending_config_path,"updatePreferences":self.update_preferences,"startup":{"restoreCoreOnLaunch":self.startup.restore_core_on_launch,"resumeCore":self.startup.resume_core},"desktop":self.desktop})
     }
     pub fn managed(&self) -> bool {
         self.core_source == CoreSource::Managed
@@ -178,7 +182,7 @@ pub struct SettingsStore {
     pub root: PathBuf,
     state: Mutex<Settings>,
     writer: Mutex<()>,
-    pub error: Option<String>,
+    error: Mutex<Option<String>>,
     _lease: crate::instance::Lease,
 }
 impl SettingsStore {
@@ -203,108 +207,11 @@ impl SettingsStore {
                 .get("schemaVersion")
                 .and_then(|v| v.as_u64())
                 .unwrap_or(0);
-            let mut settings = match schema {
-                0 => {
-                    #[derive(Deserialize)]
-                    #[serde(rename_all = "camelCase", deny_unknown_fields)]
-                    struct Legacy {
-                        core_path: Option<PathBuf>,
-                        config_path: Option<PathBuf>,
-                    }
-                    let old: Legacy = serde_json::from_value(raw).map_err(|e| e.to_string())?;
-                    Settings {
-                        core_source: old
-                            .core_path
-                            .map(|path| CoreSource::External { path })
-                            .unwrap_or_default(),
-                        config_path: old.config_path,
-                        ..Default::default()
-                    }
-                }
-                1 => {
-                    #[derive(Deserialize)]
-                    #[serde(tag = "mode", rename_all = "camelCase", deny_unknown_fields)]
-                    enum Engine {
-                        External { path: PathBuf },
-                        Managed { version: String, target: String },
-                    }
-                    #[derive(Deserialize)]
-                    #[serde(rename_all = "camelCase", deny_unknown_fields)]
-                    struct Preferences {
-                        automatic: bool,
-                        network: network::Preferences,
-                    }
-                    #[derive(Deserialize)]
-                    #[serde(rename_all = "camelCase", deny_unknown_fields)]
-                    struct V1 {
-                        schema_version: u32,
-                        revision: u64,
-                        engine: Option<Engine>,
-                        config_path: Option<PathBuf>,
-                        update_preferences: Preferences,
-                    }
-                    let old: V1 = serde_json::from_value(raw).map_err(|e| e.to_string())?;
-                    let _ = (old.schema_version, old.revision);
-                    let mut s = Settings {
-                        config_path: old.config_path,
-                        update_preferences: UpdatePreferences {
-                            automatic: old.update_preferences.automatic,
-                            automatic_core: old.update_preferences.automatic,
-                            network: old.update_preferences.network,
-                        },
-                        ..Default::default()
-                    };
-                    match old.engine {
-                        Some(Engine::External { path }) => {
-                            s.core_source = CoreSource::External { path }
-                        }
-                        Some(Engine::Managed { version, target }) => {
-                            s.managed.active = Some(ManagedRef {
-                                version,
-                                target,
-                                hash: None,
-                                source: None,
-                            })
-                        }
-                        None => {}
-                    }
-                    s
-                }
-                2 | 3 => {
-                    if raw.get("profile").is_some()
-                        || raw.get("profileRevision").is_some()
-                        || (schema == 2
-                            && (raw.get("startup").is_some() || raw.get("desktop").is_some()))
-                    {
-                        return Err("旧设置包含不属于此版本的字段，已保留原文件".into());
-                    }
-                    let mut raw = raw;
-                    raw["schemaVersion"] = serde_json::json!(4);
-                    raw["profileRevision"] = serde_json::json!(0);
-                    raw["profile"] =
-                        serde_json::to_value(crate::profile::Profile::default()).unwrap();
-                    if schema == 2 {
-                        raw["startup"] = serde_json::to_value(Startup::default()).unwrap();
-                        raw["desktop"] = serde_json::to_value(Desktop::default()).unwrap();
-                    }
-                    serde_json::from_value(raw).map_err(|e| e.to_string())?
-                }
-                4 => serde_json::from_value(raw).map_err(|e| e.to_string())?,
-                _ => return Err("不支持此设置版本".into()),
-            };
-            if schema < 4
-                && (settings.config_path.is_some() || settings.pending_config_path.is_some())
-            {
-                settings.profile.mode = crate::profile::Mode::ExternalConfig;
+            if schema != 5 {
+                return Err("大版本数据格式已变更，请备份并重新初始化".into());
             }
+            let settings: Settings = serde_json::from_value(raw).map_err(|e| e.to_string())?;
             Self::validate(&settings)?;
-            if schema < 4 {
-                let backup = root.join(format!("settings.v{schema}.backup.json"));
-                if !backup.exists() {
-                    crate::private_files::write(&backup, &bytes)?;
-                }
-                write_json(&path, &settings)?;
-            }
             Ok(settings)
         })();
         let (settings, error) = match read {
@@ -318,18 +225,21 @@ impl SettingsStore {
             root,
             state: Mutex::new(settings),
             writer: Mutex::new(()),
-            error,
+            error: Mutex::new(error),
             _lease: lease,
         })
     }
     fn validate(s: &Settings) -> Result<(), String> {
-        if s.schema_version != 4 {
+        if s.schema_version != 5 {
             return Err("不支持此设置版本".into());
         }
         s.update_preferences.network.clone().validated()?;
         s.profile.validate()?;
+        for p in &s.rule_preferences {
+            p.validate()?;
+        }
         if let Some(last) = &s.startup.last_connection {
-            last.profile().validate()?;
+            last.validate()?;
         }
         for r in [&s.managed.active, &s.managed.previous]
             .into_iter()
@@ -383,11 +293,10 @@ impl SettingsStore {
         change: impl FnOnce(&mut crate::profile::Profile) -> Result<(), String>,
     ) -> Result<Settings, String> {
         self.write(|s| {
-            if s.profile_revision != expected {
-                return Err("节点或分流已改变，请载入最新设置后重试".into());
+            if s.nodes_revision != expected {
+                return Err("节点列表已改变，请载入最新设置后重试".into());
             }
             change(&mut s.profile)?;
-            s.profile.routing = s.profile.routing.normalized()?;
             if s.startup.last_connection.as_ref().is_some_and(|last| {
                 s.profile
                     .nodes
@@ -397,7 +306,73 @@ impl SettingsStore {
                 s.startup.last_connection = None;
                 s.startup.resume_core = false;
             }
-            s.profile_revision += 1;
+            s.nodes_revision += 1;
+            Ok(())
+        })
+    }
+    pub fn error(&self) -> Option<String> {
+        self.error.lock().unwrap().clone()
+    }
+    pub fn backup_reset(&self) -> Result<PathBuf, String> {
+        let _writer = self.writer.lock().unwrap();
+        if self.error().is_none() {
+            return Err("设置正常，无需重置".into());
+        }
+        let original = self.root.join("settings.json");
+        let backup = self
+            .root
+            .join(format!("settings.{}.backup.json", crate::logs::now()));
+        let bytes = fs::read(&original).map_err(|e| e.to_string())?;
+        crate::private_files::write(&backup, &bytes)?;
+        let settings = Settings::default();
+        write_json(&original, &settings)?;
+        *self.state.lock().unwrap() = settings;
+        *self.error.lock().unwrap() = None;
+        Ok(backup)
+    }
+    pub fn routing(
+        &self,
+        expected: u64,
+        routing: crate::profile::routing::Routing,
+    ) -> Result<Settings, String> {
+        let routing = routing.normalized()?;
+        self.write(|s| {
+            if s.routing_revision != expected {
+                return Err("分流已改变，草稿已保留，请载入最新规则核对".into());
+            }
+            let ids = routing.source_ids();
+            s.rule_preferences.retain(|p| ids.contains(&p.source_id));
+            for id in ids {
+                if !s.rule_preferences.iter().any(|p| p.source_id == id) {
+                    s.rule_preferences
+                        .push(crate::rulesets::service::Preference::new(id));
+                }
+            }
+            s.profile.routing = routing;
+            s.routing_revision += 1;
+            Ok(())
+        })
+    }
+    pub fn rule_preference(
+        &self,
+        preference: crate::rulesets::service::Preference,
+    ) -> Result<Settings, String> {
+        preference.validate()?;
+        self.write(|s| {
+            if !s
+                .profile
+                .routing
+                .source_ids()
+                .contains(&preference.source_id)
+            {
+                return Err("请先保存包含此来源的规则表".into());
+            }
+            let slot = s
+                .rule_preferences
+                .iter_mut()
+                .find(|p| p.source_id == preference.source_id)
+                .ok_or("来源偏好不存在")?;
+            *slot = preference;
             Ok(())
         })
     }
@@ -430,6 +405,14 @@ impl SettingsStore {
                 s.core_revision += 1;
             }
             s.startup.resume_core = true;
+            if let Some(input) = &input {
+                if s.profile.nodes.iter().any(|n| n.id == input.node.id)
+                    && s.profile.selected_node.as_ref() != Some(&input.node.id)
+                {
+                    s.profile.selected_node = Some(input.node.id.clone());
+                    s.nodes_revision += 1;
+                }
+            }
             s.startup.last_connection = input;
             Ok(())
         })
@@ -445,7 +428,7 @@ impl SettingsStore {
         change: impl FnOnce(&mut Settings) -> Result<(), String>,
     ) -> Result<Settings, String> {
         let _writer = self.writer.lock().unwrap();
-        if let Some(e) = &self.error {
+        if let Some(e) = self.error() {
             return Err(e.clone());
         }
         let mut next = self.snapshot();
