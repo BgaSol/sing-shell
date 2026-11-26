@@ -12,6 +12,8 @@
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
 - [v0.5.0 发行记录](releases/v0.5.0.md)：节点、TUN、分流与平台验收边界
+- [v0.5.0 网络验证](releases/v0.5.0-network-verification.json)：五原生转发、异常退出和残留清理证据
+- [v0.5.0 完整验收](releases/v0.5.0-verification.json)：固定源码、签名包摘要、实际升级与跳过范围
 - [v0.4.0 发行记录](releases/v0.4.0.md)：托盘、登录自启、核心恢复及本次验收
 - [v0.4.0 验证证据](releases/v0.4.0-verification.json)：固定来源、原生目标、包摘要和跳过范围
 - [v0.3.0 发行记录](releases/v0.3.0.md)：核心自动安装、更新和本次验收
