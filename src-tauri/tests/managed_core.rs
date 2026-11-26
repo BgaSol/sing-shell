@@ -133,6 +133,21 @@ fn baseline(core: &TestCore, d: &Directory) {
     core.stop().unwrap();
 }
 #[test]
+fn generated_mode_rejects_an_unvalidated_core_before_importing_nodes() {
+    let d = Directory::new();
+    let c = TestCore::open(d.0.join("data")).unwrap();
+    c.store
+        .profile(c.store.snapshot().profile_revision, |p| {
+            p.mode = sing_shell::profile::Mode::Generated;
+            Ok(())
+        })
+        .unwrap();
+    prepare(&c, &d, "1.14.3", Origin::Required);
+    assert!(c.core.try_adopt().is_err());
+    assert!(c.store.snapshot().managed.active.is_none());
+    assert!(c.store.snapshot().managed.blocked.is_some());
+}
+#[test]
 fn restore_waits_for_required_core_and_successful_rollback_records_intent() {
     let d = Directory::new();
     {

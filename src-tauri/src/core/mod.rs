@@ -499,6 +499,8 @@ impl CoreService {
                     ));
                 }
                 Some(c)
+            } else if required && s.profile.mode == crate::profile::Mode::Generated {
+                Some(release::engine_version(&t, "1.14.4").map_err(FetchError::Network)?)
             } else {
                 release::discover(
                     &t,
@@ -665,7 +667,6 @@ impl CoreService {
         package::owned(&self.store.root, program)?;
         package::verify_path(&self.runtime, &p.reference, program, &op.cancel)?;
         if s.profile.mode == crate::profile::Mode::Generated
-            && s.profile.selected().is_some()
             && (settings::stable(&p.reference.version)? < semver::Version::new(1, 14, 4)
                 || settings::stable(&p.reference.version)? >= semver::Version::new(1, 15, 0))
         {

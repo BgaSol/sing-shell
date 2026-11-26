@@ -252,6 +252,12 @@ fn candidate(
     })
 }
 pub fn recheck(client: &Transport, cached: &Candidate) -> Result<(), String> {
+    if cached.component == Component::Engine
+        && cached.version == "1.14.4"
+        && *cached == engine_version(client, "1.14.4")?
+    {
+        return Ok(());
+    }
     let client = if cached.component == Component::Engine {
         client.clone().only_endpoint(None)?
     } else {

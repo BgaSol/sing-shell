@@ -564,6 +564,17 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
             let name = key.to_string_lossy().to_ascii_uppercase();
             if name.starts_with("DYLD_")
                 || name.starts_with("LD_")
+                || [
+                    "HTTP_PROXY",
+                    "HTTPS_PROXY",
+                    "ALL_PROXY",
+                    "NO_PROXY",
+                    "SSL_CERT_FILE",
+                    "SSL_CERT_DIR",
+                    "CURL_CA_BUNDLE",
+                    "REQUESTS_CA_BUNDLE",
+                ]
+                .contains(&name.as_str())
                 || name.contains("TOKEN")
                 || name.contains("SECRET")
                 || name.contains("PASSWORD")

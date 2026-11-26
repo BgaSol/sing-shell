@@ -26,6 +26,16 @@ pub struct Snapshot {
 impl TestCore {
     pub fn open(root: PathBuf) -> Result<Self, String> {
         let store = Arc::new(SettingsStore::open(root)?);
+        // Existing lifecycle fixtures exercise raw-config sessions with synthetic core versions.
+        if store.error.is_none()
+            && store.snapshot().profile.nodes.is_empty()
+            && store.snapshot().profile.mode == sing_shell::profile::Mode::Generated
+        {
+            store.profile(store.snapshot().profile_revision, |p| {
+                p.mode = sing_shell::profile::Mode::ExternalConfig;
+                Ok(())
+            })?;
+        }
         let runtime = Arc::new(RuntimeService::default());
         let wake = Arc::new(tokio::sync::Notify::new());
         let core = CoreService::new(
