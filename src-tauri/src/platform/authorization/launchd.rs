@@ -50,7 +50,7 @@ impl Job {
         }
         (depth == 0).then_some(job)
     }
-    pub fn failed_inactive_registration(&self) -> bool {
+    pub fn inactive_owned_registration(&self) -> bool {
         self.manager == "com.apple.xpc.ServiceManagement"
             && self.bundle == "com.bgasol.singshell"
             && matches!(
@@ -59,9 +59,10 @@ impl Job {
             )
             && self.active == Some(0)
             && self.pid.is_none()
-            && matches!(self.state.as_str(), "spawn scheduled" | "waiting")
-            && self.job_state == "spawn failed"
-            && self.exit.split(':').next() == Some("78")
+            && matches!(
+                self.state.as_str(),
+                "spawn scheduled" | "waiting" | "not running"
+            )
     }
     pub fn diagnostic(&self) -> String {
         format!(
@@ -82,14 +83,21 @@ pub(super) fn inspect() -> Result<Option<Job>, String> {
         .output()
         .map_err(|e| format!("无法查询网络 helper：{e}"))?;
     if !output.status.success() {
+        if String::from_utf8_lossy(&output.stderr).contains(
+            "Could not find service \"com.bgasol.singshell.network\" in domain for system",
+        ) {
+            return Ok(None);
+        }
         return Err("launchd 未返回可核实的网络 helper 登记".into());
     }
     if output.stdout.len() > 64 * 1024 {
         return Err("网络 helper 登记信息超限".into());
     }
-    Ok(std::str::from_utf8(&output.stdout)
+    std::str::from_utf8(&output.stdout)
         .ok()
-        .and_then(Job::parse))
+        .and_then(Job::parse)
+        .map(Some)
+        .ok_or_else(|| "launchd 返回了无法识别的旧网络服务登记，不能自动停用".into())
 }
 
 #[cfg(test)]
@@ -99,13 +107,11 @@ mod tests {
     #[test]
     fn user_report_identifies_only_the_failed_inactive_owned_job() {
         let job = Job::parse(FAILED).unwrap();
-        assert!(job.failed_inactive_registration());
+        assert!(job.inactive_owned_registration());
         assert!(job.diagnostic().contains("0.5.1"));
         for (from, to) in [
             ("active count = 0", "active count = 1"),
             ("state = spawn scheduled", "state = running"),
-            ("job state = spawn failed", "job state = running"),
-            ("78: EX_CONFIG", "1"),
             ("com.apple.xpc.ServiceManagement", "another.manager"),
             (
                 "parent bundle identifier = com.bgasol.singshell",
@@ -116,14 +122,14 @@ mod tests {
             assert!(
                 !Job::parse(&FAILED.replace(from, to))
                     .unwrap()
-                    .failed_inactive_registration(),
+                    .inactive_owned_registration(),
                 "{from}"
             );
         }
         assert!(
             !Job::parse(&FAILED.replace("\tjob state", "\tpid = 123\n\tjob state"))
                 .unwrap()
-                .failed_inactive_registration()
+                .inactive_owned_registration()
         );
     }
     #[test]
@@ -137,7 +143,7 @@ mod tests {
         );
         assert!(!Job::parse(&FAILED.replace("\tactive count = 0\n", ""))
             .unwrap()
-            .failed_inactive_registration());
+            .inactive_owned_registration());
         assert!(Job::parse(FAILED.trim_end().trim_end_matches('}')).is_none());
     }
 }

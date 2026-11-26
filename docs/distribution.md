@@ -48,7 +48,7 @@ Windows 当前用户 Run 登记，保留 StartupApproved 的系统禁用状态�
 
 ## TUN 资源与授权边界
 
-Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统 pkexec/polkit。macOS app 包含 `Contents/Library/LaunchDaemons/com.bgasol.singshell.network.plist`，BundleProgram 指向同一签名程序的受限 daemon 入口，采用 SMAppService 与 socket activation。TUN 仅 macOS 13+；未提供 Developer ID 或公证，允许/激活不能仅凭注册 API 成功声称通过。
+Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统 pkexec/polkit；macOS 由系统管理员授权弹窗启动同一程序的短期 worker，断开后退出。macOS 不登记新的 SMAppService 网络服务；包内旧网络 plist 仅用于迁移撤销。应用仍为 ad-hoc 签名、未公证，正式发行证据分别记录系统授权、身份认证、真实 TUN 及未执行范围。
 
 macOS GUI 从 Applications 内的完整安装登记网络服务，helper 与 GUI 必须来自同一安装且运行相同构建。升级前先断开、收束 worker，再由官方 updater 替换 bundle。协议不兼容或旧副本身份失败不会自动注销/登记系统服务；系统要求批准时明确显示实际原因。
 

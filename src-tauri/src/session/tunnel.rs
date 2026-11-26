@@ -408,6 +408,9 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
         return None;
     }
     Some((|| {
+        if mode == "--network-daemon" {
+            return Err("旧网络服务已停用，请从当前应用重新连接并完成系统授权".into());
+        }
         if !authorization::elevated() {
             return Err("网络 helper 需要系统授权".into());
         }
@@ -441,7 +444,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
             .build()
             .map_err(|e| e.to_string())?;
         runtime.block_on(async {
-            let mut channel = if mode == "--network-worker" {
+            let mut channel = {
                 let endpoint = args.get(2).map(PathBuf::from).ok_or("缺少网络控制端点")?;
                 let parent = args
                     .get(3)
@@ -449,15 +452,6 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                     .and_then(|s| s.parse().ok())
                     .ok_or("缺少网络控制端身份")?;
                 authorization::worker(&endpoint, parent).await?
-            } else {
-                #[cfg(target_os = "macos")]
-                {
-                    authorization::daemon().await?
-                }
-                #[cfg(not(target_os = "macos"))]
-                {
-                    return Err("当前系统不支持网络 daemon 入口".into());
-                }
             };
             let root = authorization::prepare_root()?;
             let lease = crate::instance::Lease::acquire(&root)?;
@@ -530,7 +524,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
 #[cfg(target_os = "macos")]
 pub fn authorization_probe() -> Result<(), String> {
     if authorization::elevated() {
-        return Err("授权探针须以普通用户运行，不能用 root 入口替代 SMAppService".into());
+        return Err("授权探针须以普通用户运行，不能用 root 入口替代系统授权".into());
     }
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()

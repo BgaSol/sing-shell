@@ -30,7 +30,10 @@ enum Process {
     #[cfg(unix)]
     Child(std::process::Child),
     #[cfg(target_os = "macos")]
-    Mac([u32; 8]),
+    Mac {
+        token: [u32; 8],
+        launcher: std::process::Child,
+    },
 }
 impl Connection {
     // Keep the controller thread (and its owner) alive until the helper really exits.
@@ -61,7 +64,10 @@ impl Connection {
                 Process::Child(child) => child.try_wait().map_err(|e| e.to_string())?.is_some(),
                 #[cfg(target_os = "macos")]
                 // An unconfirmed exit must retain the owner; callers have their own deadline.
-                Process::Mac(token) => macos::exited(token).unwrap_or(false),
+                Process::Mac { token, launcher } => {
+                    let launcher_exited = launcher.try_wait().map_err(|e| e.to_string())?.is_some();
+                    macos::exited(token).unwrap_or(false) && launcher_exited
+                }
             };
             if exited {
                 break;
@@ -195,7 +201,7 @@ mod native {
         cancel: &AtomicBool,
         progress: &impl Fn(Stage),
     ) -> Result<Connection, String> {
-        progress(Stage::Activation);
+        progress(Stage::Registration);
         let pipe = PathBuf::from(format!("\\\\.\\pipe\\sing-shell-network-{}", nonce()?));
         let server = crate::instance::network_pipe(&pipe)?;
         let executable = wide(std::env::current_exe().map_err(|e| e.to_string())?);
@@ -377,7 +383,7 @@ mod native {
         cancel: &AtomicBool,
         progress: &impl Fn(Stage),
     ) -> Result<Connection, String> {
-        progress(Stage::Activation);
+        progress(Stage::Registration);
         let _ = root;
         use std::os::unix::fs::DirBuilderExt;
         let directory = PathBuf::from("/tmp").join(format!(
@@ -405,38 +411,70 @@ mod native {
         let mut command = if elevated() {
             std::process::Command::new(&executable)
         } else {
-            let mut command = std::process::Command::new("/usr/bin/pkexec");
-            command.arg(&executable);
-            command
+            #[cfg(target_os = "linux")]
+            {
+                let mut command = std::process::Command::new("/usr/bin/pkexec");
+                command.arg(&executable);
+                command
+            }
+            #[cfg(target_os = "macos")]
+            {
+                super::macos::launcher(&executable, &endpoint)
+            }
         };
+        #[cfg(target_os = "macos")]
+        let apple_script = !elevated();
+        #[cfg(not(target_os = "macos"))]
+        let apple_script = false;
+        if !apple_script {
+            command
+                .arg("--network-worker")
+                .arg(&endpoint)
+                .arg(std::process::id().to_string());
+        }
         let mut child = command
-            .arg("--network-worker")
-            .arg(&endpoint)
-            .arg(std::process::id().to_string())
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn()
-            .map_err(|e| format!("无法请求系统授权，请安装并启用 polkit：{e}"))?;
+            .map_err(|e| format!("无法请求系统网络授权：{e}"))?;
         let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
         let stream = loop {
             tokio::select! {result=listener.accept()=>{break result.map_err(|e|e.to_string())?.0},_=tokio::time::sleep(Duration::from_millis(100))=>{if cancel.load(Ordering::Acquire){let _=child.kill();let _=child.wait();return Err("网络授权已取消".into());}if child.try_wait().map_err(|e|e.to_string())?.is_some(){return Err("系统未允许网络授权，请重试".into());}if tokio::time::Instant::now()>=deadline{let _=child.kill();let _=child.wait();return Err("网络授权超时，请重试".into());}}}
         };
         let mut stream = stream;
+        progress(Stage::Activation);
+        #[cfg(target_os = "macos")]
+        let mut authenticated = false;
         let result = handshake::bounded(
             cancel,
             handshake::ACTIVATION,
             handshake::client(&mut stream, |s| {
                 progress(Stage::Authentication);
                 verify(s, None, true)?;
+                #[cfg(target_os = "macos")]
+                {
+                    authenticated = true;
+                }
                 progress(Stage::Protocol);
                 Ok(())
             }),
         )
         .await;
+        #[cfg(target_os = "macos")]
+        let process = if authenticated {
+            Process::Mac {
+                token: super::macos::token(&stream)?,
+                launcher: child,
+            }
+        } else {
+            Process::Child(child)
+        };
+        #[cfg(not(target_os = "macos"))]
+        let process = Process::Child(child);
         let connection = Connection {
             channel: Box::new(stream),
-            process: Some(Process::Child(child)),
+            process: Some(process),
         };
         if let Err(error) = result {
             connection.finish().await?;
@@ -454,74 +492,17 @@ mod native {
     }
     #[cfg(target_os = "macos")]
     pub async fn connect(
-        _root: &Path,
+        root: &Path,
         cancel: &AtomicBool,
         progress: &impl Fn(Stage),
     ) -> Result<Connection, String> {
-        if elevated() {
-            if std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1") {
-                return direct_connect(_root, cancel, progress).await;
-            }
+        if !elevated() {
+            progress(Stage::Registration);
+            super::macos::prepare()?;
+        } else if std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() != Ok("1") {
             return Err("请以普通用户运行 Sing Shell，TUN 将单独请求系统授权".into());
         }
-        progress(Stage::Registration);
-        super::macos::ensure_registered()?;
-        if cancel.load(Ordering::Acquire) {
-            return Err("网络授权已取消".into());
-        }
-        let stream = match activate(cancel, progress).await {
-            Ok(stream) => stream,
-            Err(error) => {
-                if cancel.load(Ordering::Acquire) {
-                    return Err(error);
-                }
-                progress(Stage::Registration);
-                match super::macos::recover_registration(cancel) {
-                    Ok(true) => activate(cancel, progress).await.map_err(|next| {
-                        super::macos::activation_error(format!(
-                            "已恢复一次失效登记，仍未就绪：{next}（首次：{error}）"
-                        ))
-                    })?,
-                    Ok(false) => return Err(super::macos::activation_error(error)),
-                    Err(recovery) => {
-                        return Err(format!(
-                            "{}；登记恢复未完成：{recovery}",
-                            super::macos::activation_error(error)
-                        ))
-                    }
-                }
-            }
-        };
-        let process = super::macos::token(&stream)?;
-        Ok(Connection {
-            channel: Box::new(stream),
-            process: Some(Process::Mac(process)),
-        })
-    }
-    #[cfg(target_os = "macos")]
-    async fn activate(
-        cancel: &AtomicBool,
-        progress: &impl Fn(Stage),
-    ) -> Result<tokio::net::UnixStream, String> {
-        if cancel.load(Ordering::Acquire) {
-            return Err("网络授权已取消".into());
-        }
-        progress(Stage::Activation);
-        let mut stream = tokio::net::UnixStream::connect(super::macos::SOCKET)
-            .await
-            .map_err(|e| format!("网络授权进程尚未就绪：{e}"))?;
-        handshake::bounded(
-            cancel,
-            handshake::ACTIVATION,
-            handshake::client(&mut stream, |s| {
-                progress(Stage::Authentication);
-                verify(s, None, true)?;
-                progress(Stage::Protocol);
-                Ok(())
-            }),
-        )
-        .await?;
-        Ok(stream)
+        direct_connect(root, cancel, progress).await
     }
     pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         if !elevated() {
@@ -544,49 +525,6 @@ mod native {
         .await?;
         Ok(Box::new(stream))
     }
-    #[cfg(target_os = "macos")]
-    pub async fn daemon() -> Result<Channel, String> {
-        use std::os::fd::FromRawFd;
-        extern "C" {
-            fn launch_activate_socket(
-                name: *const std::ffi::c_char,
-                fds: *mut *mut i32,
-                count: *mut usize,
-            ) -> i32;
-        }
-        let mut fds = std::ptr::null_mut();
-        let mut count = 0;
-        let status = unsafe { launch_activate_socket(c"Control".as_ptr(), &mut fds, &mut count) };
-        if status != 0 || count != 1 || fds.is_null() {
-            return Err("网络 helper 缺少系统控制端点".into());
-        }
-        let listener = unsafe { std::os::unix::net::UnixListener::from_raw_fd(*fds) };
-        unsafe { libc::free(fds.cast()) };
-        listener.set_nonblocking(true).map_err(|e| e.to_string())?;
-        let listener = tokio::net::UnixListener::from_std(listener).map_err(|e| e.to_string())?;
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
-        loop {
-            let (mut stream, _) = tokio::time::timeout_at(deadline, listener.accept())
-                .await
-                .map_err(|_| "网络授权进程等待超时")?
-                .map_err(|e| e.to_string())?;
-            if verify(&stream, None, false).is_err() {
-                continue;
-            }
-            let result = tokio::time::timeout_at(
-                deadline,
-                handshake::bounded(
-                    &AtomicBool::new(false),
-                    Duration::from_secs(3),
-                    handshake::server(&mut stream),
-                ),
-            )
-            .await;
-            if matches!(result, Ok(Ok(()))) {
-                return Ok(Box::new(stream));
-            }
-        }
-    }
     pub fn protected_root() -> Result<PathBuf, String> {
         Ok(PathBuf::from(if cfg!(target_os = "macos") {
             "/Library/Application Support/Sing Shell Network"
@@ -597,8 +535,6 @@ mod native {
 }
 #[cfg(not(test))]
 pub use native::connect;
-#[cfg(target_os = "macos")]
-pub use native::daemon;
 pub use native::{elevated, protected_root, worker};
 #[cfg(test)]
 pub async fn connect(
@@ -609,24 +545,7 @@ pub async fn connect(
     Err("单元测试禁止系统提权，请使用可丢弃运行器的网络集成夹具".into())
 }
 pub fn can_resume() -> bool {
-    #[cfg(target_os = "macos")]
-    {
-        macos::already_allowed()
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        false
-    }
-}
-pub fn open_settings() -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        macos::open_settings()
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        Err("请在连接时完成系统网络授权；Linux 需要 polkit 授权代理".into())
-    }
+    false
 }
 pub fn prepare_root() -> Result<PathBuf, String> {
     let root = protected_root()?;

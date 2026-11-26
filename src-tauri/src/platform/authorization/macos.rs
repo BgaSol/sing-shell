@@ -1,10 +1,20 @@
-mod service;
-pub use service::{
-    activation_error, already_allowed, ensure_registered, open_settings, recover_registration,
-    SOCKET,
-};
+mod legacy;
+pub use legacy::prepare;
 
 use std::{ffi::c_void, os::fd::AsRawFd, path::PathBuf};
+const AUTHORIZE: &str = r#"on run argv
+    set command to "exec " & quoted form of item 1 of argv & " --network-worker " & quoted form of item 2 of argv & " " & quoted form of item 3 of argv
+    do shell script command with administrator privileges with prompt "Sing Shell 需要管理员权限来建立 TUN 网络；断开后释放网络并退出。"
+end run"#;
+pub fn launcher(executable: &std::path::Path, endpoint: &std::path::Path) -> std::process::Command {
+    let mut command = std::process::Command::new("/usr/bin/osascript");
+    command
+        .args(["-e", AUTHORIZE])
+        .arg(executable)
+        .arg(endpoint)
+        .arg(std::process::id().to_string());
+    command
+}
 type CF = *const c_void;
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
@@ -189,6 +199,22 @@ mod tests {
     use super::*;
     use std::os::fd::FromRawFd;
     #[test]
+    fn authorization_quotes_arguments_without_running_shell_text_from_paths() {
+        let path = "/tmp/a b'\"; $(exit 71) `exit 72`\ncontrol.sock";
+        let output = std::process::Command::new("/usr/bin/osascript")
+            .args(["-e", &AUTHORIZE.replace(" with administrator privileges with prompt \"Sing Shell 需要管理员权限来建立 TUN 网络；断开后释放网络并退出。\"", "")])
+            .args(["/bin/echo", path, "123"]).output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            String::from_utf8(output.stdout).unwrap(),
+            format!("--network-worker {path} 123\n")
+        );
+    }
+    #[test]
     fn replaced_executable_cannot_relabel_running_processes_as_the_new_build() {
         let runtime = tokio::runtime::Builder::new_current_thread()
             .enable_all()
@@ -283,80 +309,6 @@ mod tests {
         assert!(server.wait().unwrap().success());
         assert!(client.wait().unwrap().success());
         std::fs::remove_dir_all(directory).unwrap();
-    }
-    #[test]
-    #[ignore = "launchd integration runs on a disposable native macOS runner"]
-    fn launchd_socket_activation_authenticates_production_peer_verifier() {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-        if std::env::var_os("SING_SHELL_TEST_LAUNCHD").is_some() {
-            runtime.block_on(async {
-                let mut channel = super::super::native::daemon().await.unwrap();
-                use tokio::io::AsyncWriteExt;
-                channel.write_all(b"authenticated").await.unwrap();
-            });
-            return;
-        }
-        let directory = std::env::temp_dir().join(format!(
-            "ss-launchd-{}-{}",
-            std::process::id(),
-            crate::logs::now()
-        ));
-        std::fs::create_dir(&directory).unwrap();
-        let endpoint = directory.join("control.sock");
-        let label = format!("com.bgasol.singshell.test.{}", std::process::id());
-        let domain = format!("gui/{}", unsafe { libc::getuid() });
-        let executable = std::env::current_exe().unwrap();
-        let xml = |s: &str| {
-            s.replace('&', "&amp;")
-                .replace('<', "&lt;")
-                .replace('>', "&gt;")
-        };
-        let plist = directory.join("test.plist");
-        std::fs::write(&plist, format!(r#"<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>{label}</string><key>ProgramArguments</key><array><string>{}</string><string>--ignored</string><string>--exact</string><string>platform::authorization::macos::tests::launchd_socket_activation_authenticates_production_peer_verifier</string><string>--nocapture</string></array><key>EnvironmentVariables</key><dict><key>SING_SHELL_TEST_LAUNCHD</key><string>1</string></dict><key>Sockets</key><dict><key>Control</key><dict><key>SockPathName</key><string>{}</string><key>SockType</key><string>stream</string></dict></dict></dict></plist>"#, xml(executable.to_str().unwrap()), xml(endpoint.to_str().unwrap()))).unwrap();
-        let status = std::process::Command::new("/bin/launchctl")
-            .args(["bootstrap", &domain])
-            .arg(&plist)
-            .status()
-            .unwrap();
-        assert!(status.success(), "launchd test job must bootstrap");
-        struct Cleanup(String, PathBuf);
-        impl Drop for Cleanup {
-            fn drop(&mut self) {
-                let _ = std::process::Command::new("/bin/launchctl")
-                    .args(["bootout", &self.0])
-                    .status();
-                let _ = std::fs::remove_dir_all(&self.1);
-            }
-        }
-        let _cleanup = Cleanup(format!("{domain}/{label}"), directory);
-        runtime.block_on(async {
-            let mut stream = tokio::net::UnixStream::connect(&endpoint).await.unwrap();
-            super::super::handshake::bounded(
-                &std::sync::atomic::AtomicBool::new(false),
-                super::super::handshake::ACTIVATION,
-                super::super::handshake::client(&mut stream, |stream| {
-                    let peer = token(stream)?;
-                    assert_ne!(peer[5], 1, "authenticate helper, not launchd");
-                    assert_ne!(peer[5], std::process::id());
-                    verify(stream, peer[5], false)
-                }),
-            )
-            .await
-            .unwrap();
-            use tokio::io::AsyncReadExt;
-            let mut message = [0; 13];
-            tokio::time::timeout(
-                std::time::Duration::from_secs(5),
-                stream.read_exact(&mut message),
-            )
-            .await
-            .unwrap()
-            .unwrap();
-            assert_eq!(&message, b"authenticated");
-        });
     }
     #[test]
     fn inherited_listener_authenticates_accepting_process_after_ready() {

@@ -6,9 +6,6 @@ use crate::{
     settings::{self, SettingsStore, Trial},
 };
 pub mod tunnel;
-pub fn open_network_settings() -> Result<(), String> {
-    crate::platform::authorization::open_settings()
-}
 use serde::{Deserialize, Serialize};
 use std::{
     path::Path,
