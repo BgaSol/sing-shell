@@ -379,6 +379,7 @@ mod tests {
         release.send(()).unwrap();
         tunnel.wait_closed(Duration::from_secs(1)).unwrap();
         assert!(tunnel.client.lock().unwrap().is_none());
+        *tunnel.state.lock().unwrap() = Snapshot::default();
     }
     #[test]
     fn reading_worker_status_does_not_rewrite_or_clean_resources() {

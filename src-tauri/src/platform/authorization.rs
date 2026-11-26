@@ -560,9 +560,19 @@ mod native {
         }))
     }
 }
+#[cfg(not(test))]
+pub use native::connect;
 #[cfg(target_os = "macos")]
 pub use native::daemon;
-pub use native::{connect, elevated, protected_root, worker};
+pub use native::{elevated, protected_root, worker};
+#[cfg(test)]
+pub async fn connect(
+    _root: &Path,
+    _cancel: &AtomicBool,
+    _progress: &impl Fn(Stage),
+) -> Result<Connection, String> {
+    Err("单元测试禁止系统提权，请使用可丢弃运行器的网络集成夹具".into())
+}
 pub fn can_resume() -> bool {
     #[cfg(target_os = "macos")]
     {
