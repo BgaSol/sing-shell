@@ -229,8 +229,8 @@ fn set_restore_core(enabled: bool, app: State<App>) -> Result<serde_json::Value,
 #[tauri::command]
 fn core_snapshot(app: State<App>) -> serde_json::Value {
     let settings = app.store.snapshot();
-    let runtime = app.session.runtime_snapshot();
-    let core = app.session.snapshot_for(&settings, &runtime);
+    let core = app.session.snapshot_for(&settings);
+    let runtime = &core.runtime;
     let settings_value = settings.public();
     serde_json::json!({"settings":settings_value,"runtime":runtime,"runtimeBusy":app.gate.runtime_busy(),"core":core,"logs":app.session.logs(),"storageError":app.store.error,"closing":app.gate.closing()})
 }

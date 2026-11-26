@@ -4,9 +4,62 @@ use std::{
     time::Duration,
 };
 use tokio::io::{AsyncRead, AsyncWrite};
+mod handshake;
+#[cfg(target_os = "macos")]
+mod macos;
 pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
 impl<T: AsyncRead + AsyncWrite + Unpin + Send> Stream for T {}
 pub type Channel = Box<dyn Stream>;
+pub struct Connection {
+    pub channel: Channel,
+    process: Option<Process>,
+}
+enum Process {
+    #[cfg(windows)]
+    Windows(std::os::windows::io::OwnedHandle),
+    #[cfg(unix)]
+    Child(std::process::Child),
+    #[cfg(target_os = "macos")]
+    Mac([u32; 8]),
+}
+impl Connection {
+    // Keep the controller thread (and its owner) alive until the helper really exits.
+    pub async fn finish(self) -> Result<(), String> {
+        let Self {
+            channel,
+            mut process,
+        } = self;
+        drop(channel);
+        while let Some(process) = &mut process {
+            let exited = match process {
+                #[cfg(windows)]
+                Process::Windows(handle) => {
+                    use std::os::windows::io::AsRawHandle;
+                    let mut code = 259;
+                    if unsafe {
+                        windows_sys::Win32::System::Threading::GetExitCodeProcess(
+                            handle.as_raw_handle(),
+                            &mut code,
+                        )
+                    } == 0
+                    {
+                        return Err(std::io::Error::last_os_error().to_string());
+                    }
+                    code != 259
+                }
+                #[cfg(unix)]
+                Process::Child(child) => child.try_wait().map_err(|e| e.to_string())?.is_some(),
+                #[cfg(target_os = "macos")]
+                Process::Mac(token) => macos::exited(token)?,
+            };
+            if exited {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+        Ok(())
+    }
+}
 
 pub fn nonce() -> Result<String, String> {
     let mut bytes = [0u8; 24];
@@ -126,7 +179,7 @@ mod native {
             result
         }
     }
-    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
+    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
         let pipe = PathBuf::from(format!("\\\\.\\pipe\\sing-shell-network-{}", nonce()?));
         let server = crate::instance::network_pipe(&pipe)?;
         let executable = wide(std::env::current_exe().map_err(|e| e.to_string())?);
@@ -176,8 +229,22 @@ mod native {
             return Err("无法核对网络进程身份".into());
         }
         same_executable(&process_path(pid, true)?)?;
-        drop(process);
-        Ok(Box::new(server))
+        let mut server = server;
+        let result = handshake::bounded(
+            cancel,
+            handshake::ACTIVATION,
+            handshake::client(&mut server, |_| Ok(())),
+        )
+        .await;
+        let connection = Connection {
+            channel: Box::new(server),
+            process: process.map(Process::Windows),
+        };
+        if let Err(error) = result {
+            connection.finish().await?;
+            return Err(error);
+        }
+        Ok(connection)
     }
     pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         if !elevated() {
@@ -199,6 +266,13 @@ mod native {
             return Err("网络控制端身份无效".into());
         }
         same_executable(&process_path(pid, false)?)?;
+        let mut client = client;
+        handshake::bounded(
+            &AtomicBool::new(false),
+            Duration::from_secs(3),
+            handshake::server(&mut client),
+        )
+        .await?;
         Ok(Box::new(client))
     }
     pub fn protected_root() -> Result<PathBuf, String> {
@@ -268,25 +342,11 @@ mod native {
         #[cfg(target_os = "linux")]
         let path = std::fs::read_link(format!("/proc/{pid}/exe")).map_err(|e| e.to_string())?;
         #[cfg(target_os = "macos")]
-        let path = {
-            extern "C" {
-                fn proc_pidpath(pid: i32, buffer: *mut std::ffi::c_void, size: u32) -> i32;
-            }
-            let mut buffer = vec![0u8; 4096];
-            let size = unsafe {
-                proc_pidpath(pid as i32, buffer.as_mut_ptr().cast(), buffer.len() as u32)
-            };
-            if size <= 0 {
-                return Err("无法核对网络控制端程序".into());
-            }
-            let length = buffer.iter().position(|b| *b == 0).unwrap_or(size as usize);
-            PathBuf::from(
-                String::from_utf8(buffer[..length].to_vec()).map_err(|_| "程序路径不是 UTF-8")?,
-            )
-        };
+        return super::macos::verify(stream, pid, root);
+        #[cfg(target_os = "linux")]
         same_executable(&path)
     }
-    pub async fn direct_connect(root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
+    pub async fn direct_connect(root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
         let _ = root;
         use std::os::unix::fs::DirBuilderExt;
         let directory = PathBuf::from("/tmp").join(format!(
@@ -329,29 +389,55 @@ mod native {
             .map_err(|e| format!("无法请求系统授权，请安装并启用 polkit：{e}"))?;
         let deadline = tokio::time::Instant::now() + Duration::from_secs(120);
         let stream = loop {
-            tokio::select! {result=listener.accept()=>{break result.map_err(|e|e.to_string())?.0},_=tokio::time::sleep(Duration::from_millis(100))=>{if cancel.load(Ordering::Acquire){let _=child.kill();return Err("网络授权已取消".into());}if child.try_wait().map_err(|e|e.to_string())?.is_some(){return Err("系统未允许网络授权，请重试".into());}if tokio::time::Instant::now()>=deadline{let _=child.kill();return Err("网络授权超时，请重试".into());}}}
+            tokio::select! {result=listener.accept()=>{break result.map_err(|e|e.to_string())?.0},_=tokio::time::sleep(Duration::from_millis(100))=>{if cancel.load(Ordering::Acquire){let _=child.kill();let _=child.wait();return Err("网络授权已取消".into());}if child.try_wait().map_err(|e|e.to_string())?.is_some(){return Err("系统未允许网络授权，请重试".into());}if tokio::time::Instant::now()>=deadline{let _=child.kill();let _=child.wait();return Err("网络授权超时，请重试".into());}}}
         };
-        verify(&stream, None, true)?;
-        Ok(Box::new(stream))
+        let mut stream = stream;
+        let result = handshake::bounded(
+            cancel,
+            handshake::ACTIVATION,
+            handshake::client(&mut stream, |s| verify(s, None, true)),
+        )
+        .await;
+        let connection = Connection {
+            channel: Box::new(stream),
+            process: Some(Process::Child(child)),
+        };
+        if let Err(error) = result {
+            connection.finish().await?;
+            return Err(error);
+        }
+        Ok(connection)
     }
     #[cfg(target_os = "linux")]
-    pub async fn connect(root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
+    pub async fn connect(root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
         direct_connect(root, cancel).await
     }
     #[cfg(target_os = "macos")]
-    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Channel, String> {
+    pub async fn connect(_root: &Path, cancel: &AtomicBool) -> Result<Connection, String> {
         if elevated() {
-            return direct_connect(_root, cancel).await;
+            if std::env::var("SING_SHELL_NETWORK_PREFLIGHT").as_deref() == Ok("1") {
+                return direct_connect(_root, cancel).await;
+            }
+            return Err("请以普通用户运行 Sing Shell，TUN 将单独请求系统授权".into());
         }
         super::macos::ensure_registered()?;
         if cancel.load(Ordering::Acquire) {
             return Err("网络授权已取消".into());
         }
-        let stream = tokio::net::UnixStream::connect(super::macos::SOCKET)
+        let mut stream = tokio::net::UnixStream::connect(super::macos::SOCKET)
             .await
             .map_err(|e| format!("网络授权进程尚未就绪：{e}"))?;
-        verify(&stream, None, true)?;
-        Ok(Box::new(stream))
+        handshake::bounded(
+            cancel,
+            handshake::ACTIVATION,
+            handshake::client(&mut stream, |s| verify(s, None, true)),
+        )
+        .await?;
+        let process = super::macos::token(&stream)?;
+        Ok(Connection {
+            channel: Box::new(stream),
+            process: Some(Process::Mac(process)),
+        })
     }
     pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         if !elevated() {
@@ -362,10 +448,16 @@ mod native {
         if owner.mode() & 0o077 != 0 {
             return Err("网络端点目录权限无效".into());
         }
-        let stream = tokio::net::UnixStream::connect(endpoint)
+        let mut stream = tokio::net::UnixStream::connect(endpoint)
             .await
             .map_err(|e| e.to_string())?;
         verify(&stream, Some(parent), false)?;
+        handshake::bounded(
+            &AtomicBool::new(false),
+            Duration::from_secs(3),
+            handshake::server(&mut stream),
+        )
+        .await?;
         Ok(Box::new(stream))
     }
     #[cfg(target_os = "macos")]
@@ -388,12 +480,28 @@ mod native {
         unsafe { libc::free(fds.cast()) };
         listener.set_nonblocking(true).map_err(|e| e.to_string())?;
         let listener = tokio::net::UnixListener::from_std(listener).map_err(|e| e.to_string())?;
-        let (stream, _) = tokio::time::timeout(Duration::from_secs(60), listener.accept())
-            .await
-            .map_err(|_| "网络授权进程等待超时")?
-            .map_err(|e| e.to_string())?;
-        verify(&stream, None, false)?;
-        Ok(Box::new(stream))
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
+        loop {
+            let (mut stream, _) = tokio::time::timeout_at(deadline, listener.accept())
+                .await
+                .map_err(|_| "网络授权进程等待超时")?
+                .map_err(|e| e.to_string())?;
+            if verify(&stream, None, false).is_err() {
+                continue;
+            }
+            let result = tokio::time::timeout_at(
+                deadline,
+                handshake::bounded(
+                    &AtomicBool::new(false),
+                    Duration::from_secs(3),
+                    handshake::server(&mut stream),
+                ),
+            )
+            .await;
+            if matches!(result, Ok(Ok(()))) {
+                return Ok(Box::new(stream));
+            }
+        }
     }
     pub fn protected_root() -> Result<PathBuf, String> {
         Ok(PathBuf::from(if cfg!(target_os = "macos") {
@@ -520,68 +628,4 @@ pub fn prepare_root() -> Result<PathBuf, String> {
     }
     crate::private_files::directory(&root)?;
     Ok(root)
-}
-#[cfg(target_os = "macos")]
-mod macos {
-    use objc2::{
-        msg_send,
-        rc::{autoreleasepool, Retained},
-        runtime::{AnyClass, AnyObject},
-    };
-    use objc2_foundation::{NSError, NSString};
-    #[link(name = "ServiceManagement", kind = "framework")]
-    extern "C" {}
-    pub const SOCKET: &str = "/var/run/com.bgasol.singshell.network.sock";
-    pub fn open_settings() -> Result<(), String> {
-        let class = AnyClass::get(c"SMAppService").ok_or("当前系统不支持此授权设置")?;
-        unsafe {
-            let _: () = msg_send![class, openSystemSettingsLoginItems];
-        }
-        Ok(())
-    }
-    pub fn already_allowed() -> bool {
-        autoreleasepool(|_| {
-            let Some(class) = AnyClass::get(c"SMAppService") else {
-                return false;
-            };
-            let name = NSString::from_str("com.bgasol.singshell.network.plist");
-            let service: Retained<AnyObject> =
-                unsafe { msg_send![class,daemonServiceWithPlistName:&*name] };
-            let status: usize = unsafe { msg_send![&*service, status] };
-            status == 1
-        })
-    }
-    pub fn ensure_registered() -> Result<(), String> {
-        autoreleasepool(|_| {
-            let class = AnyClass::get(c"SMAppService")
-                .ok_or("TUN 需要 macOS 13 或更高版本；此系统可继续使用原始配置模式")?;
-            let name = NSString::from_str("com.bgasol.singshell.network.plist");
-            let service: Retained<AnyObject> =
-                unsafe { msg_send![class,daemonServiceWithPlistName:&*name] };
-            let status: usize = unsafe { msg_send![&*service, status] };
-            if status == 1 {
-                return Ok(());
-            }
-            if status == 2 {
-                return Err(
-                    "请在系统设置 → 通用 → 登录项与扩展中允许 Sing Shell 网络 helper，再重试连接"
-                        .into(),
-                );
-            }
-            let mut error: *mut NSError = std::ptr::null_mut();
-            let ok: bool = unsafe { msg_send![&*service,registerAndReturnError:&mut error] };
-            let status: usize = unsafe { msg_send![&*service, status] };
-            if status == 2 {
-                return Err(
-                    "请在系统设置 → 通用 → 登录项与扩展中允许 Sing Shell 网络 helper，再重试连接"
-                        .into(),
-                );
-            }
-            if ok && status == 1 {
-                Ok(())
-            } else {
-                Err("无法注册 Sing Shell 网络 helper，请确认应用完整安装在 Applications 目录并重新安装".into())
-            }
-        })
-    }
 }

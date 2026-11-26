@@ -84,24 +84,10 @@ impl SessionService {
         Ok(())
     }
     pub fn snapshot(&self) -> Snapshot {
-        self.snapshot_for(&self.store.snapshot(), &self.runtime.snapshot())
+        self.snapshot_for(&self.store.snapshot())
     }
     pub fn runtime_snapshot(&self) -> runtime::RuntimeSnapshot {
-        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
-            let s = self.tunnel.snapshot();
-            let mut r = s.runtime;
-            r.error = s.error.or(r.error).or(self.runtime.snapshot().error);
-            r.status = match s.phase.as_str() {
-                "authorizing" | "preparing" | "starting" => "starting",
-                "cleanupRequired" => "failed",
-                phase => phase,
-            }
-            .into();
-            r.cleanup_pending = s.phase == "cleanupRequired";
-            r
-        } else {
-            self.runtime.snapshot()
-        }
+        self.snapshot().runtime
     }
     pub fn logs(&self) -> Vec<crate::logs::Log> {
         if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
@@ -110,18 +96,26 @@ impl SessionService {
             self.runtime.logs.snapshot()
         }
     }
-    pub fn snapshot_for(
-        &self,
-        settings: &settings::Settings,
-        _r: &runtime::RuntimeSnapshot,
-    ) -> Snapshot {
-        let actual = self.runtime_snapshot();
+    pub fn snapshot_for(&self, settings: &settings::Settings) -> Snapshot {
+        let generated = settings.profile.mode == crate::profile::Mode::Generated;
+        let tunnel = self.tunnel.status();
+        let mut actual = self.runtime.snapshot();
+        if generated {
+            let local_error = actual.error;
+            actual = tunnel.runtime.clone();
+            actual.error = tunnel.error.clone().or(actual.error).or(local_error);
+            actual.status = match tunnel.phase.as_str() {
+                "authorizing" | "preparing" | "starting" => "starting",
+                "cleanupRequired" => "failed",
+                phase => phase,
+            }
+            .into();
+            actual.cleanup_pending = tunnel.phase == "cleanupRequired";
+        }
         let r = &actual;
         let core = self.engine.snapshot();
         let busy = self.gate.runtime_busy() || self.gate.closing() || !core.initialized;
         let restore = self.intent.lock().unwrap().restore;
-        let generated = settings.profile.mode == crate::profile::Mode::Generated;
-        let tunnel = self.tunnel.snapshot();
         let applied = self.applied.lock().unwrap();
         let desired = settings.profile.selected().map(|node| tunnel::Connection {
             node: node.clone(),
@@ -616,7 +610,10 @@ impl SessionService {
                 || s.startup.last_connection.is_none())
         {
             Some("TUN 自动恢复需要手动确认系统授权，请点击启动；不会在后台反复请求权限".into())
-        } else if s.config_path.is_none() && s.pending_config_path.is_none() {
+        } else if s.profile.mode == crate::profile::Mode::ExternalConfig
+            && s.config_path.is_none()
+            && s.pending_config_path.is_none()
+        {
             Some("自动恢复失败：请先导入配置".into())
         } else if !s.managed() && !self.engine.usable.load(Ordering::Acquire) {
             Some("自动恢复失败：外部核心路径不可用".into())

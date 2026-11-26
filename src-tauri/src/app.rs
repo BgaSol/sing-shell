@@ -174,7 +174,7 @@ impl Admission {
             .any(|(key, a)| *key != id && matches!(a.kind, Kind::Runtime | Kind::Selection))
     }
     pub fn wait_runtime(&self, id: u64) -> Result<(), String> {
-        let deadline = Instant::now() + Duration::from_secs(25);
+        let deadline = Instant::now() + Duration::from_secs(85);
         while self.runtime_other(id) {
             if Instant::now() >= deadline {
                 return Err("核心操作尚未收尾，请重试".into());
@@ -281,7 +281,7 @@ impl Admission {
         self.0.lock().unwrap().closing
     }
     pub fn wait(&self) -> Result<(), String> {
-        let deadline = Instant::now() + Duration::from_secs(25);
+        let deadline = Instant::now() + Duration::from_secs(85);
         while !self.0.lock().unwrap().active.is_empty() {
             if Instant::now() >= deadline {
                 return Err("任务尚未停止，请稍后重试退出".into());
