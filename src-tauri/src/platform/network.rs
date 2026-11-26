@@ -149,21 +149,22 @@ pub fn observe() -> Result<Observation, String> {
         }
         #[cfg(target_os = "macos")]
         {
-            let output = std::process::Command::new("/usr/sbin/netstat")
-                .args(["-rn"])
-                .output()
-                .map_err(|e| e.to_string())?;
-            if !output.status.success() {
-                return Err("无法读取 TUN 路由状态".into());
-            }
-            let routes = String::from_utf8_lossy(&output.stdout);
-            result.routes = routes.lines().any(|l| {
-                l.split_whitespace().any(|part| part == interface_name())
-                    && (l.starts_with("0/1") || l.starts_with("default"))
-            }) && routes.lines().any(|l| {
-                l.split_whitespace().any(|part| part == interface_name())
-                    && (l.starts_with("::/1") || l.starts_with("default"))
-            });
+            let routes = |family: &str| -> Result<bool, String> {
+                let output = std::process::Command::new("/usr/sbin/netstat")
+                    .args(["-rn", "-f", family])
+                    .output()
+                    .map_err(|e| e.to_string())?;
+                if !output.status.success() {
+                    return Err("无法读取 TUN 路由状态".into());
+                }
+                Ok(String::from_utf8_lossy(&output.stdout).lines().any(|line| {
+                    line.split_whitespace().any(|part| part == interface_name())
+                        && line.split_whitespace().next().is_some_and(|destination| {
+                            destination == "default" || destination.ends_with("/1")
+                        })
+                }))
+            };
+            result.routes = routes("inet")? && routes("inet6")?;
         }
     }
     Ok(result)

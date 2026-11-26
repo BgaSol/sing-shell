@@ -396,7 +396,13 @@ impl Worker {
                         return Err("核心已退出，TUN 未建立".into());
                     }
                     if Instant::now() >= deadline {
-                        return Err("未能确认 TUN 接口和 IPv4/IPv6 路由".into());
+                        return Err(format!(
+                            "未能确认 TUN 状态：接口={}，IPv4={}，IPv6={}，路由={}",
+                            observation.interface,
+                            observation.ipv4,
+                            observation.ipv6,
+                            observation.routes
+                        ));
                     }
                     thread::sleep(Duration::from_millis(100));
                 }
