@@ -21,6 +21,10 @@ Sing Shell 使用 Tauri 2 / Rust 与 TypeScript 原生 DOM / Vite。功能合同
 
 `session/tunnel/protocol.rs` 定义闭合业务消息和阶段，`worker.rs` 独占受保护核心准备、运行及清理，tunnel 控制线程独占通道及平台进程所有者。授权握手先由 helper 就绪，再核对对端并双向确认随机会话；macOS 通过 audit token、Security.framework 与运行 CDHash 校验同构建，安装归属检查在平台模块。线程/进程实际结束前不清除所有者；调用超时保留其状态供后续停止。Poll/快照只读，worker 运行循环处理异常退出。
 
+授权启动和安全检查按 Windows／Unix 具体文件组织，进程从创建起归授权会话所有。worker 启动线程返回资源与结果，主循环统一发布状态并清理；macOS 临时 DNS 会话与生成配置纳入相同所有者。`platform/dns` 适配临时解析器，`platform/network` 核对预期地址和路由覆盖，`profile/tun` 提供固定规格与核心能力档。系统查询有时限和输出上限。Windows 安装范围由 `platform/installation` 提供给 updater 与登录项，登录项不拥有升级安装策略。
+
+Tunnel 持有运行占用，覆盖授权、运行及清理待完成状态，RuntimeService 与核心采用共享该事实，避免各失败分支手工复位。实际关闭确认后释放；操作票据结束不代表连接结束。Session 统一阶段到进程兼容状态的投影，运行节点只随真实进程呈现，持久的上次成功连接独立保存。
+
 SessionService 每次采样只读取一份对应模式的运行事实，IPC 外层及托盘使用同一份 runtime、阶段和操作许可。托盘使用包含图像状态的完整 Projection，分别更新变化的菜单、图像及提示，不通过文案或 PID 独立推断连接成功。
 
 ## 设置、缓存与恢复

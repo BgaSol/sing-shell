@@ -50,8 +50,8 @@ Windows 当前用户 Run 登记，保留 StartupApproved 的系统禁用状态�
 
 Windows 使用 UAC 启动同一程序的受限网络 worker，Linux 使用系统 pkexec/polkit；macOS 由系统管理员授权弹窗启动同一程序的短期 worker，断开后退出。macOS 不登记新的 SMAppService 网络服务；包内旧网络 plist 仅用于迁移撤销。应用仍为 ad-hoc 签名、未公证，正式发行证据分别记录系统授权、身份认证、真实 TUN 及未执行范围。
 
-macOS GUI 从 Applications 内的完整安装登记网络服务，helper 与 GUI 必须来自同一安装且运行相同构建。升级前先断开、收束 worker，再由官方 updater 替换 bundle。协议不兼容或旧副本身份失败不会自动注销/登记系统服务；系统要求批准时明确显示实际原因。
+macOS GUI 从 Applications 内的完整安装请求按需网络授权，helper 与 GUI 必须来自同一安装且运行相同构建。升级前先断开、收束 worker 与临时 DNS，再由官方 updater 替换 bundle。协议不兼容或旧副本身份失败不会自动注销/登记系统服务；系统授权、身份和网络就绪错误分别呈现。
 
 每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL COPYING 与 NOTICE；下载的核心不进入应用包。
 
-卸载前停止连接并真正退出；macOS 在系统设置关闭网络 helper 后再删除 app。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。
+卸载前停止连接并真正退出，macOS 当前不保留网络 helper 登记。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。
