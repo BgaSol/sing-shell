@@ -333,6 +333,9 @@ impl Tunnel {
                 break;
             }
             if Instant::now() >= deadline {
+                let mut state = self.state.lock().unwrap();
+                state.phase = Phase::CleanupRequired;
+                state.error = Some("授权进程尚未结束，请重试停止并等待清理".into());
                 return Err("授权进程尚未结束".into());
             }
             thread::sleep(Duration::from_millis(50));

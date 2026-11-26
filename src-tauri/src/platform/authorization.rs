@@ -58,7 +58,8 @@ impl Connection {
                 #[cfg(unix)]
                 Process::Child(child) => child.try_wait().map_err(|e| e.to_string())?.is_some(),
                 #[cfg(target_os = "macos")]
-                Process::Mac(token) => macos::exited(token)?,
+                // An unconfirmed exit must retain the owner; callers have their own deadline.
+                Process::Mac(token) => macos::exited(token).unwrap_or(false),
             };
             if exited {
                 break;
