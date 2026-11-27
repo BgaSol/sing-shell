@@ -66,8 +66,9 @@ let proxy,worker,tcp,udp;
 let logs='';
 try{
   const echo=await echoPair();tcp=echo.tcp;udp=echo.udp;const echoPort=echo.port;
-  const holder=net.createServer();await new Promise(resolve=>holder.listen(0,'127.0.0.1',resolve));const proxyPort=holder.address().port;await new Promise(resolve=>holder.close(resolve));
-  const secondHolder=net.createServer();await new Promise(resolve=>secondHolder.listen(0,'127.0.0.1',resolve));const secondProxyPort=secondHolder.address().port;await new Promise(resolve=>secondHolder.close(resolve));
+  const proxyPairs=[await echoPair(),await echoPair()];
+  const [proxyPort,secondProxyPort]=proxyPairs.map(p=>p.port);
+  for(const pair of proxyPairs)await Promise.all([new Promise(resolve=>pair.tcp.close(resolve)),new Promise(resolve=>pair.udp.close(resolve))]);
   const password='sing-shell-fixture-password';
   const serverConfig={log:{level:'warn'},inbounds:[{type:'shadowsocks',tag:'ss-in',listen:'127.0.0.1',listen_port:proxyPort,method:'aes-128-gcm',password}],outbounds:[{type:'direct',tag:'echo'}],route:{rules:[{ip_cidr:['198.51.100.1/32','2001:db8:198::99/128'],action:'route',outbound:'echo',override_address:'127.0.0.1',override_port:echoPort}],final:'echo'}};
   if(process.platform==='darwin') {
