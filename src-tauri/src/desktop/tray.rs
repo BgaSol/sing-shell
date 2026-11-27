@@ -215,7 +215,15 @@ impl Projection {
         }
     }
     fn tooltip(&self) -> String {
-        format!("Sing Shell · {}", self.status)
+        let text = format!("Sing Shell · {}", self.status);
+        // NOTIFYICONDATAW reserves one of its 128 UTF-16 units for the terminator.
+        let mut units = 0;
+        text.chars()
+            .take_while(|c| {
+                units += c.len_utf16();
+                units <= 127
+            })
+            .collect()
     }
 }
 
@@ -684,6 +692,10 @@ mod tests {
         ));
         let app = Application::open(root.clone(), "0.0.0".into()).unwrap();
         let p = Projection::new(&settings, &app.session.snapshot_for(&settings), false);
+        let mut long = p.clone();
+        long.status = "服务器🦀".repeat(100);
+        assert!(long.tooltip().encode_utf16().count() <= 127);
+        assert!(long.tooltip().starts_with("Sing Shell · "));
         assert_ne!(p.nodes[0].label, p.nodes[1].label);
         assert_ne!(p.nodes[0].id, p.nodes[1].id);
         assert!(!format!("{p:?}").contains("secret"));
