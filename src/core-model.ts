@@ -13,7 +13,7 @@ export function corePresentation(s: Snapshot) {
     ready: s.runtime.pid ? `sing-box ${m.preparedVersion ?? "新版"} 已准备，下次启动生效` : `sing-box ${m.preparedVersion ?? "核心"} 已准备，等待采用`,
     paused: "核心维护已暂停，可明确重试",
     error: s.core.usable ? "更新未完成，当前核心仍可使用" : "核心准备未完成",
-    idle: s.core.usable ? "核心已就绪" : "正在准备核心",
+    idle: s.core.usable ? s.settings.profile.mode === "generated" ? "核心已就绪，首次连接需系统授权" : "核心已就绪" : "正在准备核心",
   } as const)[m.phase];
   if (managed && !busy && m.phase === "idle") {
     if (m.candidate && m.candidate.version !== installed) state = `可更新至 sing-box ${m.candidate.version}`;

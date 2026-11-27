@@ -45,7 +45,7 @@ export function createShell(changed: () => Promise<void>) {
           : ((
               {
                 running: "TUN 运行中",
-                preparing: "正在准备",
+                preparing: c.operation === "installingCore" ? "正在安装核心" : c.operation === "checkingConfig" ? "正在校验配置" : "正在准备",
                 starting: "正在启动",
                 stopping: "正在断开",
                 stopped: "尚未连接",

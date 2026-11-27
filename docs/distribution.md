@@ -57,3 +57,9 @@ macOS GUI 从 Applications 内的完整安装请求按需网络授权，helper �
 每个实际安装包运行生产网络 worker 集成，确认独立官方核心、加密 TCP/UDP IPv4/IPv6 转发和停止后接口释放。包内规则资源包含 SRS、可编辑 JSON、manifest、上游 LICENSE、完整 GPL / CC-BY-SA 许可与 NOTICE；下载的核心不进入应用包。
 
 卸载前停止连接并真正退出，macOS 当前不保留网络 helper 登记。授权目录保留已校验核心与设置外的残留记录，不因卸载猜测删除；确认无连接后管理员可移除 ProgramData/Sing Shell Network、/var/lib/sing-shell-network 或 /Library/Application Support/Sing Shell Network。普通应用更新不修改外部核心。
+
+## 已验证核心渠道
+
+手动运行 core-material.yml 并指定官方 1.14.x 版本：先从官方 API 核对五目标归档及原生程序摘要，使用仅测试构建接受的夹具签名执行五原生 TUN、Fake-IP/TLS 和空受保护目录安装验收。所有目标通过后，发布 job 才能读取 CORE_SIGNING_PRIVATE_KEY，签署生产材料并发布 core-v<版本>/material.json 与 core-channel/recommended.json。这些为 prerelease，不能成为应用最新版本；版本材料拒绝改字节，推荐不自动降级。
+
+核心密钥独立于 TAURI_SIGNING_PRIVATE_KEY；仓库只保留公钥和明确的公开测试密钥，生产构建不包含测试密钥验证入口。签名表示 Sing Shell 已核对官方资产，不代表上游自行提供签名。运行端只需内置公钥，不接受用户公钥、PAT 或任意仓库。密钥轮换通过应用发行完成。

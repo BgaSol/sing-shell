@@ -102,7 +102,9 @@ fn archive(d: &Directory, version: &str) -> (PathBuf, Candidate) {
         asset_id: version.bytes().map(u64::from).sum(),
         tag: format!("v{version}"),
     };
-    (path, c)
+    let envelope =
+        sing_shell::core::material::fixture(&c, Path::new(env!("CARGO_BIN_EXE_core-fixture")));
+    (path, envelope.candidate(version).unwrap())
 }
 fn prepare(core: &TestCore, d: &Directory, version: &str, origin: Origin) {
     let (path, c) = archive(d, version);
@@ -929,7 +931,10 @@ fn release_server(
                 request.push(one[0]);
             }
             let request = String::from_utf8_lossy(&request);
-            let body = if request.contains("matching-refs") {
+            let body = if request.contains("recommended.json") || request.contains("material.json")
+            {
+                c.signature.as_bytes().to_vec()
+            } else if request.contains("matching-refs") {
                 serde_json::json!([{"ref":format!("refs/tags/v{}",c.version)}])
                     .to_string()
                     .into_bytes()

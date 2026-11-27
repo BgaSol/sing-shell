@@ -236,7 +236,15 @@ impl CoreService {
         *self.takeover.lock().unwrap() = None;
         self.usable.store(true, Ordering::Release);
         self.managed.consume_ready();
-        self.notify(format!("sing-box {} 已就绪", p.reference.version));
+        self.notify(format!(
+            "sing-box {} 已就绪{}",
+            p.reference.version,
+            if s.profile.mode == crate::profile::Mode::Generated {
+                "，首次连接需系统授权"
+            } else {
+                ""
+            }
+        ));
         if let Err(e) = self.validate_pending(&op.cancel) {
             *self.config_error.lock().unwrap() = Some(e);
         }

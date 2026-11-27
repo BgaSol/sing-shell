@@ -17,6 +17,16 @@ pub(super) enum Request {
         core_version: String,
         operation_id: u64,
     },
+    CoreBegin {
+        version: String,
+        material: Option<crate::core::material::Envelope>,
+        operation_id: u64,
+    },
+    CoreChunk {
+        offset: u64,
+        bytes: Vec<u8>,
+    },
+    CoreFinish,
     Poll,
     Activity {
         query: crate::activity::Query,
@@ -41,6 +51,7 @@ pub struct Snapshot {
     pub session_id: Option<String>,
     pub running_node: Option<crate::profile::NodeSummary>,
     pub running_connection_options: Option<crate::profile::ConnectionOptions>,
+    pub core_received: Option<u64>,
     pub operation_id: u64,
     pub operation: Option<String>,
     pub operation_error: Option<String>,
@@ -102,6 +113,7 @@ impl Default for Snapshot {
             session_id: None,
             running_node: None,
             running_connection_options: None,
+            core_received: None,
             operation_id: 0,
             operation: None,
             operation_error: None,

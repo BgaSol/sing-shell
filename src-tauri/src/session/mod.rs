@@ -509,6 +509,7 @@ impl SessionService {
             }
             return Err(error);
         }
+        self.tunnel.prepare_core(&input.core_version, &op.cancel)?;
         let expected = if saved.managed.trial.is_some() && allow_core_rollback {
             self.store
                 .core(saved.core_revision, |s| {
@@ -524,6 +525,15 @@ impl SessionService {
             .tunnel
             .start(input.clone(), input.core_version.clone(), &op.cancel);
         if let Err(error) = result {
+            if saved.managed.trial.is_some()
+                && allow_core_rollback
+                && self.tunnel.status().failure != Some(tunnel::Failure::CoreStart)
+            {
+                self.store.core(expected, |s| {
+                    s.managed.trial = Some(Trial::AwaitingStart);
+                    Ok(())
+                })?;
+            }
             if allow_core_rollback
                 && saved.managed.trial.is_some()
                 && self.tunnel.status().failure == Some(tunnel::Failure::CoreStart)

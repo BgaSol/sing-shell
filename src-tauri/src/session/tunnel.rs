@@ -14,6 +14,7 @@ use std::{
 };
 use tokio::io::AsyncReadExt;
 mod cache;
+mod install;
 mod protocol;
 mod worker;
 use protocol::{exchange, read, write, Closed, Request, DISCONNECT_BUDGET, STOP_BUDGET};
@@ -82,6 +83,7 @@ impl Tunnel {
             operation_error: state.operation_error.clone(),
             activity_summary: state.activity_summary.clone(),
             activity_page: None,
+            core_received: state.core_received,
         }
     }
     fn request(&self, request: Request) -> Result<(), String> {
@@ -165,6 +167,35 @@ impl Tunnel {
                                 {
                                     return Err("连接已取消".into());
                                 }
+                                if let Request::CoreBegin {
+                                    version,
+                                    material,
+                                    operation_id,
+                                } = &request
+                                {
+                                    let result = install::provision(
+                                        channel,
+                                        &root,
+                                        version,
+                                        material.clone(),
+                                        &actor_signal,
+                                        &state,
+                                        *operation_id,
+                                    )
+                                    .await;
+                                    let mut snapshot = state.lock().unwrap();
+                                    snapshot.operation_id = *operation_id;
+                                    snapshot.operation = None;
+                                    snapshot.operation_error = result.as_ref().err().cloned();
+                                    snapshot.error = result.err();
+                                    if snapshot.error.is_some() {
+                                        snapshot.failure = Some(Failure::Preparation);
+                                        if snapshot.runtime.pid.is_none() {
+                                            snapshot.phase = Phase::Failed;
+                                        }
+                                    }
+                                    continue;
+                                }
                                 let quit = matches!(request, Request::Quit);
                                 let snapshot = exchange(channel, &request).await?;
                                 if !snapshot.logs.is_empty() {
@@ -227,6 +258,38 @@ impl Tunnel {
             });
         }
         Ok(())
+    }
+    pub fn prepare_core(&self, version: &str, cancel: &AtomicBool) -> Result<(), String> {
+        let operation_id = self.next.fetch_add(1, Ordering::AcqRel) + 1;
+        self.request(Request::CoreBegin {
+            version: version.into(),
+            material: install::material_for(&self.root, version),
+            operation_id,
+        })?;
+        let deadline = Instant::now() + Duration::from_secs(150);
+        loop {
+            if cancel.load(Ordering::Acquire) {
+                self.stop()?;
+                return Err("核心安装已取消".into());
+            }
+            let snapshot = self.snapshot();
+            if snapshot.operation_id == operation_id && snapshot.operation.is_none() {
+                return snapshot
+                    .operation_error
+                    .or(snapshot.error)
+                    .map_or(Ok(()), Err);
+            }
+            if snapshot.phase == Phase::CleanupRequired
+                || (snapshot.phase == Phase::Failed && snapshot.operation_id != operation_id)
+            {
+                return Err(snapshot.error.unwrap_or("核心准备失败".into()));
+            }
+            if Instant::now() >= deadline {
+                self.stop()?;
+                return Err("核心安装超时".into());
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
     }
     pub fn start(
         &self,
@@ -584,6 +647,53 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                         core_version,
                         operation_id,
                     } => worker.start(input, core_version, operation_id),
+                    Request::CoreBegin {
+                        version,
+                        material,
+                        operation_id,
+                    } => {
+                        if worker.snapshot().operation.is_some() {
+                            Err("已有连接操作".into())
+                        } else {
+                            worker.transfer.take();
+                            {
+                                let mut state = worker.state.lock().unwrap();
+                                state.error = None;
+                                state.operation_error = None;
+                                state.failure = None;
+                                state.operation_id = operation_id;
+                                if state.runtime.pid.is_none() {
+                                    state.phase = Phase::Preparing;
+                                }
+                            }
+                            match material {
+                                Some(material) => install::Transfer::begin(
+                                    &worker.root,
+                                    &version,
+                                    material,
+                                    &worker.runtime,
+                                )
+                                .map(|transfer| worker.transfer = transfer),
+                                None => install::existing(
+                                    &worker.root,
+                                    &version,
+                                    &worker.runtime,
+                                    &AtomicBool::new(false),
+                                )
+                                .map(|_| ()),
+                            }
+                        }
+                    }
+                    Request::CoreChunk { offset, bytes } => worker
+                        .transfer
+                        .as_mut()
+                        .ok_or("没有活动核心传输".to_string())
+                        .and_then(|t| t.chunk(offset, &bytes)),
+                    Request::CoreFinish => worker
+                        .transfer
+                        .take()
+                        .ok_or("没有活动核心传输".to_string())
+                        .and_then(|t| t.finish(&worker.root, &worker.runtime)),
                     Request::Poll | Request::Activity { .. } | Request::Logs { .. } => Ok(()),
                     Request::Stop | Request::Quit => worker.stop(),
                 };
@@ -716,6 +826,8 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
         #[serde(default)]
         options: crate::profile::ConnectionOptions,
         core_version: String,
+        core_program: Option<PathBuf>,
+        material: Option<crate::core::material::Envelope>,
         control: PathBuf,
     }
     let input: Input = serde_json::from_slice(&std::fs::read(file).map_err(|e| e.to_string())?)
@@ -725,6 +837,36 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
         input.control.join("app"),
         "0.0.0".into(),
     )?);
+    if let (Some(program), Some(envelope)) = (&input.core_program, &input.material) {
+        crate::core::material::program(
+            envelope,
+            &input.core_version,
+            program,
+            &AtomicBool::new(false),
+        )?;
+        let reference = crate::settings::ManagedRef {
+            version: input.core_version.clone(),
+            target: crate::TARGET.into(),
+            hash: Some(crate::core::package::hash(program)?),
+            source: Some(envelope.candidate(&input.core_version)?),
+        };
+        let destination = crate::settings::managed_path(&application.store.root, &reference)?;
+        crate::private_files::directory(destination.parent().unwrap())?;
+        std::fs::copy(program, &destination).map_err(|e| e.to_string())?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&destination, std::fs::Permissions::from_mode(0o700))
+                .map_err(|e| e.to_string())?;
+        }
+        application
+            .store
+            .core(application.store.snapshot().core_revision, |s| {
+                s.managed.active = Some(reference);
+                s.update_preferences.automatic_core = false;
+                Ok(())
+            })?;
+    }
     application.session.initialize()?;
     if !application.core.snapshot().usable {
         application
@@ -826,7 +968,11 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
                     .map_err(|e| e.to_string())?;
             std::fs::remove_file(command).map_err(|e| e.to_string())?;
             let result = if request.id == 1 {
-                tunnel.start(request.input.clone(), request.input.core_version, &cancel)
+                tunnel
+                    .prepare_core(&request.input.core_version, &cancel)
+                    .and_then(|_| {
+                        tunnel.start(request.input.clone(), request.input.core_version, &cancel)
+                    })
             } else {
                 let id = import_node(&application, &request.input.node)?;
                 application.profiles.routing(

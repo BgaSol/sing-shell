@@ -28,11 +28,15 @@ function appimageSmoke(executable,label,expected=version,env={}){run(process.exe
 function driverInput(manifest,root,executable,data,verifyOnly,currentVersion=version){const update=updater(manifest);const name=path.join(directory,`driver-${verifyOnly?'verify':'install'}-${manifest.version}.json`);fs.writeFileSync(name,JSON.stringify({root:data,executable,package:path.join(root,update.name),signature:fs.readFileSync(path.join(root,update.name+'.sig'),'utf8').trim(),current:verifyOnly?'0.0.1':currentVersion,version:manifest.version,verifyOnly}));return name;}
 function verifySignature(manifest,root){run(driver,[driverInput(manifest,root,driver,directory,true)]);}
 let official,officialArchive;
+const networkCores={};
 function networkPackage(executable,label){
-  const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:official,APPIMAGE_EXTRACT_AND_RUN:'1'};
-  if(process.platform==='win32')run(process.execPath,['scripts/network-integration.mjs',target],env);
-  else run('sudo',['-E',process.execPath,'scripts/network-integration.mjs',target],env);
-  const result=JSON.parse(fs.readFileSync(path.join('artifacts/network-preflight',target,'integration-report.json')));assert.equal(result.passed,true);report.networkIntegration=result;report.verified.push(label);
+  report.networkVersions??=[];
+  for(const [coreVersion,core] of Object.entries(networkCores)){
+    const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:core,CORE_VERSION:coreVersion,APPIMAGE_EXTRACT_AND_RUN:'1'};
+    if(process.platform==='win32')run(process.execPath,['scripts/network-integration.mjs',target],env);
+    else run('sudo',['-E',process.execPath,'scripts/network-integration.mjs',target],env);
+    const result=JSON.parse(fs.readFileSync(path.join('artifacts/network-preflight',target,'integration-report.json')));assert.equal(result.passed,true);assert.equal(result.freshProtectedInstall,true);report.networkIntegration=result;report.networkVersions.push(result);report.verified.push(label+' sing-box '+coreVersion);
+  }
 }
 function ruleResources(root){
   const entries=fs.readdirSync(root,{recursive:true,withFileTypes:true});
@@ -134,6 +138,11 @@ try{
   const expected={'windows-amd64':'99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df','windows-arm64':'8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae','linux-amd64':'699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968','linux-arm64':'436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26','darwin-arm64':'0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838'}[`${platform}-${arch}`];
   run('gh',['release','download',`v${coreVersion}`,'--repo','SagerNet/sing-box','--pattern',archive,'--dir',directory]);const coreArchive=path.join(directory,archive);officialArchive=coreArchive;assert.equal(hash(coreArchive),expected);run('tar',['-xf',coreArchive,'-C',directory]);official=path.join(directory,upstream,process.platform==='win32'?'sing-box.exe':'sing-box');verifyBinary(official,target);
   run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','real_core','--','--ignored'],{SING_SHELL_TEST_CORE:official,SING_SHELL_TEST_ARCHIVE:coreArchive});run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','managed_core']);run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','profile','--','--include-ignored'],{SING_SHELL_TEST_CORE:official});run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','rules','--','--include-ignored'],{SING_SHELL_TEST_CORE:official});run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--locked','--features','test-fixtures','--test','fakeip','--','--ignored'],{SING_SHELL_TEST_CORE:official});report.verified.push('production Fake-IP DNS, real IPv4 verified TLS, IPv6 node bootstrap and persistent reconnect mapping');report.verified.push('same-source managed core automation, compatibility, cancellation, rollback and crash recovery integration');report.officialCore={version:coreVersion,archive,sha256:expected};report.verified.push('official sing-box SOCKS5 roundtrip, stop, managed preparation, config compatibility and tamper rejection');
+  networkCores['1.14.4']=official;
+  const material=JSON.parse(Buffer.from(JSON.parse(fs.readFileSync('src-tauri/resources/cores/1.14.5.json')).payload,'base64'));
+  const newer='sing-box-1.14.5-'+platform+'-'+arch,newerArchive=newer+'.'+(process.platform==='win32'?'zip':'tar.gz');
+  run('gh',['release','download','v1.14.5','--repo','SagerNet/sing-box','--pattern',newerArchive,'--dir',directory]);assert.equal(hash(path.join(directory,newerArchive)),material.platforms[target].archiveSha256);run('tar',['-xf',path.join(directory,newerArchive),'-C',directory]);networkCores['1.14.5']=path.join(directory,newer,process.platform==='win32'?'sing-box.exe':'sing-box');
+  run('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--features','test-fixtures','--locked','--lib','first_install_is_offline','--','--ignored'],{SING_SHELL_TEST_CORE:networkCores['1.14.5'],CORE_VERSION:'1.14.5'});
   publishedUpgrade('0.5.4');
   publishedUpgrade('0.6.0');
   if(process.platform==='win32'){

@@ -89,3 +89,9 @@ SING_SHELL_TEST_CORE 指向官方 1.14.4 后，执行 cargo test --manifest-path
 Native TUN Preflight 的 scripts/fakeip-check.mjs 在五原生运行器显式运行此测试，报告独立于基础 TCP/UDP 预检；实际包验收也运行同源测试。受控 TUN 另外核对系统解析得到 Fake-IP、候选替换后的映射和 IPv4 兼容实际状态及 IPv6 拒绝。未覆盖的真实节点、独立 DoH/ECH、物理切网和缓存池回绕长跑需按发行记录写明。
 
 真实网络夹具地址已移到 198.51.100.* / 203.0.113.*，避免与 198.18.0.0/15 Fake-IP 池冲突。
+
+## 离线受保护核心安装回归
+
+设置 SING_SHELL_TEST_CORE 和 CORE_VERSION 后显式运行 cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --lib first_install_is_offline -- --ignored，验证完整本地分块安装、来源复核、损坏拒绝及中断清理；不改变系统网络。核心材料测试另确认已批准版本的获取和 recheck 不发出 HTTP 请求。默认 Rust 测试仍明确跳过需要官方程序的项。
+
+原生网络与实际包验收从空受保护版本目录开始，通过认证通道上传已验签程序；实际包分别验证 1.14.4 与 1.14.5。清空版本目录只允许可丢弃 GitHub Actions 运行器，不用于维护者电脑。原始配置旧格式与核心恢复升级基线继续验证 1.14.4。

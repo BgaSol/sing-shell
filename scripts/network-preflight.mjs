@@ -12,7 +12,7 @@ import {echoPair} from './network-echo.mjs';
 assert.equal(process.env.SING_SHELL_NETWORK_PREFLIGHT, '1', 'explicit isolated network preflight required');
 const target = process.argv[2];
 assert.ok(target, 'native target required');
-const version = '1.14.4';
+const version = process.env.CORE_VERSION??'1.14.4';
 const platform = process.platform;
 assert.equal(target.startsWith('aarch64-'), process.arch === 'arm64', 'native architecture required');
 const suffix = platform === 'win32' ? `windows-${process.arch === 'arm64' ? 'arm64' : 'amd64'}.zip` : platform === 'darwin' ? 'darwin-arm64.tar.gz' : `linux-${process.arch === 'arm64' ? 'arm64' : 'amd64'}.tar.gz`;

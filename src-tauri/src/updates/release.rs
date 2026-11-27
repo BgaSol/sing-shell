@@ -35,7 +35,6 @@ struct Release {
     draft: bool,
     prerelease: bool,
     assets: Vec<Asset>,
-    body: Option<String>,
     html_url: String,
 }
 #[derive(Deserialize)]
@@ -44,8 +43,6 @@ struct Asset {
     name: String,
     browser_download_url: String,
     size: u64,
-    #[serde(default)]
-    digest: Option<String>,
 }
 #[derive(Deserialize)]
 struct Manifest {
@@ -101,25 +98,7 @@ pub fn validate_engine(c: &Candidate) -> Result<(), String> {
     Ok(())
 }
 pub fn engine_version(transport: &Transport, version: &str) -> Result<Candidate, String> {
-    stable(version)?;
-    let client = transport.clone().only_endpoint(None)?;
-    // The shipped bootstrap version keeps its upstream digest even when GitHub's API is rate limited.
-    let release: Release = if version == "1.14.4" {
-        serde_json::from_str(include_str!("../../resources/core-1.14.4.json"))
-            .map_err(|_| "包内官方核心来源记录无效")?
-    } else {
-        client.json(
-            &format!("https://api.github.com/repos/SagerNet/sing-box/releases/tags/v{version}"),
-            RequestKind::Api,
-            ACCEPT,
-        )?
-    };
-    if release.draft || release.prerelease || release.tag_name != format!("v{version}") {
-        return Err("核心发行状态不符".into());
-    }
-    let c = candidate(&client, Component::Engine, version, release)?;
-    validate_engine(&c)?;
-    Ok(c)
+    crate::core::material::version(transport, version)
 }
 
 pub fn discover(
@@ -127,17 +106,11 @@ pub fn discover(
     component: Component,
     current: &str,
 ) -> Result<Option<Candidate>, String> {
-    let repository = if component == Component::App {
-        REPOSITORY
-    } else {
-        "SagerNet/sing-box"
-    };
-    // Upstream digest metadata must originate from GitHub, not a mirror controlling the bytes.
-    let client = if component == Component::Engine {
-        transport.clone().only_endpoint(None)?
-    } else {
-        transport.clone()
-    };
+    if component == Component::Engine {
+        return crate::core::material::discover(transport, current);
+    }
+    let repository = REPOSITORY;
+    let client = transport.clone();
     let refs: Vec<TagRef> = client.json(
         &format!("https://api.github.com/repos/{repository}/git/matching-refs/tags/v"),
         RequestKind::Api,
@@ -179,7 +152,7 @@ fn candidate(
     version: &str,
     release: Release,
 ) -> Result<Candidate, String> {
-    let (asset, signature, sha256, notes) = if component == Component::App {
+    let (asset, signature, sha256, notes) = {
         let manifest_asset = release
             .assets
             .iter()
@@ -207,29 +180,11 @@ fn candidate(
             .find(|a| a.browser_download_url == p.url && a.size == p.size)
             .ok_or("更新包不属于此正式发行或大小不符")?;
         (asset, p.signature.clone(), p.sha256.clone(), manifest.notes)
-    } else {
-        let name = engine_asset(version, crate::TARGET)?;
-        let asset = release
-            .assets
-            .iter()
-            .find(|a| a.name == name)
-            .ok_or("最新正式发行缺少本机原生 sing-box 包")?;
-        (
-            asset,
-            String::new(),
-            digest(asset.digest.as_deref().ok_or("上游发行没有资产摘要")?)?.into(),
-            release.body.clone().unwrap_or_default(),
-        )
     };
     client.validate_url(&asset.browser_download_url)?;
     if !asset.browser_download_url.starts_with(&format!(
         "https://github.com/{}/releases/download/{}/",
-        if component == Component::App {
-            REPOSITORY
-        } else {
-            "SagerNet/sing-box"
-        },
-        release.tag_name
+        REPOSITORY, release.tag_name
     )) {
         return Err("更新包来源不符".into());
     }
@@ -252,22 +207,12 @@ fn candidate(
     })
 }
 pub fn recheck(client: &Transport, cached: &Candidate) -> Result<(), String> {
-    if cached.component == Component::Engine
-        && cached.version == "1.14.4"
-        && *cached == engine_version(client, "1.14.4")?
-    {
+    if cached.component == Component::Engine {
+        crate::core::material::for_candidate(cached)?;
         return Ok(());
     }
-    let client = if cached.component == Component::Engine {
-        client.clone().only_endpoint(None)?
-    } else {
-        client.clone()
-    };
-    let repository = if cached.component == Component::App {
-        REPOSITORY
-    } else {
-        "SagerNet/sing-box"
-    };
+    let client = client.clone();
+    let repository = REPOSITORY;
     let release: Release = client.json(
         &format!(
             "https://api.github.com/repos/{repository}/releases/tags/{}",

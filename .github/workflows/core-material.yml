@@ -1,0 +1,116 @@
+name: Verify and publish official core material
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Official stable sing-box 1.14.x version
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sing-shell-core-material
+  cancel-in-progress: false
+env:
+  CORE_VERSION: ${{ inputs.version }}
+jobs:
+  collect:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - id: matrix
+        run: node scripts/ci-matrix.mjs
+      - name: Collect upstream identity and program bytes without the production key
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CORE_MATERIAL_UNSIGNED: '1'
+        run: node scripts/core-material.mjs "$CORE_VERSION" artifacts/core-material.json
+      - name: Sign the isolated native test candidate with the public fixture key
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; import {createPrivateKey} from 'node:crypto'; import {signedMaterial} from './scripts/core-material.mjs'; const data=JSON.parse(fs.readFileSync('artifacts/core-material.json')); const key=createPrivateKey({key:fs.readFileSync('src-tauri/tests/fixtures/material/key.der'),format:'der',type:'pkcs8'}); fs.writeFileSync('artifacts/core-candidate.json',JSON.stringify(signedMaterial(data,key)));"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-core-material
+          path: |
+            artifacts/core-material.json
+            artifacts/core-candidate.json
+  native:
+    needs: collect
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.collect.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    env:
+      CORE_MATERIAL: artifacts/core-candidate.json
+      SING_SHELL_NETWORK_PREFLIGHT: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v5
+        with:
+          name: unsigned-core-material
+          path: artifacts
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+        with:
+          workspaces: src-tauri -> target
+      - if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf
+      - run: npm ci
+      - run: npm run web:build
+      - run: cargo build --release --manifest-path src-tauri/Cargo.toml --features test-fixtures --bin network-fixture --locked
+      - if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/network-preflight.mjs ${{ matrix.target }}
+      - if: runner.os != 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: sudo -E "$(which node)" scripts/network-preflight.mjs ${{ matrix.target }}
+      - run: node scripts/fakeip-check.mjs ${{ matrix.target }}
+      - if: runner.os == 'Windows'
+        run: node scripts/network-integration.mjs ${{ matrix.target }}
+      - if: runner.os != 'Windows'
+        run: sudo -E "$(which node)" scripts/network-integration.mjs ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: network-preflight-${{ matrix.target }}
+          path: |
+            artifacts/network-preflight/**/*report.json
+            fakeip-*-report.json
+  publish:
+    needs: [collect, native]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v5
+        with:
+          name: unsigned-core-material
+          path: artifacts
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: network-preflight-*
+          path: artifacts/reports
+      - name: Sign and publish only after every native check passes
+        env:
+          CORE_SIGNING_PRIVATE_KEY: ${{ secrets.CORE_SIGNING_PRIVATE_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/publish-core.mjs artifacts/core-material.json artifacts/reports

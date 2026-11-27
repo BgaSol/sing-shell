@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
-const VERSION: u32 = 4;
+const VERSION: u32 = 5;
 const LIMIT: usize = 1024;
 pub const ACTIVATION: Duration = Duration::from_secs(15);
 

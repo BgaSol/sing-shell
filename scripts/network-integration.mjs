@@ -15,7 +15,8 @@ const target=process.argv[2],directory=path.resolve('artifacts/network-preflight
 await fs.mkdir(directory,{recursive:true});
 const suffix=process.platform==='win32'?'.exe':'';
 const executable=process.env.SING_SHELL_NETWORK_EXECUTABLE??path.resolve(`src-tauri/target/release/network-fixture${suffix}`);
-const core=process.env.SING_SHELL_NETWORK_CORE??path.join(directory,`sing-box-1.14.4-${process.platform==='win32'?'windows':process.platform==='darwin'?'darwin':'linux'}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${suffix}`);
+const coreVersion=process.env.CORE_VERSION??'1.14.4';
+const core=process.env.SING_SHELL_NETWORK_CORE??path.join(directory,`sing-box-${coreVersion}-${process.platform==='win32'?'windows':process.platform==='darwin'?'darwin':'linux'}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${suffix}`);
 const report={target,passed:false,verified:[],skipped:['interactive UAC/polkit approval','macOS administrator authorization dialog','suspend and physical network switching']};
 if(approvedMac)report.skipped=['interactive UAC/polkit approval (other platforms)','controller/core/helper crash injection on the user Mac; covered on disposable native runners','suspend and physical network switching'];
 const timeout=setTimeout(async()=>{report.error='integration deadline exceeded';report.log=logs.slice(-32768);if(worker)worker.kill();if(proxy)proxy.kill();await fs.writeFile(path.join(directory,'integration-report.json'),JSON.stringify(report,null,2));console.error(JSON.stringify(report));process.exit(1);},240_000);
@@ -80,7 +81,7 @@ try{
   serverConfig.inbounds.push({...serverConfig.inbounds[0],tag:'ss-second',listen_port:secondProxyPort});
   const config=path.join(directory,'proxy-server.json');await fs.writeFile(config,JSON.stringify(serverConfig));
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
-  const input={node:{tags:[],id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultExit:'direct',policies:[{id:'github',name:'GitHub',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}},{id:'echo',name:'Echo',enabled:true,exit:'proxy',match:{kind:'custom',domains:[],ipCidrs:['198.51.100.1/32','2001:db8:198::99/128']}}]},coreVersion:'1.14.4',control};
+  const input={node:{tags:[],id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultExit:'direct',policies:[{id:'github',name:'GitHub',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}},{id:'echo',name:'Echo',enabled:true,exit:'proxy',match:{kind:'custom',domains:[],ipCidrs:['198.51.100.1/32','2001:db8:198::99/128']}}]},coreVersion,coreProgram:core,material:JSON.parse(await fs.readFile(process.env.CORE_MATERIAL??`src-tauri/resources/cores/${coreVersion}.json`)),control};
   input.routing.policies.push({id:'dns-domain',name:'DNS domain',enabled:true,exit:'proxy',match:{kind:'custom',domains:[{value:'example.com',includeSubdomains:true}],ipCidrs:[]}});
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
@@ -90,10 +91,21 @@ try{
     worker=spawn(command,args,{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});worker.stderr.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});
     return Promise.race([waitFile('started.json'),new Promise((_,reject)=>{worker.once('error',reject);worker.once('exit',code=>reject(Error(`worker exited ${code}: ${logs}`)));})]);
   }
+  const protectedRoot=process.platform==='win32'?path.join(process.env.ProgramData,'Sing Shell Network'):process.platform==='darwin'?'/Library/Application Support/Sing Shell Network':'/var/lib/sing-shell-network';
+  if(!approvedMac){
+    assert.equal(process.env.GITHUB_ACTIONS,'true','fresh install cleanup only on disposable Actions runners');
+    for(const relative of [`trusted-${coreVersion}.json`,`engines/sing-box/${coreVersion}`]){
+      const targetPath=path.resolve(protectedRoot,relative);assert.ok(targetPath.startsWith(path.resolve(protectedRoot)+path.sep));
+      await fs.rm(targetPath,{recursive:true,force:true});
+    }
+    report.freshProtectedInstall=true;
+  }
   console.log('Waiting for authorized worker to prepare the official core and TUN');
   const started=await launch();
   console.log('Authorized TUN running; verifying selected-node traffic');
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
+  report.coreVersion=coreVersion;
+  if(!approvedMac)assert.ok((await fs.stat(path.join(protectedRoot,`trusted-${coreVersion}.json`))).isFile());
   report.verified.push('production network worker authenticates control channel and independently verifies official core','typed node and routing become checked private TUN config','native interface and IPv4/IPv6 routes are confirmed');
   for(const address of ['198.51.100.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);report.verified.push(`TCP and UDP ${net.isIP(address)===6?'IPv6':'IPv4'} forwarded through selected encrypted Shadowsocks node`);}
   const fakeName=`sing-shell-${Date.now()}.example.com`;

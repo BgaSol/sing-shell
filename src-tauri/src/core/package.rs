@@ -275,6 +275,14 @@ pub fn prepare(
     let result = (|| {
         unpack(archive, &staging, cfg!(windows), cancel)?;
         verify_binary(&staging, crate::TARGET)?;
+        if !candidate.signature.is_empty() {
+            super::material::program(
+                &super::material::for_candidate(candidate)?,
+                &candidate.version,
+                &staging,
+                cancel,
+            )?;
+        }
         if runtime.probe(&staging, cancel)? != reference.version {
             return Err(PrepareError::Invalid("核心版本与候选不符".into()));
         }
@@ -299,6 +307,18 @@ pub fn verify_path(
 ) -> Result<(), String> {
     reference.validate()?;
     verify_binary(path, crate::TARGET)?;
+    if let Some(candidate) = reference
+        .source
+        .as_ref()
+        .filter(|c| !c.signature.is_empty())
+    {
+        super::material::program(
+            &super::material::for_candidate(candidate)?,
+            &reference.version,
+            path,
+            cancel,
+        )?;
+    }
     if let Some(hash) = &reference.hash {
         if hash_cancel(path, cancel)? != *hash {
             return Err("受管核心已损坏或被修改".into());

@@ -1,6 +1,7 @@
 mod adoption;
 pub use adoption::Adoption;
 pub mod managed;
+pub mod material;
 pub mod package;
 use crate::{
     app::{Admission, Kind, Operation, Receipt},
@@ -228,7 +229,23 @@ impl CoreService {
         self.initialized.store(true, Ordering::Release);
     }
     pub fn verify(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
-        package::verify(&self.store.root, &self.runtime, reference, cancel)
+        package::verify(&self.store.root, &self.runtime, reference, cancel)?;
+        if self.store.snapshot().profile.mode == crate::profile::Mode::Generated {
+            let envelope = reference
+                .source
+                .as_ref()
+                .map(material::for_candidate)
+                .transpose()?
+                .or_else(|| material::bundled(&reference.version))
+                .ok_or("当前版本缺少离线安装材料，请重试准备核心")?;
+            material::program(
+                &envelope,
+                &reference.version,
+                &settings::managed_path(&self.store.root, reference)?,
+                cancel,
+            )?;
+        }
+        Ok(())
     }
     fn compatible(&self, reference: &ManagedRef, cancel: &AtomicBool) -> Result<(), String> {
         self.verify(reference, cancel)?;
@@ -545,7 +562,13 @@ impl CoreService {
         let s = self.store.snapshot();
         if required {
             if let Some(r) = s.managed.active.as_ref() {
-                let c = release::engine_version(t, &r.version).map_err(FetchError::Network)?;
+                let c = match r.source.as_ref() {
+                    Some(source) if !source.signature.is_empty() => {
+                        material::for_candidate(source).and_then(|e| e.candidate(&r.version))
+                    }
+                    _ => release::engine_version(t, &r.version),
+                }
+                .map_err(FetchError::Network)?;
                 if r.source.as_ref().is_some_and(|old| !same_asset(old, &c)) {
                     return Err(FetchError::Conflict(
                         "已选版本的官方资产发生变化，请明确处理".into(),
@@ -554,7 +577,7 @@ impl CoreService {
                 return Ok(Some(c));
             }
             if s.profile.mode == crate::profile::Mode::Generated {
-                return release::engine_version(t, "1.14.4")
+                return release::engine_version(t, material::BASELINE)
                     .map(Some)
                     .map_err(FetchError::Network);
             }
@@ -637,7 +660,9 @@ impl CoreService {
             let candidate = if manual == Some(Maintenance::Retry) && s.managed.active.is_none() {
                 if let Some(cached) = self.managed.snapshot().candidate {
                     release::validate_engine(&cached).map_err(FetchError::Package)?;
-                    let fresh = release::engine_version(&t, &cached.version)
+                    let fresh = material::for_candidate(&cached)
+                        .and_then(|e| e.candidate(&cached.version))
+                        .or_else(|_| release::engine_version(&t, &cached.version))
                         .map_err(FetchError::Network)?;
                     if !same_asset(&cached, &fresh) {
                         return Err(FetchError::Conflict(

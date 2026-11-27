@@ -35,6 +35,7 @@ struct Prepared {
 }
 pub(super) struct Worker {
     pub(super) root: PathBuf,
+    pub(super) transfer: Option<super::install::Transfer>,
     owner_key: String,
     pub(super) runtime: Arc<RuntimeService>,
     pub(super) state: Arc<Mutex<Snapshot>>,
@@ -54,6 +55,7 @@ impl Worker {
                 ..Default::default()
             },
             root,
+            transfer: None,
             owner_key,
             runtime: Arc::new(Default::default()),
             state: Arc::new(Mutex::new(Snapshot::default())),
@@ -84,6 +86,7 @@ impl Worker {
         } else {
             None
         };
+        s.core_received = self.transfer.as_ref().map(|t| t.received);
         s.logs.clear();
         s.activity_summary = self
             .collector
@@ -221,6 +224,7 @@ impl Worker {
             }
         }
         self.start = Some(thread::spawn(move || {
+            state.lock().unwrap().operation = Some("checkingConfig".into());
             let prepared = prepare(&root, &owner_key, input, &cancel);
             let candidate = match prepared {
                 Ok(v) => v,
@@ -332,6 +336,7 @@ impl Worker {
         Ok(())
     }
     pub(super) fn stop(&mut self) -> Result<(), String> {
+        self.transfer.take();
         self.cancel.store(true, Ordering::Release);
         self.state.lock().unwrap().phase = Phase::Stopping;
         let deadline = Instant::now() + Duration::from_secs(30);
@@ -590,54 +595,7 @@ fn trusted_core(
     runtime: &RuntimeService,
     cancel: &Arc<AtomicBool>,
 ) -> Result<PathBuf, String> {
-    crate::profile::tun::require_version(version)?;
-    let record = root.join(format!("trusted-{version}.json"));
-    if let Ok(bytes) = std::fs::read(&record) {
-        let reference: crate::settings::ManagedRef =
-            serde_json::from_slice(&bytes).map_err(|_| "受保护核心记录损坏")?;
-        if reference.version != version || reference.source.is_none() {
-            return Err("受保护核心来源无效".into());
-        }
-        crate::core::package::verify(root, runtime, &reference, cancel)?;
-        return crate::settings::managed_path(root, &reference);
-    }
-    let mut preferences = crate::updates::network::Preferences::default();
-    preferences.fallback_enabled = false;
-    let client =
-        crate::updates::network::Transport::new(preferences, Arc::new(Default::default()))?
-            .observed(Arc::new(|_| {}), {
-                let cancel = cancel.clone();
-                Arc::new(move || cancel.load(Ordering::Acquire))
-            });
-    let candidate = crate::updates::release::engine_version(&client, version)?;
-    let archive = root.join(format!("official-{version}.archive"));
-    client
-        .download_result(
-            &candidate.url,
-            &archive,
-            |_, _| {},
-            |path, hash| {
-                if hash != candidate.sha256
-                    || std::fs::metadata(path)
-                        .map_err(|e| crate::updates::network::Error::Local(e.to_string()))?
-                        .len()
-                        != candidate.size
-                {
-                    return Err(crate::updates::network::Error::remote(
-                        "官方核心摘要或大小不符",
-                    ));
-                }
-                Ok(())
-            },
-        )
-        .map_err(|e| e.message())?;
-    let reference = crate::core::package::prepare(root, runtime, &candidate, &archive, cancel)?;
-    let staged = crate::core::package::staged_path(root, &reference)?;
-    let installed = crate::settings::managed_path(root, &reference)?;
-    std::fs::rename(staged, &installed).map_err(|e| e.to_string())?;
-    crate::settings::write_json(&record, &reference)?;
-    let _ = std::fs::remove_file(archive);
-    Ok(installed)
+    super::install::existing(root, version, runtime, cancel)
 }
 
 #[cfg(test)]
