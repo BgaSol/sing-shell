@@ -13,7 +13,7 @@
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
 - [v0.11.0 发行记录](releases/v0.11.0.md)：分流行内连接设置、表单与草稿重构
-- [v0.11.0 包验证证据](releases/v0.11.0-verification.json)：五原生原包、签名升级、草稿附件核对与跳过范围
+- [v0.11.0 包验证证据](releases/v0.11.0-verification.json)：五原生原包、签名升级、公开附件核对与跳过范围
 - [v0.11.0 网络验证证据](releases/v0.11.0-network-verification.json)：五原生 DNS、TUN 排除、候选替换与退出清理
 - [v0.10.0 发行记录](releases/v0.10.0.md)：自定义直连绕过 TUN、固定 DNS 与连接准备
 - [v0.10.0 包验证证据](releases/v0.10.0-verification.json)：固定签名原包、五原生安装升级、复验与附件核对
