@@ -1,0 +1,579 @@
+{
+  "version": "0.10.0",
+  "packageSource": "2eb47b2b2230635eb4be8af22164b48f5ee66d1a",
+  "toolSource": "de8a7609de87d3c418a8ad964b5a79c0af288e7e",
+  "networkRun": "46037371930",
+  "reports": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "basic": {
+        "target": "x86_64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26100",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-amd64.zip",
+          "digest": "sha256:99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-amd64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0001] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0001] network: updated default interface Ethernet 4, index 15\n\u001b[36mINFO\u001b[0m[0001] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.34s)\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;106m1247377754\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:58951\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;106m1247377754\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;106m1247377754\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;147m1564520067\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:57481\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;147m1564520067\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;147m1564520067\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;165m2790010261\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:58953\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;165m2790010261\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;165m2790010261\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;215m3118173383\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:57483\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;215m3118173383\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:60216\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;215m3118173383\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "bypassPrerequisite": {
+        "target": "x86_64-pc-windows-msvc",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "isolated local DNS query without TUN",
+          "short-lived local DNS obtains fresh physical result while old TUN holds different pinned result"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[tun-in]: started at sing-shell\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface Ethernet 4, index 15\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m1794613770\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:64299\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m1794613770\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to 172.19.0.2:53\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;221m1794613770\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] clash-api: restful api listening at 127.0.0.1:58963\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.32s)\n\u001b[36mINFO\u001b[0m[0000] dns: exchanged A example.com. 600 IN A 192.0.2.71\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;191m470593455\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from [fdfe:dcba:9876::1]:57015\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;191m470593455\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to [fdfe:dcba:9876::2]:53\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;106m1819944538\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from [fdfe:dcba:9876::1]:52160\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;106m1819944538\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to [fdfe:dcba:9876::2]:53\n\u001b[31mERROR\u001b[0m[0000] [\u001b[38;5;106m1819944538\u001b[0m 0ms] connection: listen packet connection using  using outbound/direct[direct]: loopback connection to TUN range\n\u001b[31mERROR\u001b[0m[0000] [\u001b[38;5;191m470593455\u001b[0m 0ms] connection: listen packet connection using  using outbound/direct[direct]: loopback connection to TUN range\n"
+      },
+      "fakeip": {
+        "target": "x86_64-pc-windows-msvc",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "integration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding",
+          "bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      }
+    },
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "basic": {
+        "target": "aarch64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26200",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-arm64.zip",
+          "digest": "sha256:8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-arm64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0002] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0002] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0002] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0002] sing-box started (2.74s)\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;230m4011256321\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:62570\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;230m4011256321\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;230m4011256321\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;216m2350074312\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:53440\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;216m2350074312\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;216m2350074312\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;101m1309331029\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:62572\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;101m1309331029\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;101m1309331029\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2758036455\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:53442\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2758036455\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:62982\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;32m2758036455\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "bypassPrerequisite": {
+        "target": "aarch64-pc-windows-msvc",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "isolated local DNS query without TUN",
+          "short-lived local DNS obtains fresh physical result while old TUN holds different pinned result"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[tun-in]: started at sing-shell\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;86m2045498513\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:55289\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;86m2045498513\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to 172.19.0.2:53\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;86m2045498513\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] clash-api: restful api listening at 127.0.0.1:50964\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.45s)\n\u001b[36mINFO\u001b[0m[0000] dns: exchanged A example.com. 600 IN A 192.0.2.71\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;200m3152165816\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from [fdfe:dcba:9876::1]:50549\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;200m3152165816\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to [fdfe:dcba:9876::2]:53\n\u001b[31mERROR\u001b[0m[0000] [\u001b[38;5;200m3152165816\u001b[0m 0ms] connection: listen packet connection using  using outbound/direct[direct]: loopback connection to TUN range\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;199m3422097847\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from [fdfe:dcba:9876::1]:64601\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;199m3422097847\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to [fdfe:dcba:9876::2]:53\n\u001b[31mERROR\u001b[0m[0000] [\u001b[38;5;199m3422097847\u001b[0m 0ms] connection: listen packet connection using  using outbound/direct[direct]: loopback connection to TUN range\n"
+      },
+      "fakeip": {
+        "target": "aarch64-pc-windows-msvc",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "integration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding",
+          "bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      }
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "basic": {
+        "target": "x86_64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1073-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-amd64.tar.gz",
+          "digest": "sha256:699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-amd64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.01s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m2886664747\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:56874\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m2886664747\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m2886664747\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;85m2130718277\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:41143\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;85m2130718277\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;85m2130718277\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;65m3070878257\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:47822\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;65m3070878257\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;65m3070878257\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;154m1938992522\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:34787\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;154m1938992522\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:42569\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;154m1938992522\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "bypassPrerequisite": {
+        "target": "x86_64-unknown-linux-gnu",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "isolated local DNS query without TUN",
+          "short-lived local DNS obtains fresh physical result while old TUN holds different pinned result"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[tun-in]: started at sing-shell\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] clash-api: restful api listening at 127.0.0.1:46513\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.01s)\n\u001b[36mINFO\u001b[0m[0001] dns: exchanged A example.com. 600 IN A 192.0.2.71\n"
+      },
+      "fakeip": {
+        "target": "x86_64-unknown-linux-gnu",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "integration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding",
+          "bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      }
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "basic": {
+        "target": "aarch64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1073-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-arm64.tar.gz",
+          "digest": "sha256:436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-arm64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.00s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;118m470113905\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:44560\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;118m470113905\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;118m470113905\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;51m327164666\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:36828\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;51m327164666\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;51m327164666\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;83m2838213187\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:37060\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;83m2838213187\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;83m2838213187\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m3655740789\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:44234\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m3655740789\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:36956\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;133m3655740789\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "bypassPrerequisite": {
+        "target": "aarch64-unknown-linux-gnu",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "isolated local DNS query without TUN",
+          "short-lived local DNS obtains fresh physical result while old TUN holds different pinned result"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[tun-in]: started at sing-shell\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] clash-api: restful api listening at 127.0.0.1:38123\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.01s)\n\u001b[36mINFO\u001b[0m[0000] dns: exchanged A example.com. 600 IN A 192.0.2.71\n"
+      },
+      "fakeip": {
+        "target": "aarch64-unknown-linux-gnu",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "integration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding",
+          "bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      }
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "basic": {
+        "target": "aarch64-apple-darwin",
+        "platform": "darwin",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "25.6.0",
+        "archive": {
+          "name": "sing-box-1.14.4-darwin-arm64.tar.gz",
+          "digest": "sha256:0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+        },
+        "resources": [],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at utun223\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface en0, index 7\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 192.168.64.1, gateway_mac a6:77:f3:60:f4:64\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.02s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;28m2227198732\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:49177\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;28m2227198732\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;28m2227198732\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;100m2839840084\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:61176\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;100m2839840084\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;100m2839840084\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;68m2886955572\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:49179\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;68m2886955572\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;68m2886955572\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;39m3248776727\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:55818\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;39m3248776727\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:53954\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;39m3248776727\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "bypassPrerequisite": {
+        "target": "aarch64-apple-darwin",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "isolated local DNS query without TUN",
+          "short-lived local DNS obtains fresh physical result while old TUN holds different pinned result"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[tun-in]: started at utun223\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface en0, index 7\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 192.168.64.1, gateway_mac a6:77:f3:60:f4:64\n\u001b[36mINFO\u001b[0m[0000] clash-api: restful api listening at 127.0.0.1:49185\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.04s)\n\u001b[36mINFO\u001b[0m[0000] dns: exchanged A example.com. 600 IN A 192.0.2.71\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m3773304619\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:53950\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m3773304619\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to 17.253.253.6:443\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;188m3773304619\u001b[0m 1ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;33m3662795240\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:54259\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;33m3662795240\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to 17.253.253.7:443\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;33m3662795240\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2942773512\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:59440\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2942773512\u001b[0m 0ms] inbound/tun[tun-in]: inbound packet connection to 17.253.253.6:443\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;223m2942773512\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "fakeip": {
+        "target": "aarch64-apple-darwin",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "integration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "macOS system Fake-IP reaches its restored real destination through TCP and UDP TUN traffic",
+          "macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding",
+          "bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "temporary resolver released and all existing network-service DNS preferences preserved",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "cachedFake": "198.18.0.3",
+        "dnsReleaseMs": [
+          17,
+          19
+        ],
+        "log": ""
+      }
+    }
+  ],
+  "previousFailures": [
+    {
+      "run": "46026627933",
+      "report": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": false,
+        "verified": [],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "error": "AssertionError [ERR_ASSERTION]: native route query finishes",
+        "log": ""
+      }
+    },
+    {
+      "run": "46030187574",
+      "report": {
+        "target": "aarch64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": false,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26200",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-arm64.zip",
+          "digest": "sha256:8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-arm64/libcronet.dll"
+        ],
+        "error": "AssertionError [ERR_ASSERTION]: TUN interface timeout: \u001b[36mINFO\u001b[0m[0002] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0002] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0002] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0002] sing-box started (2.12s)\n",
+        "log": "\u001b[36mINFO\u001b[0m[0002] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0002] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0002] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0002] sing-box started (2.12s)\n"
+      }
+    },
+    {
+      "run": "46030187574",
+      "report": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": false,
+        "verified": [
+          "production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN",
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "selecting another node persists the choice without changing the running core, forwarding or pending settings",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    {\n+     address: '172.66.157.237',\n-     address: '104.20.26.136',\n      family: 4\n    },\n    {\n+     address: '104.20.26.136',\n-     address: '172.66.157.237',\n      family: 4\n    },\n    {\n+     address: '2606:4700:10::ac42:9ded',\n-     address: '2606:4700:10::6814:1a88',\n      family: 6\n    },\n    {\n+     address: '2606:4700:10::6814:1a88',\n-     address: '2606:4700:10::ac42:9ded',\n      family: 6\n    }\n  ]\n",
+        "routeDiagnostics": "[{\"dst\":\"0.0.0.0/2\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"64.0.0.0/3\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"96.0.0.0/5\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.0.0.0/12\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.16.0.0/14\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.0.0/20\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.16.0/21\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.24.0/23\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.0/25\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.128/29\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.137\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.138/31\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.140/30\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.144/28\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.160/27\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.26.192/26\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.27.0/24\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.28.0/22\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.32.0/19\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.64.0/18\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.20.128.0/17\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.21.0.0/16\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.22.0.0/15\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.24.0.0/13\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.32.0.0/11\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.64.0.0/10\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"104.128.0.0/9\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"105.0.0.0/8\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"106.0.0.0/7\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"108.0.0.0/6\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"112.0.0.0/4\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"128.0.0.0/3\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"160.0.0.0/5\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"168.0.0.0/6\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.0.0.0/10\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.64.0.0/15\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.0.0/17\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.128.0/20\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.144.0/21\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.152.0/22\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.156.0/24\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.0/25\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.128/26\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.192/27\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.224/29\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.232/30\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.236\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.238/31\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.157.240/28\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.158.0/23\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.160.0/19\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.66.192.0/18\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.67.0.0/16\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.68.0.0/14\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.72.0.0/13\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.80.0.0/12\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.96.0.0/11\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"172.128.0.0/9\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"173.0.0.0/8\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"174.0.0.0/7\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"176.0.0.0/4\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"192.0.0.0/5\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"200.0.0.0/7\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"202.0.0.0/8\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.0.0/18\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.64.0/19\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.96.0/20\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.112.0/24\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.0/26\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.64/30\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.68/31\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.70\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.72/29\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.80/28\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.96/27\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.113.128/25\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.114.0/23\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.116.0/22\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.120.0/21\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.0.128.0/17\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.1.0.0/16\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.2.0.0/15\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.4.0.0/14\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.8.0.0/13\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.16.0.0/12\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.32.0.0/11\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.64.0.0/10\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"203.128.0.0/9\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"204.0.0.0/6\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"208.0.0.0/4\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"224.0.0.0/3\",\"gateway\":\"172.19.0.2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"flags\":[]},{\"dst\":\"default\",\"gateway\":\"10.1.0.1\",\"dev\":\"eth0\",\"protocol\":\"dhcp\",\"prefsrc\":\"10.1.0.52\",\"metric\":100,\"flags\":[]},{\"dst\":\"10.1.0.0/20\",\"dev\":\"eth0\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"10.1.0.52\",\"metric\":100,\"flags\":[]},{\"dst\":\"10.1.0.1\",\"dev\":\"eth0\",\"protocol\":\"dhcp\",\"scope\":\"link\",\"prefsrc\":\"10.1.0.52\",\"metric\":100,\"flags\":[]},{\"dst\":\"168.63.129.16\",\"gateway\":\"10.1.0.1\",\"dev\":\"eth0\",\"protocol\":\"dhcp\",\"prefsrc\":\"10.1.0.52\",\"metric\":100,\"flags\":[]},{\"dst\":\"169.254.169.254\",\"gateway\":\"10.1.0.1\",\"dev\":\"eth0\",\"protocol\":\"dhcp\",\"prefsrc\":\"10.1.0.52\",\"metric\":100,\"flags\":[]},{\"dst\":\"172.17.0.0/16\",\"dev\":\"docker0\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"172.17.0.1\",\"flags\":[\"linkdown\"]},{\"dst\":\"172.19.0.0/30\",\"dev\":\"sing-shell\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"172.19.0.1\",\"flags\":[]},{\"type\":\"local\",\"dst\":\"10.1.0.52\",\"dev\":\"eth0\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"host\",\"prefsrc\":\"10.1.0.52\",\"flags\":[]},{\"type\":\"broadcast\",\"dst\":\"10.1.15.255\",\"dev\":\"eth0\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"10.1.0.52\",\"flags\":[]},{\"type\":\"local\",\"dst\":\"127.0.0.0/8\",\"dev\":\"lo\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"host\",\"prefsrc\":\"127.0.0.1\",\"flags\":[]},{\"type\":\"local\",\"dst\":\"127.0.0.1\",\"dev\":\"lo\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"host\",\"prefsrc\":\"127.0.0.1\",\"flags\":[]},{\"type\":\"broadcast\",\"dst\":\"127.255.255.255\",\"dev\":\"lo\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"127.0.0.1\",\"flags\":[]},{\"type\":\"local\",\"dst\":\"172.17.0.1\",\"dev\":\"docker0\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"host\",\"prefsrc\":\"172.17.0.1\",\"flags\":[]},{\"type\":\"broadcast\",\"dst\":\"172.17.255.255\",\"dev\":\"docker0\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"172.17.0.1\",\"flags\":[\"linkdown\"]},{\"type\":\"local\",\"dst\":\"172.19.0.1\",\"dev\":\"sing-shell\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"host\",\"prefsrc\":\"172.19.0.1\",\"flags\":[]},{\"type\":\"broadcast\",\"dst\":\"172.19.0.3\",\"dev\":\"sing-shell\",\"table\":\"local\",\"protocol\":\"kernel\",\"scope\":\"link\",\"prefsrc\":\"172.19.0.1\",\"flags\":[]},{\"dst\":\"::/3\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2000::/16\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001::/21\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:800::/22\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:c00::/24\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:d00::/25\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:d80::/27\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:da0::/28\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db0::/29\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8::/42\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:40::/43\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:60::/44\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:70::/48\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2/127\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4/126\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8/125\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::10/124\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::20/123\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::40/122\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::80/121\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::100/120\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::200/119\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::400/118\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::800/117\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::1000/116\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2000/115\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4000/114\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8000/113\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::1:0/112\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2:0/111\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4:0/110\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8:0/109\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::10:0/108\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::20:0/107\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::40:0/106\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::80:0/105\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::100:0/104\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::200:0/103\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::400:0/102\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::800:0/101\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::1000:0/100\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2000:0/99\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4000:0/98\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8000:0/97\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::1:0:0/96\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2:0:0/95\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4:0:0/94\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8:0:0/93\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::10:0:0/92\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::20:0:0/91\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::40:0:0/90\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::80:0:0/89\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::100:0:0/88\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::200:0:0/87\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::400:0:0/86\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::800:0:0/85\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::1000:0:0/84\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::2000:0:0/83\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::4000:0:0/82\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71::8000:0:0/81\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:1::/80\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:2::/79\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:4::/78\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:8::/77\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:10::/76\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:20::/75\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:40::/74\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:80::/73\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:100::/72\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:200::/71\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:400::/70\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:800::/69\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:1000::/68\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:2000::/67\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:4000::/66\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:0:8000::/65\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:1::/64\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:2::/63\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:4::/62\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:8::/61\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:10::/60\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:20::/59\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:40::/58\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:80::/57\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:100::/56\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:200::/55\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:400::/54\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:800::/53\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:1000::/52\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:2000::/51\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:4000::/50\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:71:8000::/49\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:72::/47\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:74::/46\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:78::/45\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:80::/41\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:100::/40\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:200::/39\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:400::/38\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:800::/37\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:1000::/36\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:2000::/35\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:4000::/34\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db8:8000::/33\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:db9::/32\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:dba::/31\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:dbc::/30\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:dc0::/26\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:e00::/23\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:1000::/20\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:2000::/19\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:4000::/18\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2001:8000::/17\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2002::/15\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2004::/14\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2008::/13\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2010::/12\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2020::/11\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2040::/10\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2080::/9\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2100::/8\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2200::/7\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2400::/7\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2600::/14\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2604::/15\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606::/18\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4000::/22\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4400::/23\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4600::/24\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700::/44\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::/98\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::4000:0/99\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6000:0/101\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6800:0/108\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6810:0/110\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:0/116\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1000/117\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1800/119\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a00/121\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a80/125\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a89\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a8a/127\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a8c/126\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1a90/124\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1aa0/123\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1ac0/122\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1b00/120\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:1c00/118\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:2000/115\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:4000/114\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6814:8000/113\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6815:0/112\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6816:0/111\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6818:0/109\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6820:0/107\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6840:0/106\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6880:0/105\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6900:0/104\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6a00:0/103\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::6c00:0/102\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::7000:0/100\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::8000:0/99\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::a000:0/101\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::a800:0/102\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac00:0/106\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac40:0/111\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:0/113\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:8000/116\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9000/117\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9800/118\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9c00/120\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9d00/121\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9d80/122\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9dc0/123\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9de0/125\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9de8/126\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9dec\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9dee/127\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9df0/124\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:9e00/119\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:a000/115\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac42:c000/114\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac43:0/112\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac44:0/110\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac48:0/109\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac50:0/108\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac60:0/107\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ac80:0/105\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ad00:0/104\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::ae00:0/103\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::b000:0/100\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::c000:0/98\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::1:0:0/96\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::2:0:0/95\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::4:0:0/94\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::8:0:0/93\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::10:0:0/92\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::20:0:0/91\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::40:0:0/90\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::80:0:0/89\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::100:0:0/88\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::200:0:0/87\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::400:0:0/86\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::800:0:0/85\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::1000:0:0/84\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::2000:0:0/83\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::4000:0:0/82\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10::8000:0:0/81\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:1::/80\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:2::/79\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:4::/78\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:8::/77\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:10::/76\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:20::/75\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:40::/74\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:80::/73\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:100::/72\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:200::/71\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:400::/70\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:800::/69\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:1000::/68\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:2000::/67\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:4000::/66\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:0:8000::/65\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:1::/64\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:2::/63\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:4::/62\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:8::/61\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:10::/60\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:20::/59\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:40::/58\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:80::/57\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:100::/56\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:200::/55\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:400::/54\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:800::/53\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:1000::/52\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:2000::/51\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:4000::/50\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:10:8000::/49\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:11::/48\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:12::/47\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:14::/46\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:18::/45\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:20::/43\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:40::/42\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:80::/41\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:100::/40\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:200::/39\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:400::/38\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:800::/37\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:1000::/36\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:2000::/35\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:4000::/34\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4700:8000::/33\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4701::/32\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4702::/31\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4704::/30\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4708::/29\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4710::/28\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4720::/27\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4740::/26\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4780::/25\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:4800::/21\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:5000::/20\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:6000::/19\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2606:8000::/17\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2607::/16\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2608::/13\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2610::/12\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2620::/11\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2640::/10\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2680::/9\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2700::/8\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"2800::/5\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"3000::/4\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"4000::/2\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"8000::/1\",\"gateway\":\"fdfe:dcba:9876::2\",\"dev\":\"sing-shell\",\"table\":\"2022\",\"metric\":1024,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"::1\",\"dev\":\"lo\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"fdfe:dcba:9876::/126\",\"dev\":\"sing-shell\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"fe80::/64\",\"dev\":\"eth0\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"},{\"dst\":\"fe80::/64\",\"dev\":\"sing-shell\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"local\",\"dst\":\"::1\",\"dev\":\"lo\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":0,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"local\",\"dst\":\"fdfe:dcba:9876::1\",\"dev\":\"sing-shell\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":0,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"local\",\"dst\":\"fe80::6714:1681:8ed5:6d4\",\"dev\":\"sing-shell\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":0,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"local\",\"dst\":\"fe80::7eed:8dff:fee3:da0c\",\"dev\":\"eth0\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":0,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"multicast\",\"dst\":\"ff00::/8\",\"dev\":\"eth0\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"},{\"type\":\"multicast\",\"dst\":\"ff00::/8\",\"dev\":\"sing-shell\",\"table\":\"local\",\"protocol\":\"kernel\",\"metric\":256,\"flags\":[],\"pref\":\"medium\"}]\n",
+        "log": ""
+      }
+    },
+    {
+      "run": "46031246297",
+      "report": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": false,
+        "verified": [],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "error": "AssertionError [ERR_ASSERTION]: controlled proxy stays alive\n\n1 !== null\n",
+        "log": "\u001b[31mFATAL\u001b[0m[0000] start service: start inbound: start inbound/shadowsocks[ss-in]: listen udp 127.0.0.1:55508: bind: An attempt was made to access a socket in a way forbidden by its access permissions.\n"
+      }
+    }
+  ],
+  "corrections": [
+    "Compare complete DNS address sets without requiring the answer order; core rotates answers.",
+    "Windows effective-route acceptance now uses direct GetBestRoute2 / ConvertInterfaceLuidToAlias instead of PowerShell/CIM. Both exclusion targets and a positive TUN target are asserted; the probe is compiled only into test drivers.",
+    "Use the existing tested UDP-first TCP/UDP allocator for the controlled proxy, avoiding Windows UDP-excluded ports."
+  ],
+  "skipped": [
+    "real RustDesk peer-to-peer session across user NAT/firewall",
+    "forced rollback with externally changed DNS answers",
+    "third-party DoH/DoT and application-internal DNS caches",
+    "physical network switching, suspend/resume and interactive system authorization"
+  ],
+  "previousSameProductionNetwork": {
+    "run": "46032773923",
+    "toolSource": "485ee72cad3d45490c05b08de33287866cd90aab",
+    "conclusion": "success",
+    "nativeTargets": 5
+  }
+}
