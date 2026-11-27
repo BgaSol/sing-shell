@@ -900,7 +900,10 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
             thread::sleep(Duration::from_millis(50));
         }
         let state = app.session.snapshot();
-        if state.phase != "running" || state.running_node.as_ref().map(|n| &n.id) != Some(&id) {
+        if state.runtime.error.is_some()
+            || state.phase != "running"
+            || state.running_node.as_ref().map(|n| &n.id) != Some(&id)
+        {
             return Err(state
                 .runtime
                 .error

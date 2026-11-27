@@ -10,8 +10,8 @@
 - RuleService 复用 Application 已有后台唤醒循环，一次处理一个固定来源，读取网络偏好快照，下载、核心校验后原子发布不可变版本索引。运行、候选、恢复、包内引用保留，固定目录回收无引用内容。
 - SessionService 接纳 `connect(nodeId)`、保存规则后应用、停止和一次恢复，冻结节点参数、有序规则、具体来源及核心版本。托盘、页面和退出使用相同的实际运行事实。
 - SessionService 同时接纳只选择节点，统一派生改选、连接、停止能力。选择、连接目标、实际运行和成功恢复依据分开；显式连接保存选择，应用设置针对实际节点，成功确认不反写用户选择。`desktop/tray.rs` 只负责公开状态投影、原生菜单及明确事件，`desktop.rs` 保留窗口、导航和宿主故障回退。
-- worker 独占受保护核心、TUN、临时 DNS、候选替换和清理。准备在独立可取消任务执行，命令循环保持可响应；候选完整校验后才停旧。新连接失败最多恢复一次旧固定连接；准备失败不停止旧连接，清理失败阻止新 TUN。
-- RuntimeService 独占 Child、校验子进程、启动观察、reader 和真实退出结果。平台进程组/Job、系统授权和网络适配留在 platform，不复制到业务层。
+- worker 独占受保护核心、TUN、临时 DNS、候选替换和清理。preparation.rs 冻结输入与本次绕过解析结果，resolver.rs 独占短期 DNS 实例和候选目录。准备在独立可取消任务执行，命令循环保持可响应；候选完整校验后才停旧。新连接失败最多恢复一次旧实际结果；准备失败不停止旧连接，清理失败阻止新 TUN。
+- RuntimeService 管理正式核心与校验；runtime/process.rs 共用 Child、reader 和真实退出处理，runtime/control.rs 共用本机鉴权端点及禁代理、禁重定向 HTTP。平台进程组/Job、两种固定用途的残留记录、系统授权和网络适配留在 platform。
 - ActivityCollector 跟随 worker 中的真实核心，探测能力后只读采样本机鉴权接口；连接按运行时 tag 清单归因。原始配置不注入监控，不能用展示故障推断网络已停止。
 - CoreService / ManagedCore 保留官方材料、来源、版本采用及回退；UpdateService 只负责应用更新，复用官方 Tauri updater，不覆盖外部核心。
 
@@ -21,7 +21,7 @@
 
 ## 授权协议与资源释放
 
-控制线程独占通道和系统授权进程所有者，worker 持有机器级租约。握手协议 5 验证同构建、进程/安装身份和随机 nonce，之后只接收闭合节点/规则/官方版本及有界签名程序分块，不接受任意管理员路径、命令或 URL。macOS 用系统管理员授权启动短期 worker，不登记持久网络服务；历史 helper 只按既有安全撤销路径处理。
+控制线程独占通道和系统授权进程所有者，worker 持有机器级租约。握手协议 6 验证同构建、进程/安装身份和随机 nonce，之后只接收闭合节点/规则/官方版本及有界签名程序分块，不接受任意管理员路径、命令、DNS 解析结果或 URL。macOS 用系统管理员授权启动短期 worker，不登记持久网络服务；历史 helper 只按既有安全撤销路径处理。
 
 轻量 Poll 不夹带完整日志或连接。活动、日志按需只读分页；控制队列、HTTP、字段、页数和编码字节均有界。Stop/Quit 取消准备和采集，等待真实子进程及任务结束后释放本次 DNS、核心、TUN、配置目录和通道；超时保持 cleanupRequired 和同一所有者供重试。
 
@@ -51,7 +51,9 @@ schema 5 使用 nodesRevision、routingRevision、coreRevision、preferencesRevi
 
 profile/connection.rs 的 ConnectionInput 是冻结业务输入；SessionService 统一构造，恢复直接使用成功快照。connectionRevision 独立于节点、路由和下载偏好，新增字段缺省兼容 schema 5。公开状态携带 worker 的实际运行选项，随机路径/密钥不进入有效指纹。
 
-profile/config.rs 用固定材料路径与运行绑定一次编译，DNS 域名投影区分客户端 Fake-IP 回答与核心内部真实 Lookup；原有解析前后本地保护、用户全局优先级和 IP 规则语义保持。缓存与活动 API 一次组装，后续不补写 experimental。
+profile/bypass.rs 从有效规则收集目标并验证完整解析结果，ip_network.rs 只共用 IP/CIDR 运算。业务输入保留绕过意图，RunningConnection 另持本次固定地址；后者不持久化、不接受 IPC 提交。普通分流仍由核心匹配，显式绕过在系统路由层优先。
+
+profile/config.rs 用固定材料路径与运行绑定一次编译，DNS 域名投影区分客户端 Fake-IP 回答与核心内部真实 Lookup；缓存、活动 API、绕过 hosts 和排除前缀在同一次编译组装。build_check 保持离线检查，compile_runtime 要求完整运行结果。network/routes.rs 同时核验排除空洞和剩余接管覆盖，不在壳中写系统路由。
 
 session/tunnel/cache.rs 只派生受保护路径和检查链接，不实现数据库或映射。认证平台层返回核验过的用户身份，缓存按用户稳定隔离；机器级租约保持单写者，候选 check 与正式启动分开。
 

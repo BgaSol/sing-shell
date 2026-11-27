@@ -69,7 +69,10 @@ pub(super) fn prepare(
         .map(|c| Ok(c.id.clone()))
         .unwrap_or_else(crate::platform::authorization::nonce)?;
     let directory = root.join("runtime").join(&session_id);
-    preparation.lock().unwrap().create(root, &session_id)?;
+    preparation
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .create(root, &session_id)?;
     let config = directory.join("config.json");
     let bypass = match frozen {
         Some(b) => {
@@ -88,7 +91,7 @@ pub(super) fn prepare(
                 root,
                 &executable,
                 &input,
-                &mut preparation.lock().unwrap(),
+                &mut preparation.lock().unwrap_or_else(|p| p.into_inner()),
                 cancel,
             )?
         }

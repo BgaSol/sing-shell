@@ -176,55 +176,37 @@ fn resolve_with_server(
     let deadline = Instant::now() + Duration::from_secs(30);
     let mut hosts = BTreeMap::new();
     for (domain, rule) in targets.domains {
-        let addresses = loop {
-            crate::core::package::cancelled(cancel)?;
-            if resources
-                .process
-                .as_mut()
-                .unwrap()
-                .child
-                .try_wait()
-                .map_err(|e| e.to_string())?
-                .is_some()
-            {
-                return Err(format!("{rule}：域名解析核心已退出，绕过 TUN 未应用"));
+        crate::core::package::cancelled(cancel)?;
+        if resources
+            .process
+            .as_mut()
+            .unwrap()
+            .child
+            .try_wait()
+            .map_err(|e| e.to_string())?
+            .is_some()
+        {
+            return Err(format!("{rule}：域名解析核心已退出"));
+        }
+        let (mut addresses,v6)=runtime.block_on(async {
+            tokio::select! {
+                result=async {tokio::try_join!(endpoint.query(&client,&domain,"A"),endpoint.query(&client,&domain,"AAAA"))}=>result,
+                _=async {while !cancel.load(std::sync::atomic::Ordering::Acquire){tokio::time::sleep(Duration::from_millis(25)).await}}=>Err("连接已取消".into()),
+                _=tokio::time::sleep(deadline.saturating_duration_since(Instant::now()))=>Err("域名解析总时限已到".into()),
             }
-            if Instant::now() >= deadline {
-                return Err(format!("{rule}：{domain} 解析超时，绕过 TUN 未应用"));
-            }
-            let query=runtime.block_on(async {
-                tokio::select! {
-                    result=async {tokio::try_join!(endpoint.query(&client,&domain,"A"),endpoint.query(&client,&domain,"AAAA"))}=>result,
-                    _=async {while !cancel.load(std::sync::atomic::Ordering::Acquire){tokio::time::sleep(Duration::from_millis(25)).await}}=>Err("连接已取消".into()),
-                    _=tokio::time::sleep(deadline.saturating_duration_since(Instant::now()))=>Err("域名解析总时限已到".into()),
-                }
-            });
-            if resources
-                .process
-                .as_mut()
-                .unwrap()
-                .child
-                .try_wait()
-                .map_err(|e| e.to_string())?
-                .is_some()
-            {
-                return Err("域名解析核心已退出".into());
-            }
-            match query {
-                Ok((mut v4, v6)) => {
-                    v4.extend(v6);
-                    break v4;
-                }
-                Err(e)
-                    if e == "绕过域名解析接口不可用"
-                        && deadline.saturating_duration_since(Instant::now())
-                            > Duration::from_secs(29) =>
-                {
-                    std::thread::sleep(Duration::from_millis(50))
-                }
-                Err(e) => return Err(format!("{rule}：无法解析 {domain}，绕过 TUN 未应用：{e}")),
-            }
-        };
+        }).map_err(|e|format!("{rule}：无法解析 {domain}，绕过 TUN 未应用：{e}"))?;
+        if resources
+            .process
+            .as_mut()
+            .unwrap()
+            .child
+            .try_wait()
+            .map_err(|e| e.to_string())?
+            .is_some()
+        {
+            return Err("域名解析核心已退出".into());
+        }
+        addresses.extend(v6);
         hosts.insert(domain, addresses);
     }
     let result = Resolved::new(&input.routing, hosts)?;
@@ -235,6 +217,36 @@ fn resolve_with_server(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn preparation_resources_remain_owned_after_task_panic() {
+        let root = std::env::temp_dir().join(format!(
+            "ss-prep-panic-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        let resources = Arc::new(std::sync::Mutex::new(Resources::default()));
+        let task_resources = resources.clone();
+        let task_root = root.clone();
+        let task = std::thread::spawn(move || {
+            task_resources
+                .lock()
+                .unwrap()
+                .create(&task_root, &"a".repeat(64))
+                .unwrap();
+            let _held = task_resources.lock().unwrap();
+            panic!("preparation task panic");
+        });
+        assert!(task.join().is_err());
+        assert!(root.join("runtime/preparing.json").exists());
+        resources
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .close(&root)
+            .unwrap();
+        assert!(!root.join("runtime/preparing.json").exists());
+        assert!(!root.join("runtime").join("a".repeat(64)).exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
     #[test]
     #[ignore = "requires official core in SING_SHELL_TEST_CORE; isolated DNS, no TUN or system DNS changes"]
     fn official_bypass_resolver_freezes_results_and_releases_process() {

@@ -789,6 +789,11 @@ dialog::backdrop {
   font-size: 12px;
   font-weight: 600;
 }
+.modal-content .bypass-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .modal-content .hint {
   margin: 0;
   font-weight: 400;

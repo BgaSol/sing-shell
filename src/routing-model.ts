@@ -1,8 +1,11 @@
 import type { Policy } from "./core";
-export function setExit(policy: Pick<Policy,"exit"|"bypassTun">, exit:Policy["exit"]) {
-  const cleared=exit==="proxy"&&!!policy.bypassTun;
-  policy.exit=exit;
-  if(exit==="proxy")policy.bypassTun=false;
+export function setExit(
+  policy: Pick<Policy, "exit" | "bypassTun">,
+  exit: Policy["exit"],
+) {
+  const cleared = exit === "proxy" && !!policy.bypassTun;
+  policy.exit = exit;
+  if (exit === "proxy") policy.bypassTun = false;
   return cleared;
 }
 // Visible rules keep their global slots; hidden rules never move during filtered sorting.

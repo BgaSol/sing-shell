@@ -150,10 +150,37 @@ pub(super) fn linux_expected(
         .filter(|r| r["dev"] == interface)
         .map(|r| table(&r["table"]))
         .collect();
-    Ok(tables.into_iter().any(|t| {
-        let active = rules
+    let all: Vec<_> = routes
+        .iter()
+        .filter(|r| r["dev"] == interface)
+        .filter_map(|r| r["dst"].as_str())
+        .collect();
+    for prefix in excluded.iter().filter(|p| p.contains(':') == v6) {
+        let Some((first, last)) = range(prefix, v6) else {
+            return Ok(false);
+        };
+        if all
             .iter()
-            .any(|rule| table(&rule["table"]) == t && rule.get("table").is_some());
+            .filter_map(|p| range(p, v6))
+            .any(|(a, b)| a <= last && b >= first)
+        {
+            return Ok(false);
+        }
+    }
+    Ok(tables.into_iter().any(|t| {
+        let active = rules.iter().any(|rule| {
+            table(&rule["table"]) == t
+                && rule.get("table").is_some()
+                && ["src", "dst"]
+                    .into_iter()
+                    .all(|key| rule.get(key).is_none() || rule[key] == "all")
+                && [
+                    "iif", "oif", "fwmark", "fwmask", "uidrange", "ipproto", "sport", "dport",
+                    "not",
+                ]
+                .into_iter()
+                .all(|key| rule.get(key).is_none())
+        });
         active
             && matches(
                 routes
@@ -208,6 +235,13 @@ mod tests {
     fn linux_requires_policy_selection_and_complete_routes_in_one_table() {
         let routes = r#"[{"dev":"sing-shell","dst":"default","table":2022}]"#;
         assert!(!linux(routes, "[]", "sing-shell", false).unwrap());
+        assert!(!linux(
+            routes,
+            r#"[{"table":2022,"dst":"192.0.2.0/24"}]"#,
+            "sing-shell",
+            false
+        )
+        .unwrap());
         assert!(linux(
             routes,
             r#"[{"priority":9000,"table":2022}]"#,
@@ -223,5 +257,22 @@ mod tests {
         )
         .unwrap());
         assert!(linux("invalid", "[]", "sing-shell", false).is_err());
+    }
+    #[test]
+    fn linux_exclusions_cannot_reappear_in_another_table() {
+        let routes = r#"[{"dev":"sing-shell","dst":"0.0.0.0/1","table":2022},{"dev":"sing-shell","dst":"192.0.0.0/2","table":2022}]"#;
+        let rules = r#"[{"table":2022,"src":"all"}]"#;
+        let excluded = vec!["128.0.0.0/2".into()];
+        assert!(linux_expected(routes, rules, "sing-shell", false, &excluded).unwrap());
+        let mut rows: Vec<serde_json::Value> = serde_json::from_str(routes).unwrap();
+        rows.push(serde_json::json!({"dev":"sing-shell","dst":"128.0.0.0/2","table":2023}));
+        assert!(!linux_expected(
+            &serde_json::to_string(&rows).unwrap(),
+            rules,
+            "sing-shell",
+            false,
+            &excluded
+        )
+        .unwrap());
     }
 }

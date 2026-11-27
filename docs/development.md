@@ -98,6 +98,14 @@ Native TUN Preflight 的 scripts/fakeip-check.mjs 在五原生运行器显式运
 
 真实网络夹具地址已移到 198.51.100.* / 203.0.113.*，避免与 198.18.0.0/15 Fake-IP 池冲突。
 
+## TUN 绕过回归
+
+纯回归覆盖规则缺省兼容、两处出口切换、精确匹配和保留地址约束、固定结果完整性、DNS 查询响应、双栈排除与剩余路由覆盖、准备任务异常后的资源回收。离线 check 与正式编译分别验证；默认测试不解析真实域名或修改网络。
+
+scripts/bypass-preflight.mjs 在可丢弃五原生运行器保留旧 TUN 的错误 hosts 回答，再启动无 TUN 官方核心验证独立解析入口；Linux 使用物理接口 DNS。提供 SING_SHELL_TEST_CORE 后，显式运行 lib 的 official_bypass_resolver_freezes_results_and_releases_process 测试，通过生产 resolver 路径检查双栈固定结果及进程/目录释放，无 TUN。
+
+生产 network-integration 与实际包验收同时验证精确域名和 IPv4/IPv6 排除、系统真实 DNS、原生有效路由、剩余双栈加密转发、失败候选保留旧 PID/固定 DNS/排除，以及停止和异常清理。Windows 路由查询单次加载系统网络模块，并给原生 ARM64 冷启动有界时间。真实 RustDesk 两端 P2P、动态对端发现和第三方 DoH 不属于这些自动化结论，需单独实机验收。
+
 ## 离线受保护核心安装回归
 
 设置 SING_SHELL_TEST_CORE 和 CORE_VERSION 后显式运行 cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --lib first_install_is_offline -- --ignored，验证完整本地分块安装、来源复核、损坏拒绝及中断清理；不改变系统网络。核心材料测试另确认已批准版本的获取和 recheck 不发出 HTTP 请求。默认 Rust 测试仍明确跳过需要官方程序的项。

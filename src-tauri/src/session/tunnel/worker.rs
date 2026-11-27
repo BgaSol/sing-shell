@@ -170,7 +170,12 @@ impl Worker {
             &mut self.resources,
             &self.collector,
         );
-        let result = result.and_then(|_| self.preparation.lock().unwrap().close(&self.root));
+        let result = result.and_then(|_| {
+            self.preparation
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .close(&self.root)
+        });
         let mut s = self.state.lock().unwrap();
         s.phase = if result.is_ok() && failure != Failure::Cleanup {
             Phase::Failed
@@ -261,12 +266,24 @@ impl Worker {
             }
         }
         self.start = Some(thread::spawn(move || {
-            state.lock().unwrap().operation = Some("checkingConfig".into());
+            state.lock().unwrap().operation = Some(
+                if crate::profile::bypass::Targets::collect(&input.routing)
+                    .is_ok_and(|t| !t.domains.is_empty())
+                {
+                    "resolvingBypass"
+                } else {
+                    "checkingConfig"
+                }
+                .into(),
+            );
             let prepared = prepare(&root, &owner_key, input, None, &cancel, &preparation);
             let candidate = match prepared {
                 Ok(v) => v,
                 Err(e) => {
-                    let clean = preparation.lock().unwrap().close(&root);
+                    let clean = preparation
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .close(&root);
                     if let Err(clean) = clean {
                         return Started {
                             resources,
@@ -301,7 +318,10 @@ impl Worker {
                 s.phase = Phase::Stopping;
             }
             if let Err(e) = cleanup(&root, &runtime, &state, &mut resources, &collector) {
-                let _ = preparation.lock().unwrap().close(&root);
+                let _ = preparation
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .close(&root);
                 return Started {
                     resources,
                     result: Err((Failure::Cleanup, e)),
@@ -329,7 +349,12 @@ impl Worker {
                 },
                 Err((failure, error)) => {
                     if let Err(clean) = cleanup(&root, &runtime, &state, &mut resources, &collector)
-                        .and_then(|_| preparation.lock().unwrap().close(&root))
+                        .and_then(|_| {
+                            preparation
+                                .lock()
+                                .unwrap_or_else(|p| p.into_inner())
+                                .close(&root)
+                        })
                     {
                         return Started {
                             resources,
@@ -413,7 +438,12 @@ impl Worker {
             &mut self.resources,
             &self.collector,
         );
-        let result = result.and_then(|_| self.preparation.lock().unwrap().close(&self.root));
+        let result = result.and_then(|_| {
+            self.preparation
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .close(&self.root)
+        });
         match &result {
             Ok(()) => {
                 self.actual = None;
@@ -466,7 +496,10 @@ fn launch(
             state.session_id = Some(prepared.session_id.clone());
         }
         crate::settings::write_json(&root.join("runtime/current.json"), &prepared.session_id)?;
-        preparation.lock().unwrap().release(root)?;
+        preparation
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .release(root)?;
         failure = Failure::CoreStart;
         runtime.start(
             &StartSpec {

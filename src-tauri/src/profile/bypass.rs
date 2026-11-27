@@ -9,6 +9,14 @@ pub const MAX_DOMAINS: usize = 32;
 pub const MAX_PREFIXES: usize = 64;
 
 pub fn validate_address(value: &str) -> Result<(), String> {
+    if value
+        .split('/')
+        .next()
+        .and_then(|s| s.trim().parse::<std::net::Ipv6Addr>().ok())
+        .is_some_and(|ip| ip.to_ipv4_mapped().is_some())
+    {
+        return Err("绕过 TUN 不接受 IPv4-mapped IPv6，请直接填写 IPv4".into());
+    }
     let net = network(value)?;
     if matches!(net.0, IpAddr::V6(ip) if ip.to_ipv4_mapped().is_some()) {
         return Err("绕过 TUN 不接受 IPv4-mapped IPv6，请直接填写 IPv4".into());
@@ -157,7 +165,13 @@ mod tests {
             .unwrap()
             .prefixes
             .is_empty());
-        for p in ["0.0.0.0/0", "::/0", "198.0.0.0/8", "172.19.0.0/16"] {
+        for p in [
+            "0.0.0.0/0",
+            "::/0",
+            "198.0.0.0/8",
+            "172.19.0.0/16",
+            "::ffff:192.0.2.1/64",
+        ] {
             assert!(validate_address(p).is_err());
         }
     }

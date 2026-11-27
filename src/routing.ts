@@ -110,9 +110,14 @@ export function createRouting(
     name.value = initial.name;
     name.maxLength = 64;
     const exit = exitSelect(initial.exit, "规则出口");
-    const bypass=el("input");bypass.type="checkbox";bypass.checked=!!initial.bypassTun;
-    const bypassLabel=el("label","policy-toggle");bypassLabel.append(bypass,document.createTextNode("绕过 TUN"));
-    const bypassHelp=el("p","hint");bypassHelp.id="bypass-help";bypass.setAttribute("aria-describedby",bypassHelp.id);
+    const bypass = el("input");
+    bypass.type = "checkbox";
+    bypass.checked = !!initial.bypassTun;
+    const bypassLabel = el("label", "bypass-toggle");
+    bypassLabel.append(bypass, document.createTextNode("绕过 TUN"));
+    const bypassHelp = el("p", "hint");
+    bypassHelp.id = "bypass-help";
+    bypass.setAttribute("aria-describedby", bypassHelp.id);
     const domains: {
       input: HTMLInputElement;
       kind: HTMLSelectElement;
@@ -128,7 +133,7 @@ export function createRouting(
     const value = () => ({
       name: name.value,
       exit: exit.value,
-      bypassTun:bypass.checked,
+      bypassTun: bypass.checked,
       domains: domains
         .filter((d) => d.input.value.trim())
         .map((d) => ({
@@ -151,15 +156,25 @@ export function createRouting(
     exitLabel.append(exit);
     pair.append(nameLabel, exitLabel);
     modal.content.append(pair);
-    modal.content.append(bypassLabel,bypassHelp);
-    function updateBypass(){
-      bypassLabel.hidden=exit.value!=="direct";
-      bypassHelp.hidden=exit.value!=="direct";
-      const suffix=domains.some(d=>d.input.value.trim()&&d.kind.value==="suffix");
-      bypass.disabled=suffix&&!bypass.checked;
-      bypassHelp.textContent=suffix?"绕过 TUN 仅支持精确域名，请先修改匹配方式。":"目标直接使用系统网络，优先于其他分流规则；相同 IP 的其他服务也会绕过。域名地址变更后请应用并重连。";
+    modal.content.append(bypassLabel, bypassHelp);
+    function updateBypass() {
+      bypassLabel.hidden = exit.value !== "direct";
+      bypassHelp.hidden = exit.value !== "direct";
+      const suffix = domains.some(
+        (d) => d.input.value.trim() && d.kind.value === "suffix",
+      );
+      bypass.disabled = suffix && !bypass.checked;
+      bypassHelp.textContent = suffix
+        ? "绕过 TUN 仅支持精确域名，请先修改匹配方式。"
+        : "目标直接使用系统网络，优先于其他分流规则；相同 IP 的其他服务也会绕过。域名地址变更后请应用并重连。";
     }
-    exit.onchange=()=>{const choice={exit:initial.exit as RouteAction,bypassTun:bypass.checked};if(setExit(choice,exit.value as RouteAction))modal.error("切换为代理后已关闭绕过 TUN");bypass.checked=!!choice.bypassTun;updateBypass();};
+    exit.onchange = () => {
+      const choice = { exit: initial.exit, bypassTun: bypass.checked };
+      if (setExit(choice, exit.value as RouteAction))
+        modal.error("切换为代理后已关闭绕过 TUN");
+      bypass.checked = !!choice.bypassTun;
+      updateBypass();
+    };
     function addDomain(
       domain: DomainMatch = { value: "", includeSubdomains: true },
     ) {
@@ -183,7 +198,8 @@ export function createRouting(
         kind.append(option);
       }
       kind.value = domain.includeSubdomains ? "suffix" : "exact";
-      kind.onchange=updateBypass;input.addEventListener("input",updateBypass);
+      kind.onchange = updateBypass;
+      input.addEventListener("input", updateBypass);
       kind.setAttribute("aria-label", "域名匹配方式");
       const entry = { input, kind, row };
       const remove = iconButton("remove", "删除此域名", () => {
@@ -252,7 +268,7 @@ export function createRouting(
         ...initial,
         name: v.name.trim(),
         exit: v.exit as RouteAction,
-        bypassTun:v.bypassTun,
+        bypassTun: v.bypassTun,
         match: { kind: "custom", domains: v.domains, ipCidrs: v.ipCidrs },
       };
       const proposed = structuredClone(draft!);
@@ -450,7 +466,7 @@ export function createRouting(
             : "固定开源规则",
         ),
       );
-      if(p.bypassTun)info.append(el("span","hint","直连 · 绕过 TUN"));
+      if (p.bypassTun) info.append(el("span", "hint", "直连 · 绕过 TUN"));
       const enabled = el("input");
       enabled.type = "checkbox";
       enabled.checked = p.enabled;

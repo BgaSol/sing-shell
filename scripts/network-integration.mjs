@@ -87,7 +87,7 @@ try{
   input.routing.policies.push({id:'bypass',name:'Bypass',enabled:true,exit:'direct',bypassTun:true,match:{kind:'custom',domains:[{value:'example.org',includeSubdomains:false}],ipCidrs:['203.0.113.71/32','2001:db8:71::1/128']}});
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
-    for(const file of ['started.json','stopped.json','stop','activity.json','query-activity','replace.json','replace-1.json','replace-2.json'])await fs.rm(path.join(control,file),{force:true});
+    for(const file of ['started.json','stopped.json','stop','activity.json','query-activity','replace.json','replace-1.json','replace-2.json','replace-3.json','replace-4.json'])await fs.rm(path.join(control,file),{force:true});
     const command=approvedMac?'/usr/bin/open':executable;
     const args=approvedMac?['-W','-n','--env','SING_SHELL_NETWORK_PREFLIGHT=1','--stdout',path.join(control,'app.stdout'),'--stderr',path.join(control,'app.stderr'),path.resolve(executable,'../../..'),'--args','--smoke-test','--network-fixture-input',inputFile]:process.env.SING_SHELL_NETWORK_EXECUTABLE?['--smoke-test','--network-fixture-input',inputFile]:[inputFile];
     worker=spawn(command,args,{stdio:['ignore','pipe','pipe'],windowsHide:true});worker.stdout.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});worker.stderr.on('data',bytes=>{logs=(logs+bytes).slice(-65536);});
@@ -108,14 +108,24 @@ try{
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
   assert.equal(started.runningBypass,true);
   const realAddresses=await lookup('example.org',{all:true});assert.ok(realAddresses.length&&realAddresses.every(a=>!/^198\.(18|19)\./.test(a.address)),'bypass domain receives fixed real DNS');
-  function excludesRoute(address){
-    const result=process.platform==='win32'?spawnSync('powershell.exe',['-NoProfile','-Command',`@(Find-NetRoute -RemoteIPAddress '${address}' -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -eq 'sing-shell' }).Count`],{encoding:'utf8',windowsHide:true,timeout:5000}):process.platform==='darwin'?spawnSync('/sbin/route',['-n','get',...(net.isIP(address)===6?['-inet6']:[]),address],{encoding:'utf8',timeout:5000}):spawnSync('ip',['-j',net.isIP(address)===6?'-6':'-4','route','get',address],{encoding:'utf8',timeout:5000});
-    assert.ok(!result.error,'native route query finishes');
-    if(process.platform==='win32'){assert.equal(result.status,0);assert.equal(result.stdout.trim(),'0');}
-    else if(result.status===0)assert.ok(!/sing-shell|utun223/.test(result.stdout),'bypass effective route excludes our TUN');
-    else assert.match(result.stderr,/unreachable|not in table|No route|Network is unreachable/i,'only absent address-family route is acceptable');
+  function excludesRoutes(addresses){
+    if(process.platform==='win32'){
+      assert.ok(addresses.every(a=>net.isIP(a)));
+      // Load the native network module once; ARM64 hosted Windows has a slow cold start.
+      const result=spawnSync('powershell.exe',['-NoProfile','-Command',`$ErrorActionPreference='Stop'; Get-Command Find-NetRoute | Out-Null; @(${addresses.map(a=>`'${a}'`).join(',')}) | ForEach-Object { [pscustomobject]@{ address=$_; interfaces=@(Find-NetRoute -RemoteIPAddress $_ -ErrorAction SilentlyContinue | Select-Object -ExpandProperty InterfaceAlias -Unique) } } | ConvertTo-Json -Compress`],{encoding:'utf8',windowsHide:true,timeout:30000});
+      assert.ok(!result.error,`native route query finishes: ${result.error?.message}`);assert.equal(result.status,0,result.stderr);
+      const rows=[JSON.parse(result.stdout)].flat();assert.equal(rows.length,addresses.length);
+      for(const [i,row] of rows.entries()){assert.equal(row.address,addresses[i]);assert.ok(Array.isArray(row.interfaces));if(net.isIP(row.address)===4)assert.ok(row.interfaces.length,'IPv4 effective route exists');assert.ok(!row.interfaces.includes('sing-shell'),'bypass effective route excludes our TUN');}
+      return;
+    }
+    for(const address of addresses){
+      const result=process.platform==='darwin'?spawnSync('/sbin/route',['-n','get',...(net.isIP(address)===6?['-inet6']:[]),address],{encoding:'utf8',timeout:5000}):spawnSync('ip',['-j',net.isIP(address)===6?'-6':'-4','route','get',address],{encoding:'utf8',timeout:5000});
+      assert.ok(!result.error,`native route query finishes: ${result.error?.message}`);
+      if(result.status===0)assert.ok(!/sing-shell|utun223/.test(result.stdout),'bypass effective route excludes our TUN');
+      else assert.match(result.stderr,/unreachable|not in table|No route|Network is unreachable/i,'only absent address-family route is acceptable');
+    }
   }
-  for(const address of ['203.0.113.71','2001:db8:71::1',...realAddresses.map(a=>a.address)])excludesRoute(address);
+  excludesRoutes(['203.0.113.71','2001:db8:71::1',...realAddresses.map(a=>a.address)]);
   report.verified.push('production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN');
   report.coreVersion=coreVersion;
   if(!approvedMac)assert.ok((await fs.stat(path.join(protectedRoot,`trusted-${coreVersion}.json`))).isFile());
@@ -157,6 +167,11 @@ try{
   await assert.rejects(()=>tcpEcho('2001:db8:198::99',echoPort));
   report.verified.push('saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6');
   const applied=await selectNode(input.node,{ipv4Compatibility:false});assert.equal(applied.session.phase,'running');assert.equal(applied.session.runtime.error,null);assert.equal(applied.session.runningNode.id,compatibilityResult.session.runningNode.id);assert.notEqual(applied.settings.profile.selectedNode,applied.session.runningNode.id);assert.equal(applied.session.pendingChanges,false);assert.equal(applied.session.runningConnectionOptions.ipv4Compatibility,false);for(const address of ['198.51.100.1','2001:db8:198::99'])await tcpEcho(address,echoPort);report.verified.push('applying saved settings reconnects the actual running node, preserves a different selected node and restores dual-stack forwarding');
+
+  const oldAnswers=await lookup('example.org',{all:true});
+  const unresolved=structuredClone(replacement);unresolved.routing.policies.find(p=>p.id==='bypass').match.domains[0].value='sing-shell-no-address.invalid';
+  const unresolvedResult=await replaceNode(4,unresolved);assert.equal(unresolvedResult.succeeded,false);assert.equal(unresolvedResult.snapshot.runtime.pid,applied.session.runtime.pid);assert.equal(unresolvedResult.session.runningBypass,true);assert.equal(unresolvedResult.session.pendingChanges,true);assert.deepEqual(await lookup('example.org',{all:true}),oldAnswers);await tcpEcho('198.51.100.1',echoPort);excludesRoutes(oldAnswers.map(a=>a.address));
+  report.verified.push('bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending');
 
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
