@@ -651,39 +651,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                         version,
                         material,
                         operation_id,
-                    } => {
-                        if worker.snapshot().operation.is_some() {
-                            Err("已有连接操作".into())
-                        } else {
-                            worker.transfer.take();
-                            {
-                                let mut state = worker.state.lock().unwrap();
-                                state.error = None;
-                                state.operation_error = None;
-                                state.failure = None;
-                                state.operation_id = operation_id;
-                                if state.runtime.pid.is_none() {
-                                    state.phase = Phase::Preparing;
-                                }
-                            }
-                            match material {
-                                Some(material) => install::Transfer::begin(
-                                    &worker.root,
-                                    &version,
-                                    material,
-                                    &worker.runtime,
-                                )
-                                .map(|transfer| worker.transfer = transfer),
-                                None => install::existing(
-                                    &worker.root,
-                                    &version,
-                                    &worker.runtime,
-                                    &AtomicBool::new(false),
-                                )
-                                .map(|_| ()),
-                            }
-                        }
-                    }
+                    } => worker.begin_core(&version, material, operation_id),
                     Request::CoreChunk { offset, bytes } => worker
                         .transfer
                         .as_mut()

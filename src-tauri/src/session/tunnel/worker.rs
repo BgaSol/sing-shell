@@ -187,6 +187,41 @@ impl Worker {
         });
         s.operation = None;
     }
+    pub(super) fn begin_core(
+        &mut self,
+        version: &str,
+        material: Option<crate::core::material::Envelope>,
+        operation_id: u64,
+    ) -> Result<(), String> {
+        if self.snapshot().operation.is_some() {
+            return Err("已有连接操作".into());
+        }
+        self.transfer.take();
+        let running = self.runtime.snapshot().pid.is_some();
+        {
+            let mut state = self.state.lock().unwrap();
+            state.error = None;
+            state.operation_error = None;
+            state.failure = None;
+            state.operation_id = operation_id;
+            if !running {
+                state.phase = Phase::Preparing;
+            }
+        }
+        match material {
+            Some(material) => {
+                super::install::Transfer::begin(&self.root, version, material, &self.runtime)
+                    .map(|transfer| self.transfer = transfer)
+            }
+            None => super::install::existing(
+                &self.root,
+                version,
+                &self.runtime,
+                &AtomicBool::new(false),
+            )
+            .map(|_| ()),
+        }
+    }
     pub(super) fn start(
         &mut self,
         input: ConnectionInput,

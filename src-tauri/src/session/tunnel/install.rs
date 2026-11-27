@@ -277,7 +277,7 @@ mod tests {
             crate::logs::now()
         ));
         crate::private_files::directory(&root).unwrap();
-        let bytes = fs::read(program).unwrap();
+        let bytes = fs::read(&program).unwrap();
         let cancel = AtomicBool::new(false);
         let mut transfer = Transfer::begin(&root, &version, envelope.clone(), &runtime)
             .unwrap()
@@ -316,12 +316,34 @@ mod tests {
         tampered[512] ^= 1;
         fs::write(&installed, tampered).unwrap();
         assert!(existing(&root, &version, &runtime, &cancel).is_err());
-        let transfer = Transfer::begin(&root, &version, envelope, &runtime)
+        let transfer = Transfer::begin(&root, &version, envelope.clone(), &runtime)
             .unwrap()
             .unwrap();
         let temporary = transfer.path.clone();
         drop(transfer);
         assert!(!temporary.exists());
+        fs::write(&installed, &bytes).unwrap();
+        let config = root.join("raw-check.json");
+        fs::write(&config, r#"{"outbounds":[{"type":"direct"}]}"#).unwrap();
+        let mut worker = super::super::worker::Worker::new(root.clone(), "a".repeat(64));
+        worker
+            .runtime
+            .start(
+                &crate::runtime::StartSpec {
+                    executable: installed.clone(),
+                    config,
+                    version: Some(version.clone()),
+                },
+                std::sync::Arc::new(AtomicBool::new(false)),
+            )
+            .unwrap();
+        worker.state.lock().unwrap().phase = Phase::Running;
+        let pid = worker.runtime.snapshot().pid;
+        assert!(pid.is_some());
+        worker.begin_core(&version, Some(envelope), 42).unwrap();
+        assert_eq!(worker.snapshot().phase,Phase::Running,"installation recheck must preserve the real running state even when stored runtime fields are empty");
+        assert_eq!(worker.runtime.snapshot().pid, pid);
+        worker.stop().unwrap();
         fs::remove_dir_all(root).unwrap();
     }
 }
