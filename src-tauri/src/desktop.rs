@@ -125,7 +125,11 @@ impl Desktop {
             return w.minimize().map_err(|e| e.to_string());
         }
         if self.state.lock().unwrap().tray.is_none() {
-            return Err("托盘不可用，已保留主窗口".into());
+            let error = self.state.lock().unwrap().error.clone();
+            return Err(format!(
+                "托盘不可用，已保留主窗口{}",
+                error.map(|e| format!("：{e}")).unwrap_or_default()
+            ));
         }
         w.hide().map_err(|e| e.to_string())?;
         #[cfg(target_os = "macos")]

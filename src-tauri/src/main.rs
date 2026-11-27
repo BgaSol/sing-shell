@@ -715,6 +715,7 @@ fn main() {
             })?;
             tauri.manage(server);
             if let Err(e) = application.desktop.install(tauri.handle()) {
+                eprintln!("Sing Shell tray installation failed: {e}");
                 application.desktop.report(tauri.handle(), e);
             }
             if (launch.login || native_login) && !launch.restart {
