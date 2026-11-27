@@ -457,11 +457,8 @@ const server = await createServer({
   plugins: [
     {
       name: "isolated-ui-fixture",
-      transformIndexHtml(html) {
-        return html.replace(
-          '<script type="module" src="/main.ts">',
-          '<script src="/__fixture.js"></script><script type="module" src="/main.ts">',
-        );
+      transformIndexHtml() {
+        return [{ tag: "script", attrs: { src: "/__fixture.js" }, injectTo: "head-prepend" }];
       },
       configureServer(server) {
         server.middlewares.use("/__fixture.js", (_req, res) => {
