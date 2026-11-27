@@ -313,6 +313,24 @@ impl SettingsStore {
             Ok(())
         })
     }
+    pub fn select_node(&self, id: &str, expected: u64) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.nodes_revision != expected {
+                return Err("节点列表已改变，请重新打开菜单或载入最新设置后重试".into());
+            }
+            if s.profile.mode != crate::profile::Mode::Generated {
+                return Err("请先停止并切换到节点模式".into());
+            }
+            if !s.profile.nodes.iter().any(|n| n.id == id) {
+                return Err("节点不存在".into());
+            }
+            if s.profile.selected_node.as_deref() != Some(id) {
+                s.profile.selected_node = Some(id.into());
+                s.nodes_revision += 1;
+            }
+            Ok(())
+        })
+    }
     pub fn error(&self) -> Option<String> {
         self.error.lock().unwrap().clone()
     }
@@ -425,14 +443,6 @@ impl SettingsStore {
                 s.core_revision += 1;
             }
             s.startup.resume_core = true;
-            if let Some(input) = &input {
-                if s.profile.nodes.iter().any(|n| n.id == input.node.id)
-                    && s.profile.selected_node.as_ref() != Some(&input.node.id)
-                {
-                    s.profile.selected_node = Some(input.node.id.clone());
-                    s.nodes_revision += 1;
-                }
-            }
             s.startup.last_connection = input;
             Ok(())
         })

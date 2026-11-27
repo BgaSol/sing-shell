@@ -62,6 +62,11 @@ try {
   assert.equal(report.completed, true);
   if(installInput)assert.equal(report.installThroughLifecycle,true);
   assert.equal(report.frontendReady, true);
+  const [major,minor]=report.version.split('.').map(Number);
+  if(report.trayAvailable && (major>0 || minor>=9)) {
+    assert.equal(report.trayMenu?.nodes,2000);
+    for(const key of ['selectionUpdated','renameUpdated','modeUpdated']) assert.equal(report.trayMenu[key],true);
+  }
   assert.equal(report.closeRequestIntercepted, true);
   if(runningCore){assert.equal(report.restoredPid,hiddenPid);assert.equal(report.reactivated,true);assert.equal(report.restartArgsNormalized,true);assert.equal(report.settings.startup.resumeCore,true);const deadline=Date.now()+25_000;for(;;){const listener=net.createServer();try{await new Promise((resolve,reject)=>{listener.once('error',reject);listener.listen(port,'127.0.0.1',resolve);});await new Promise(resolve=>listener.close(resolve));break;}catch(e){if(e.code!=='EADDRINUSE')throw e;assert.ok(Date.now()<deadline,'core port did not release after native exit');await delay(50);}}}
   if(!process.env.EXPECTED_LEGACY) assert.equal(report.settings.schemaVersion,5);
