@@ -76,6 +76,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           ./scripts/prepare-windows-desktop.ps1
+          cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --test windows_tray -- --ignored --nocapture
           node scripts/smoke.mjs
       - name: Smoke (macOS bundle)
         if: runner.os == 'macOS'
