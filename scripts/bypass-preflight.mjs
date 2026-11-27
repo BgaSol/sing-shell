@@ -31,7 +31,18 @@ async function run(name,config){
   for(;;){assert.equal(child.exitCode,null,output);try{const r=await fetch(url,{signal:AbortSignal.timeout(1000)});if(r.status===401)break;}catch{}assert.ok(Date.now()<deadline,output);await delay(100);}
   return {child,async query(name,type='A'){assert.equal(child.exitCode,null,output);const r=await fetch(`${url}/dns/query?${new URLSearchParams({name,type})}`,{headers:{Authorization:`Bearer ${secret}`},signal:AbortSignal.timeout(10000)});assert.equal(r.status,200,await r.clone().text());const a=await r.json();assert.equal(a.Status,0);assert.equal(child.exitCode,null,output);return (a.Answer??[]).filter(a=>a.type===(type==='A'?1:28)).map(a=>a.data);}};
 }
-const resolverConfig=()=>({log:{level:'warn'},dns:{servers:[{type:'local',tag:'physical'}],final:'physical',disable_cache:true},route:{auto_detect_interface:true}});
+function resolverConfig(){
+  let server={type:'local',tag:'physical'};
+  if(process.platform==='linux'){
+    const iface=JSON.parse(execFileSync('ip',['-j','route','show','default'],{encoding:'utf8'}))[0]?.dev;assert.ok(iface&&iface!=='sing-shell');
+    let addresses=[];
+    try{addresses=execFileSync('resolvectl',['dns',iface],{encoding:'utf8'}).split(': ').slice(1).join(': ').trim().split(/\s+/);}catch{addresses=(requireResolv()).split('\n').filter(s=>/^nameserver\s/.test(s)).map(s=>s.trim().split(/\s+/)[1]);}
+    const address=addresses.find(ip=>net.isIP(ip.split('%')[0])&&!ip.startsWith('127.')&&ip!=='::1'&&ip!=='172.19.0.2'&&ip!=='fdfe:dcba:9876::2');assert.ok(address,'independent DNS on physical interface');
+    server={type:'udp',tag:'physical',server:address,bind_interface:iface};
+  }
+  return {log:{level:'warn'},dns:{servers:[server],final:'physical',disable_cache:true},route:{auto_detect_interface:true}};
+}
+function requireResolv(){return execFileSync('cat',['/etc/resolv.conf'],{encoding:'utf8'});}
 try{
   const fresh=await run('fresh',resolverConfig());
   const before=await fresh.query('example.com');assert.ok(before.length);await stop(fresh.child);
