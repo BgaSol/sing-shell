@@ -544,7 +544,13 @@ impl Tray {
             }
             next.nodes[1999].label = literal("重命名 & 服务器");
             self.update(next.clone())?;
-            if self.nodes[1999].text().map_err(|e| e.to_string())? != next.nodes[1999].label {
+            // AppKit returns the displayed title, whereas Windows/GTK preserve mnemonic escapes.
+            let expected = if cfg!(target_os = "macos") {
+                next.nodes[1999].label.replace("&&", "&")
+            } else {
+                next.nodes[1999].label.clone()
+            };
+            if self.nodes[1999].text().map_err(|e| e.to_string())? != expected {
                 return Err("原生托盘名称未同步".into());
             }
             next.generated = false;
