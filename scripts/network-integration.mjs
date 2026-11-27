@@ -109,14 +109,14 @@ try{
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
   assert.equal(started.runningBypass,true);
   const realAddresses=await lookup('example.org',{all:true});assert.ok(realAddresses.length&&realAddresses.every(a=>!/^198\.(18|19)\./.test(a.address)),'bypass domain receives fixed real DNS');
-  function excludesRoutes(addresses){
+  function assertRoutes(addresses,tunnel=false){
     if(process.platform==='win32'){
       assert.ok(addresses.every(a=>net.isIP(a)));
-      // Load the native network module once; ARM64 hosted Windows has a slow cold start.
-      const result=spawnSync('powershell.exe',['-NoProfile','-Command',`$ErrorActionPreference='Stop'; Get-Command Find-NetRoute | Out-Null; @(${addresses.map(a=>`'${a}'`).join(',')}) | ForEach-Object { [pscustomobject]@{ address=$_; interfaces=@(Find-NetRoute -RemoteIPAddress $_ -ErrorAction SilentlyContinue | Select-Object -ExpandProperty InterfaceAlias -Unique) } } | ConvertTo-Json -Compress`],{encoding:'utf8',windowsHide:true,timeout:30000});
+      const probe=process.env.SING_SHELL_ROUTE_PROBE??path.resolve('src-tauri/target/release/network-fixture.exe');
+      const result=spawnSync(probe,['--route-probe',...addresses],{encoding:'utf8',windowsHide:true,timeout:5000});
       assert.ok(!result.error,`native route query finishes: ${result.error?.message}`);assert.equal(result.status,0,result.stderr);
       const rows=[JSON.parse(result.stdout)].flat();assert.equal(rows.length,addresses.length);
-      for(const [i,row] of rows.entries()){assert.equal(row.address,addresses[i]);assert.ok(Array.isArray(row.interfaces));if(net.isIP(row.address)===4)assert.ok(row.interfaces.length,'IPv4 effective route exists');assert.ok(!row.interfaces.includes('sing-shell'),'bypass effective route excludes our TUN');}
+      for(const [i,row] of rows.entries()){assert.equal(row.address,addresses[i]);assert.ok(Array.isArray(row.interfaces));if(net.isIP(row.address)===4)assert.ok(row.interfaces.length,'IPv4 effective route exists');assert.equal(row.interfaces.includes('sing-shell'),tunnel,'native effective route matches expected TUN ownership');}
       return;
     }
     for(const address of addresses){
@@ -126,7 +126,8 @@ try{
       else assert.match(result.stderr,/unreachable|not in table|No route|Network is unreachable/i,'only absent address-family route is acceptable');
     }
   }
-  excludesRoutes(['203.0.113.71','2001:db8:71::1',...realAddresses.map(a=>a.address)]);
+  assertRoutes(['203.0.113.71','2001:db8:71::1',...realAddresses.map(a=>a.address)]);
+  if(process.platform==='win32')assertRoutes(['198.51.100.1'],true);
   report.verified.push('production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN');
   report.coreVersion=coreVersion;
   if(!approvedMac)assert.ok((await fs.stat(path.join(protectedRoot,`trusted-${coreVersion}.json`))).isFile());
@@ -172,7 +173,7 @@ try{
   const oldAnswers=await lookup('example.org',{all:true});
   const addressSet=answers=>answers.map(a=>`${a.family}:${a.address}`).sort();
   const unresolved=structuredClone(replacement);unresolved.routing.policies.find(p=>p.id==='bypass').match.domains[0].value='sing-shell-no-address.invalid';
-  const unresolvedResult=await replaceNode(4,unresolved);assert.equal(unresolvedResult.succeeded,false);assert.equal(unresolvedResult.snapshot.runtime.pid,applied.session.runtime.pid);assert.equal(unresolvedResult.session.runningBypass,true);assert.equal(unresolvedResult.session.pendingChanges,true);assert.deepEqual(addressSet(await lookup('example.org',{all:true})),addressSet(oldAnswers));await tcpEcho('198.51.100.1',echoPort);excludesRoutes(oldAnswers.map(a=>a.address));
+  const unresolvedResult=await replaceNode(4,unresolved);assert.equal(unresolvedResult.succeeded,false);assert.equal(unresolvedResult.snapshot.runtime.pid,applied.session.runtime.pid);assert.equal(unresolvedResult.session.runningBypass,true);assert.equal(unresolvedResult.session.pendingChanges,true);assert.deepEqual(addressSet(await lookup('example.org',{all:true})),addressSet(oldAnswers));await tcpEcho('198.51.100.1',echoPort);assertRoutes(oldAnswers.map(a=>a.address));
   report.verified.push('bypass resolution failure preserves the old core PID, fixed DNS, exclusions and forwarding; saved changes remain pending');
 
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');

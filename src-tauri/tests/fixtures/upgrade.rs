@@ -2,6 +2,7 @@
 use serde::Deserialize;
 use sing_shell::updates::{application, release::Candidate, Component};
 use std::{fs, path::PathBuf};
+mod route_probe;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Input {
@@ -15,6 +16,9 @@ struct Input {
     version: String,
 }
 fn main() {
+    if route_probe::run() {
+        return;
+    }
     let input: Input =
         serde_json::from_slice(&fs::read(std::env::args_os().nth(1).expect("input file")).unwrap())
             .unwrap();

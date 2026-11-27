@@ -32,7 +32,7 @@ const networkCores={};
 function networkPackage(executable,label){
   report.networkVersions??=[];
   for(const [coreVersion,core] of Object.entries(networkCores)){
-    const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:core,CORE_VERSION:coreVersion,APPIMAGE_EXTRACT_AND_RUN:'1'};
+    const env={SING_SHELL_NETWORK_PREFLIGHT:'1',SING_SHELL_NETWORK_EXECUTABLE:executable,SING_SHELL_NETWORK_CORE:core,SING_SHELL_ROUTE_PROBE:driver,CORE_VERSION:coreVersion,APPIMAGE_EXTRACT_AND_RUN:'1'};
     if(process.platform==='win32')run(process.execPath,['scripts/network-integration.mjs',target],env);
     else run('sudo',['-E',process.execPath,'scripts/network-integration.mjs',target],env);
     const result=JSON.parse(fs.readFileSync(path.join('artifacts/network-preflight',target,'integration-report.json')));assert.equal(result.passed,true);assert.equal(result.freshProtectedInstall,true);report.networkIntegration=result;report.networkVersions.push(result);report.verified.push(label+' sing-box '+coreVersion);

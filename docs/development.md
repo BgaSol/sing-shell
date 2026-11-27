@@ -104,7 +104,7 @@ Native TUN Preflight 的 scripts/fakeip-check.mjs 在五原生运行器显式运
 
 scripts/bypass-preflight.mjs 在可丢弃五原生运行器保留旧 TUN 的错误 hosts 回答，再启动无 TUN 官方核心验证独立解析入口；Linux 使用物理接口 DNS。提供 SING_SHELL_TEST_CORE 后，显式运行 lib 的 official_bypass_resolver_freezes_results_and_releases_process 测试，通过生产 resolver 路径检查双栈固定结果及进程/目录释放，无 TUN。
 
-生产 network-integration 与实际包验收同时验证精确域名和 IPv4/IPv6 排除、系统真实 DNS、原生有效路由、剩余双栈加密转发、失败候选保留旧 PID/固定 DNS/排除，以及停止和异常清理。Windows 路由查询单次加载系统网络模块，并给原生 ARM64 冷启动有界时间。真实 RustDesk 两端 P2P、动态对端发现和第三方 DoH 不属于这些自动化结论，需单独实机验收。
+生产 network-integration 与实际包验收同时验证精确域名和 IPv4/IPv6 排除、系统真实 DNS、原生有效路由、剩余双栈加密转发、失败候选保留旧 PID/固定 DNS/排除，以及停止和异常清理。Windows 验收夹具直接调用 GetBestRoute2 及接口别名 API，避免 PowerShell/CIM 查询在 ARM64 托管环境阻塞；只读探针不进入正式包。真实 RustDesk 两端 P2P、动态对端发现和第三方 DoH 不属于这些自动化结论，需单独实机验收。
 
 ## 离线受保护核心安装回归
 

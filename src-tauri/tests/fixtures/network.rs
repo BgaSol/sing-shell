@@ -1,4 +1,8 @@
+mod route_probe;
 fn main() {
+    if route_probe::run() {
+        return;
+    }
     let args: Vec<_> = std::env::args_os().collect();
     if let Some(result) = sing_shell::session::tunnel::dispatch(&args) {
         if let Err(error) = result {
