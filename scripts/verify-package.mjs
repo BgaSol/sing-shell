@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {validate,updater,hash} from './package-artifacts.mjs';
 import {verifyBinary} from './verify-binary.mjs';
+import {verifyPreservedSettings} from './verify-settings.mjs';
 
 const target=process.env.EXPECTED_RUST_TARGET;
 assert.equal(target,`${process.arch==='arm64'?'aarch64':'x86_64'}-${{win32:'pc-windows-msvc',linux:'unknown-linux-gnu',darwin:'apple-darwin'}[process.platform]}`);
@@ -73,7 +74,8 @@ function upgrade(executable,isImage=false,destination=candidate,destinationRoot=
   assert.equal(fs.readFileSync(config,'utf8'),'{"outbounds":[{"type":"direct"}]}');
   if(managedData){
     (isImage?appimageSmoke:smoke)(executable,'upgraded package preserves managed settings and existing core bytes',destination.version,{SING_SHELL_TEST_DATA:managedData,EXPECTED_INCOMPATIBLE:old?'1':''});
-    assert.deepEqual(fs.readFileSync(path.join(managedData,'settings.json')),managedOriginal);
+    const preserved=verifyPreservedSettings(managedOriginal,fs.readFileSync(path.join(managedData,'settings.json')));
+    (report.settingsCompatibility??=[]).push({from,...preserved});
     (isImage?appimageSmoke:smoke)(executable,'explicit initialization recovers an existing official core, starts and stops it',destination.version,{SING_SHELL_TEST_DATA:managedData,SING_SHELL_CORE_RECOVERY_TEST:'1'});
     const recovery=JSON.parse(fs.readFileSync(path.join(managedData,'core-recovery-result.json')));
     if(old)assert.deepEqual(fs.readFileSync(recovery.backup),managedOriginal);else assert.equal(recovery.backup,null);assert.equal(recovery.programHash,hash(official));assert.equal(recovery.version,'1.14.4');assert.equal(recovery.runningVersion,'1.14.4');assert.ok(recovery.startedPid);assert.equal(recovery.stopped,true);assert.equal(recovery.automaticConnection,false);
