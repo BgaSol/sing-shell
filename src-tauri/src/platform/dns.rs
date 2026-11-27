@@ -1,5 +1,6 @@
 #[cfg(target_os = "macos")]
 mod macos;
+pub(crate) mod upstream;
 
 #[derive(Default)]
 pub struct Dns {

@@ -115,6 +115,25 @@ fn dns(input: &ConnectionInput, projected: Vec<Value>) -> Value {
     ],"rules":rules,"final":if input.routing.default_exit==Action::Direct{"local"}else{"proxy-dns"}})
 }
 pub fn compile(input: &ConnectionInput, bindings: &Bindings) -> Result<Value, String> {
+    compile_runtime(
+        input,
+        bindings,
+        &super::bypass::Resolved::new(&input.routing, Default::default())?,
+    )
+}
+pub fn compile_runtime(
+    input: &ConnectionInput,
+    bindings: &Bindings,
+    bypass: &super::bypass::Resolved,
+) -> Result<Value, String> {
+    bypass.validate(&input.routing)?;
+    compile_inner(input, bindings, bypass)
+}
+fn compile_inner(
+    input: &ConnectionInput,
+    bindings: &Bindings,
+    bypass: &super::bypass::Resolved,
+) -> Result<Value, String> {
     input.validate()?;
     if input
         .node
@@ -165,27 +184,47 @@ pub fn compile(input: &ConnectionInput, bindings: &Bindings) -> Result<Value, St
         experimental["clash_api"] =
             json!({"external_controller":format!("127.0.0.1:{port}"),"secret":secret});
     }
-    Ok(json!({
+    let mut value = json!({
         "log":{"level":"info","disabled":false,"timestamp":false},
         "dns":dns(input, projected_dns),
         "inbounds":[{"type":"tun","tag":"tun-in","interface_name":super::tun::INTERFACE,"address":super::tun::ADDRESS,"auto_route":true,"strict_route":true,"stack":"mixed","mtu":1400,"dns_mode":"hijack","dns_address":super::tun::DNS}],
         "outbounds":[outbound,{"type":"direct","tag":"direct","domain_resolver":"local"}],
         "route":{"auto_detect_interface":true,"default_domain_resolver":"local","rules":rules,"rule_set":sets,"final":routing.default_exit.tag()},
         "experimental":experimental
-    }))
+    });
+    if !bypass.prefixes.is_empty() {
+        value["inbounds"][0]["route_exclude_address"] = json!(bypass.prefixes);
+    }
+    if !bypass.hosts.is_empty() {
+        value["dns"]["servers"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({"type":"hosts","tag":"bypass-hosts","predefined":bypass.hosts}));
+        let names: Vec<_> = bypass.hosts.keys().collect();
+        let rules = value["dns"]["rules"].as_array_mut().unwrap();
+        rules.insert(0,json!({"domain":names,"query_type":["HTTPS","SVCB"],"action":"predefined","rcode":"NOERROR"}));
+        rules.insert(0,json!({"domain":names,"query_type":["A","AAAA"],"action":"route","server":"bypass-hosts"}));
+    }
+    Ok(value)
 }
 pub fn fakeip(ip: std::net::Ipv4Addr) -> bool {
     let [a, b, ..] = ip.octets();
     a == 198 && matches!(b, 18 | 19)
 }
-pub fn build(profile: &Profile, root: &Path, version: &str) -> Result<Generated, String> {
+pub fn build_check(profile: &Profile, root: &Path, version: &str) -> Result<Generated, String> {
     let versions = rulesets::selected(root, &profile.routing)?;
     let node = profile.selected().ok_or("请先选择节点")?.clone();
     let input = ConnectionInput::from_profile(profile, node, versions, version.into())?;
     let directory = root.join("runtime");
     crate::private_files::directory(&directory)?;
     let bindings = Bindings::prepare(root, &input.versions, directory.join("check-cache.db"))?;
-    let value = compile(&input, &bindings)?;
+    let targets = super::bypass::Targets::collect(&input.routing)?;
+    // Check-only compilation never performs DNS and is never a launch input.
+    let bypass = super::bypass::Resolved {
+        hosts: targets.domains.into_keys().map(|d| (d, vec![])).collect(),
+        prefixes: targets.prefixes.into_iter().collect(),
+    };
+    let value = compile_inner(&input, &bindings, &bypass)?;
     let path = directory.join("generated.json");
     settings::write_json(&path, &value)?;
     Ok(Generated {
@@ -203,6 +242,43 @@ pub fn remove_generated(root: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn runtime_requires_complete_bypass_and_assembles_dns_before_compatibility() {
+        let node = super::super::import::preview("trojan://secret@example.com:443", &[])
+            .unwrap()
+            .nodes
+            .remove(0);
+        let mut input=ConnectionInput{node,routing:serde_json::from_value(json!({"defaultExit":"proxy","policies":[{"id":"rd","name":"RustDesk","enabled":true,"exit":"direct","bypassTun":true,"match":{"kind":"custom","domains":[{"value":"id.example.test","includeSubdomains":false}],"ipCidrs":[]}}]})).unwrap(),versions:vec![],core_version:"1.14.4".into(),options:Default::default()};
+        let bindings = Bindings {
+            rules: Default::default(),
+            cache: "cache.db".into(),
+            activity: None,
+        };
+        assert!(compile(&input, &bindings).is_err());
+        let resolved = super::super::bypass::Resolved::new(
+            &input.routing,
+            BTreeMap::from([(
+                "id.example.test".into(),
+                vec!["192.0.2.7".parse().unwrap(), "2001:db8::7".parse().unwrap()],
+            )]),
+        )
+        .unwrap();
+        input.options.ipv4_compatibility = true;
+        let v = compile_runtime(&input, &bindings, &resolved).unwrap();
+        assert_eq!(v["dns"]["rules"][0]["server"], "bypass-hosts");
+        assert_eq!(v["dns"]["rules"][1]["query_type"], json!(["HTTPS", "SVCB"]));
+        assert_eq!(
+            v["inbounds"][0]["route_exclude_address"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            v["dns"]["servers"][3]["predefined"]["id.example.test"][1],
+            "2001:db8::7"
+        );
+    }
     #[test]
     fn compilation_preserves_policy_order_and_combines_runtime_features() {
         let node = super::super::import::preview("trojan://secret@example.com:443", &[])

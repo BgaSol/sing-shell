@@ -29,6 +29,7 @@ export interface Policy {
   name: string;
   enabled: boolean;
   exit: RouteAction;
+  bypassTun?: boolean;
   match: PolicyMatch;
 }
 export interface Routing {
@@ -216,6 +217,7 @@ export interface CoreState {
   pendingChanges: boolean;
   runningNode: NodeSummary | null;
   runningConnectionOptions: ConnectionOptions | null;
+  runningBypass: boolean;
   sessionId: string | null;
   target: NodeSummary | null;
   operation: string | null;

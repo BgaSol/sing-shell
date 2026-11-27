@@ -1,6 +1,6 @@
 use super::{ConnectionInput, Failure, Phase, Snapshot};
 use crate::{
-    activity::{Collector, Context},
+    activity::Collector,
     platform::{dns::Dns, network},
     runtime::{RuntimeService, StartSpec},
 };
@@ -22,17 +22,10 @@ pub(super) struct Resources {
 struct Started {
     resources: Resources,
     result: Result<network::Observation, (Failure, String)>,
-    actual: Option<ConnectionInput>,
+    actual: Option<RunningConnection>,
     error: Option<String>,
 }
-struct Prepared {
-    input: ConnectionInput,
-    executable: PathBuf,
-    config: PathBuf,
-    directory: PathBuf,
-    context: Option<Context>,
-    session_id: String,
-}
+use super::preparation::{prepare, Prepared, RunningConnection};
 pub(super) struct Worker {
     pub(super) root: PathBuf,
     pub(super) transfer: Option<super::install::Transfer>,
@@ -42,9 +35,10 @@ pub(super) struct Worker {
     pub(super) cancel: Arc<AtomicBool>,
     start: Option<JoinHandle<Started>>,
     resources: Resources,
-    actual: Option<ConnectionInput>,
+    actual: Option<RunningConnection>,
     collector: Arc<Mutex<Option<Collector>>>,
     observed: Instant,
+    preparation: Arc<Mutex<super::resolver::Resources>>,
 }
 impl Worker {
     pub(super) fn new(root: PathBuf, owner_key: String) -> Self {
@@ -64,6 +58,7 @@ impl Worker {
             actual: None,
             collector: Arc::new(Mutex::new(None)),
             observed: Instant::now(),
+            preparation: Arc::new(Mutex::new(Default::default())),
         }
     }
     pub(super) fn snapshot(&self) -> Snapshot {
@@ -86,6 +81,11 @@ impl Worker {
         } else {
             None
         };
+        s.running_bypass = s.running_node.is_some()
+            && self
+                .actual
+                .as_ref()
+                .is_some_and(|c| !c.bypass.prefixes.is_empty());
         s.core_received = self.transfer.as_ref().map(|t| t.received);
         s.logs.clear();
         s.activity_summary = self
@@ -170,6 +170,7 @@ impl Worker {
             &mut self.resources,
             &self.collector,
         );
+        let result = result.and_then(|_| self.preparation.lock().unwrap().close(&self.root));
         let mut s = self.state.lock().unwrap();
         s.phase = if result.is_ok() && failure != Failure::Cleanup {
             Phase::Failed
@@ -248,6 +249,7 @@ impl Worker {
         let owner_key = self.owner_key.clone();
         let collector = self.collector.clone();
         let old = self.actual.clone();
+        let preparation = self.preparation.clone();
         let mut resources = std::mem::take(&mut self.resources);
         {
             let mut s = state.lock().unwrap();
@@ -260,10 +262,19 @@ impl Worker {
         }
         self.start = Some(thread::spawn(move || {
             state.lock().unwrap().operation = Some("checkingConfig".into());
-            let prepared = prepare(&root, &owner_key, input, &cancel);
+            let prepared = prepare(&root, &owner_key, input, None, &cancel, &preparation);
             let candidate = match prepared {
                 Ok(v) => v,
                 Err(e) => {
+                    let clean = preparation.lock().unwrap().close(&root);
+                    if let Err(clean) = clean {
+                        return Started {
+                            resources,
+                            result: Err((Failure::Cleanup, format!("{e}；{clean}"))),
+                            actual: old,
+                            error: None,
+                        };
+                    }
                     if old.is_some()
                         && runtime.snapshot().pid.is_some()
                         && !cancel.load(Ordering::Acquire)
@@ -290,7 +301,7 @@ impl Worker {
                 s.phase = Phase::Stopping;
             }
             if let Err(e) = cleanup(&root, &runtime, &state, &mut resources, &collector) {
-                let _ = std::fs::remove_dir_all(candidate.directory);
+                let _ = preparation.lock().unwrap().close(&root);
                 return Started {
                     resources,
                     result: Err((Failure::Cleanup, e)),
@@ -298,10 +309,11 @@ impl Worker {
                     error: None,
                 };
             }
-            let requested = candidate.input.clone();
+            let requested = candidate.running.clone();
             let first = launch(
                 &root,
                 candidate,
+                &preparation,
                 &runtime,
                 &state,
                 &cancel,
@@ -317,6 +329,7 @@ impl Worker {
                 },
                 Err((failure, error)) => {
                     if let Err(clean) = cleanup(&root, &runtime, &state, &mut resources, &collector)
+                        .and_then(|_| preparation.lock().unwrap().close(&root))
                     {
                         return Started {
                             resources,
@@ -327,19 +340,27 @@ impl Worker {
                     }
                     if !cancel.load(Ordering::Acquire) {
                         if let Some(previous) = old {
-                            let restored = prepare(&root, &owner_key, previous.clone(), &cancel)
-                                .map_err(|e| (Failure::Preparation, e))
-                                .and_then(|p| {
-                                    launch(
-                                        &root,
-                                        p,
-                                        &runtime,
-                                        &state,
-                                        &cancel,
-                                        &mut resources,
-                                        &collector,
-                                    )
-                                });
+                            let restored = prepare(
+                                &root,
+                                &owner_key,
+                                previous.input.clone(),
+                                Some(previous.bypass.clone()),
+                                &cancel,
+                                &preparation,
+                            )
+                            .map_err(|e| (Failure::Preparation, e))
+                            .and_then(|p| {
+                                launch(
+                                    &root,
+                                    p,
+                                    &preparation,
+                                    &runtime,
+                                    &state,
+                                    &cancel,
+                                    &mut resources,
+                                    &collector,
+                                )
+                            });
                             return match restored {
                                 Ok(n) => Started {
                                     resources,
@@ -392,6 +413,7 @@ impl Worker {
             &mut self.resources,
             &self.collector,
         );
+        let result = result.and_then(|_| self.preparation.lock().unwrap().close(&self.root));
         match &result {
             Ok(()) => {
                 self.actual = None;
@@ -414,81 +436,10 @@ impl Worker {
         self.stop()
     }
 }
-fn prepare(
-    root: &Path,
-    owner_key: &str,
-    input: ConnectionInput,
-    cancel: &Arc<AtomicBool>,
-) -> Result<Prepared, String> {
-    input.validate()?;
-    network::require_fakeip_clear()?;
-    let mut keep = input.versions.clone();
-    if let Ok(bytes) = std::fs::read(root.join("rules/pinned.json")) {
-        if let Ok(pinned) = serde_json::from_slice::<Vec<crate::rulesets::Version>>(&bytes) {
-            if pinned.iter().all(|v| v.validate().is_ok()) {
-                keep.extend(pinned);
-            }
-        }
-    }
-    crate::rulesets::prune(root, &keep)?;
-    let check = RuntimeService::default();
-    let executable = trusted_core(root, &input.core_version, &check, cancel)?;
-    for expected in &input.versions {
-        let mut preferences = crate::updates::network::Preferences::default();
-        preferences.fallback_enabled = false;
-        let v = crate::rulesets::prepare(
-            root,
-            &expected.source_id,
-            &expected.commit,
-            preferences,
-            cancel,
-        )?;
-        if &v != expected {
-            return Err("受保护规则与固定版本不一致".into());
-        }
-    }
-    let context = if check.supports_activity(&executable, cancel)? {
-        Some(Context::new()?)
-    } else {
-        None
-    };
-    let session_id = context
-        .as_ref()
-        .map(|c| Ok(c.id.clone()))
-        .unwrap_or_else(crate::platform::authorization::nonce)?;
-    let directory = root.join("runtime").join(&session_id);
-    crate::private_files::directory(&directory)?;
-    let config = directory.join("config.json");
-    let result = (|| {
-        let cache = super::cache::prepare(root, owner_key)?;
-        let mut bindings = crate::profile::config::Bindings::prepare(root, &input.versions, cache)?;
-        let mut secrets = input.node.spec.secrets();
-        if let Some(context) = &context {
-            bindings.activity = Some((context.port, context.secret.clone()));
-            secrets.push(context.secret.clone());
-            secrets.push(format!("127.0.0.1:{}", context.port));
-        }
-        check.logs.redact(secrets);
-        let value = crate::profile::config::compile(&input, &bindings)?;
-        crate::settings::write_json(&config, &value)?;
-        check.validate(&executable, &config, cancel)
-    })();
-    if let Err(e) = result {
-        let _ = std::fs::remove_dir_all(&directory);
-        return Err(e);
-    }
-    Ok(Prepared {
-        input,
-        executable,
-        config,
-        directory,
-        context,
-        session_id,
-    })
-}
 fn launch(
     root: &Path,
     prepared: Prepared,
+    preparation: &Mutex<super::resolver::Resources>,
     runtime: &RuntimeService,
     state: &Mutex<Snapshot>,
     cancel: &Arc<AtomicBool>,
@@ -497,7 +448,7 @@ fn launch(
 ) -> Result<network::Observation, (Failure, String)> {
     resources.directory = Some(prepared.directory);
     // Old readers have joined before launch; stored log lines are already redacted.
-    let mut secrets = prepared.input.node.spec.secrets();
+    let mut secrets = prepared.running.input.node.spec.secrets();
     if let Some(context) = &prepared.context {
         secrets.push(context.secret.clone());
         secrets.push(format!("127.0.0.1:{}", context.port));
@@ -515,12 +466,13 @@ fn launch(
             state.session_id = Some(prepared.session_id.clone());
         }
         crate::settings::write_json(&root.join("runtime/current.json"), &prepared.session_id)?;
+        preparation.lock().unwrap().release(root)?;
         failure = Failure::CoreStart;
         runtime.start(
             &StartSpec {
                 executable: prepared.executable,
                 config: prepared.config,
-                version: Some(prepared.input.core_version.clone()),
+                version: Some(prepared.running.input.core_version.clone()),
             },
             cancel.clone(),
         )?;
@@ -531,7 +483,7 @@ fn launch(
             if runtime.snapshot().pid.is_none() {
                 return Err("核心已退出，TUN 未建立".into());
             }
-            let n = network::observe()?;
+            let n = network::observe_expected(&prepared.running.bypass.prefixes)?;
             if n.ready() {
                 break n;
             }
@@ -546,9 +498,13 @@ fn launch(
             return Err("DNS 接管期间核心已退出".into());
         }
         crate::private_files::directory(&root.join("rules"))?;
-        crate::settings::write_json(&root.join("rules/pinned.json"), &prepared.input.versions)?;
+        crate::settings::write_json(
+            &root.join("rules/pinned.json"),
+            &prepared.running.input.versions,
+        )?;
         if let Some(context) = prepared.context {
-            *collector.lock().unwrap() = Some(Collector::start(context, &prepared.input.routing));
+            *collector.lock().unwrap() =
+                Some(Collector::start(context, &prepared.running.input.routing));
         }
         Ok(observation)
     })();
@@ -624,15 +580,6 @@ fn recorded_directory(root: &Path) -> Option<PathBuf> {
     }
     Some(root.join("runtime").join(id))
 }
-fn trusted_core(
-    root: &Path,
-    version: &str,
-    runtime: &RuntimeService,
-    cancel: &Arc<AtomicBool>,
-) -> Result<PathBuf, String> {
-    super::install::existing(root, version, runtime, cancel)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

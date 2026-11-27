@@ -137,6 +137,7 @@ function bootstrap() {
     pendingChanges: false,
     runningNode: null,
     runningConnectionOptions: null,
+    runningBypass:false,
     target: null,
     operation: null,
     activity: null,

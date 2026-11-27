@@ -45,7 +45,7 @@ export function createShell(changed: () => Promise<void>) {
           : ((
               {
                 running: "TUN 运行中",
-                preparing: c.operation === "installingCore" ? "正在安装核心" : c.operation === "checkingConfig" ? "正在校验配置" : "正在准备",
+                preparing: c.operation === "installingCore" ? "正在安装核心" : c.operation === "resolvingBypass" ? "正在解析绕过地址" : c.operation === "checkingConfig" ? "正在校验配置" : "正在准备",
                 starting: "正在启动",
                 stopping: "正在断开",
                 stopped: "尚未连接",
@@ -82,7 +82,7 @@ export function createShell(changed: () => Promise<void>) {
       element("check").hidden = !raw;
       element<HTMLButtonElement>("check").disabled =
         busy || running || !c.usable;
-      element("apply-connection").hidden = raw || !running || !c.pendingChanges;
+      element("apply-connection").hidden = raw || !running || (!c.pendingChanges && !c.runningBypass);
       element<HTMLButtonElement>("apply-connection").disabled = busy;
       element<HTMLButtonElement>("choose-core").disabled = !c.canImport;
       element<HTMLButtonElement>("choose-config").disabled = !c.canImport;

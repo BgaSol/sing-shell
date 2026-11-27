@@ -2,6 +2,7 @@ use std::{
     io,
     process::{Child, Command},
 };
+pub(crate) mod record;
 
 #[cfg(windows)]
 mod native {

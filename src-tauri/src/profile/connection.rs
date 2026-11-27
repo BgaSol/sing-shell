@@ -81,3 +81,22 @@ impl ConnectionInput {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn bypass_changes_intent_but_disabled_rules_and_legacy_defaults_do_not() {
+        let node = super::super::import::preview("trojan://s@example.com:443", &[])
+            .unwrap()
+            .nodes
+            .remove(0);
+        let mut input=super::ConnectionInput{node,routing:serde_json::from_value(serde_json::json!({"defaultExit":"proxy","policies":[{"id":"rd","name":"RustDesk","enabled":true,"exit":"direct","match":{"kind":"custom","domains":[],"ipCidrs":["192.0.2.7/32"]}}]})).unwrap(),versions:vec![],core_version:"1.14.4".into(),options:Default::default()};
+        let before = input.fingerprint();
+        input.routing.policies[0].bypass_tun = true;
+        assert_ne!(before, input.fingerprint());
+        input.routing.policies[0].enabled = false;
+        let disabled = input.fingerprint();
+        input.routing.policies[0].bypass_tun = false;
+        assert_eq!(disabled, input.fingerprint());
+    }
+}

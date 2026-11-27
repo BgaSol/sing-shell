@@ -8,6 +8,7 @@ export function verifyPreservedSettings(before,after) {
   expected.connectionRevision??=0;
   expected.profile.connection??={ipv4Compatibility:false};
   if(expected.startup.lastConnection)expected.startup.lastConnection.options??={ipv4Compatibility:false};
-  assert.deepEqual(JSON.parse(after),expected,'existing settings must be unchanged apart from missing connection defaults');
+  for(const routing of [expected.profile.routing,expected.startup.lastConnection?.routing])for(const policy of routing?.policies??[])policy.bypassTun??=false;
+  assert.deepEqual(JSON.parse(after),expected,'existing settings must be unchanged apart from missing connection and bypass defaults');
   return{connectionDefaultsAdded:added};
 }

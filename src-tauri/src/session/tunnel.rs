@@ -15,7 +15,9 @@ use std::{
 use tokio::io::AsyncReadExt;
 mod cache;
 mod install;
+mod preparation;
 mod protocol;
+mod resolver;
 mod worker;
 use protocol::{exchange, read, write, Closed, Request, DISCONNECT_BUDGET, STOP_BUDGET};
 pub use protocol::{Failure, Phase, Snapshot};
@@ -78,6 +80,7 @@ impl Tunnel {
             session_id: state.session_id.clone(),
             running_node: state.running_node.clone(),
             running_connection_options: state.running_connection_options,
+            running_bypass: state.running_bypass,
             operation_id: state.operation_id,
             operation: state.operation.clone(),
             operation_error: state.operation_error.clone(),
@@ -615,6 +618,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
             let mut channel = peer.channel;
             let root = authorization::prepare_root()?;
             let lease = crate::instance::Lease::acquire(&root)?;
+            resolver::Resources::recover(&root)?;
             let mut worker = Worker::new(root, peer.owner_key);
             worker.runtime.record_network(worker.root.clone());
             let result = loop {

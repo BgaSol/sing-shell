@@ -16,6 +16,7 @@ pub mod login_startup;
 pub mod startup;
 
 pub mod activity;
+pub(crate) mod ip_network;
 mod private_files;
 pub mod profile;
 pub mod rulesets;

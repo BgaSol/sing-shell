@@ -47,6 +47,7 @@ fn routing_commit_preserves_other_source_preferences_and_rejects_stale_writes() 
         id: "github".into(),
         name: "GitHub".into(),
         enabled: true,
+        bypass_tun: false,
         exit: Action::Proxy,
         r#match: Match::Source {
             source_id: "github".into(),

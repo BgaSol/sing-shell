@@ -243,6 +243,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     });
     profile.selected_node = Some("n".into());
     let domain = |id: &str, value: &str, suffix: bool, exit| Policy {
+        bypass_tun: false,
         id: id.into(),
         name: id.into(),
         enabled: true,
@@ -256,6 +257,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
         },
     };
     let ip = |id: &str, value: &str, exit| Policy {
+        bypass_tun: false,
         id: id.into(),
         name: id.into(),
         enabled: true,
@@ -285,6 +287,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
             id: id.into(),
             name: id.into(),
             enabled: true,
+            bypass_tun: false,
             exit: if id == "github" {
                 Action::Direct
             } else {
@@ -295,7 +298,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
             },
         });
     }
-    let generated = profile::config::build(&profile, &root, "1.14.4").unwrap();
+    let generated = profile::config::build_check(&profile, &root, "1.14.4").unwrap();
     let mut config: serde_json::Value =
         serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
     // Keep generated routing and SRS unchanged; replace only ingress, DNS transport and exit probes.
@@ -421,7 +424,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     request("unmatched.test", b'D');
     client.stop().unwrap();
     profile.routing.policies.swap(0, 3);
-    let reversed_path = profile::config::build(&profile, &root, "1.14.4")
+    let reversed_path = profile::config::build_check(&profile, &root, "1.14.4")
         .unwrap()
         .path;
     let reversed: serde_json::Value =
@@ -505,13 +508,14 @@ fn official_core_checks_every_supported_protocol_and_site_assets() {
                 id: source.id.into(),
                 name: source.name.into(),
                 enabled: true,
+                bypass_tun: false,
                 exit: profile::routing::Action::Direct,
                 r#match: profile::routing::Match::Source {
                     source_id: source.id.into(),
                 },
             })
             .collect();
-        let config = profile::config::build(&profile, &root, "1.14.4").unwrap();
+        let config = profile::config::build_check(&profile, &root, "1.14.4").unwrap();
         let output = std::process::Command::new(&core)
             .args(["check", "-c"])
             .arg(config.path)
@@ -641,7 +645,7 @@ fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
     let selected = reopened.snapshot();
     assert_eq!(selected.profile.selected().unwrap().name, "zzz");
     assert!(selected.profile.selected().unwrap().spec == spec);
-    let generated = profile::config::build(&selected.profile, &root, "1.14.4").unwrap();
+    let generated = profile::config::build_check(&selected.profile, &root, "1.14.4").unwrap();
     let value: serde_json::Value =
         serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
     assert_eq!(

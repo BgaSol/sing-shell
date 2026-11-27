@@ -53,6 +53,7 @@ pub struct Snapshot {
     pub network: crate::platform::network::Observation,
     pub running_node: Option<crate::profile::NodeSummary>,
     pub running_connection_options: Option<crate::profile::ConnectionOptions>,
+    pub running_bypass: bool,
     pub pending_changes: bool,
     pub target: Option<crate::profile::NodeSummary>,
     pub operation: Option<String>,
@@ -192,6 +193,7 @@ impl SessionService {
             } else {
                 None
             },
+            running_bypass: generated && tunnel.running_bypass,
             pending_changes: r.pid.is_some()
                 && desired
                     .as_ref()
@@ -396,7 +398,7 @@ impl SessionService {
     fn check_owned(&self, op: &Operation) -> Result<(), String> {
         let s = self.store.snapshot();
         if s.profile.mode == crate::profile::Mode::Generated {
-            let config = crate::profile::config::build(
+            let config = crate::profile::config::build_check(
                 &s.profile,
                 &self.store.root,
                 &s.managed.active.as_ref().ok_or("核心尚未就绪")?.version,

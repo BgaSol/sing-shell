@@ -13,3 +13,9 @@ test('upgrade permits only additive connection defaults and preserves every prio
   assert.equal(verifyPreservedSettings(bytes(next),bytes(next)).connectionDefaultsAdded,false);
   const old=Buffer.from('{"schemaVersion":4}');verifyPreservedSettings(old,old);assert.throws(()=>verifyPreservedSettings(old,Buffer.from('{ "schemaVersion":4}')));
 });
+test('schema-five upgrade defaults bypass without altering rule intent or saved connection',()=>{
+ const policy={id:'rd',name:'RustDesk',exit:'direct',enabled:true,match:{kind:'custom',domains:[],ipCidrs:['192.0.2.1/32']}};
+ const before={schemaVersion:5,connectionRevision:0,profile:{connection:{ipv4Compatibility:false},routing:{policies:[policy]}},startup:{lastConnection:{options:{ipv4Compatibility:false},routing:{policies:[policy]}}}};
+ const after=structuredClone(before);after.profile.routing.policies[0].bypassTun=false;after.startup.lastConnection.routing.policies[0].bypassTun=false;
+ verifyPreservedSettings(JSON.stringify(before),JSON.stringify(after));after.profile.routing.policies[0].bypassTun=true;assert.throws(()=>verifyPreservedSettings(JSON.stringify(before),JSON.stringify(after)));
+});

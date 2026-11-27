@@ -41,6 +41,8 @@ pub struct Policy {
     pub name: String,
     pub enabled: bool,
     pub exit: Action,
+    #[serde(default)]
+    pub bypass_tun: bool,
     pub r#match: Match,
 }
 impl Policy {
@@ -64,6 +66,7 @@ impl Default for Routing {
                     id: id.into(),
                     name: name.into(),
                     enabled: true,
+                    bypass_tun: false,
                     exit: Action::Direct,
                     r#match: Match::Source {
                         source_id: id.into(),
@@ -110,58 +113,8 @@ pub fn domain(value: &str) -> Result<String, String> {
     }
     Ok(host)
 }
-pub fn network(value: &str) -> Result<(IpAddr, u8), String> {
-    let (address, prefix) = value
-        .trim()
-        .split_once('/')
-        .map(|(a, p)| (a, Some(p)))
-        .unwrap_or((value.trim(), None));
-    let address = address.parse::<IpAddr>().map_err(|_| "IP 地址格式无效")?;
-    let max = if address.is_ipv4() { 32 } else { 128 };
-    let prefix = prefix
-        .map(|p| p.parse::<u8>().map_err(|_| "网段前缀无效"))
-        .transpose()?
-        .unwrap_or(max);
-    if prefix > max {
-        return Err("网段前缀超出地址长度".into());
-    }
-    let masked = match address {
-        IpAddr::V4(a) => IpAddr::V4(
-            (u32::from(a)
-                & if prefix == 0 {
-                    0
-                } else {
-                    u32::MAX << (32 - prefix)
-                })
-            .into(),
-        ),
-        IpAddr::V6(a) => IpAddr::V6(
-            (u128::from(a)
-                & if prefix == 0 {
-                    0
-                } else {
-                    u128::MAX << (128 - prefix)
-                })
-            .into(),
-        ),
-    };
-    Ok((masked, prefix))
-}
-fn overlap(a: (IpAddr, u8), b: (IpAddr, u8)) -> bool {
-    if a.0.is_ipv4() != b.0.is_ipv4() {
-        return false;
-    }
-    let bits = a.1.min(b.1);
-    match (a.0, b.0) {
-        (IpAddr::V4(a), IpAddr::V4(b)) => {
-            bits == 0 || (u32::from(a) >> (32 - bits)) == (u32::from(b) >> (32 - bits))
-        }
-        (IpAddr::V6(a), IpAddr::V6(b)) => {
-            bits == 0 || (u128::from(a) >> (128 - bits)) == (u128::from(b) >> (128 - bits))
-        }
-        _ => false,
-    }
-}
+pub use crate::ip_network::network;
+use crate::ip_network::overlap;
 impl Routing {
     pub fn normalized(&self) -> Result<Self, String> {
         if self.policies.len() > 100 {
@@ -188,6 +141,11 @@ impl Routing {
             }
             let name = p.name.clone();
             let issue = |message: &str| format!("{name}：{message}");
+            if p.bypass_tun
+                && (p.exit != Action::Direct || !matches!(p.r#match, Match::Custom { .. }))
+            {
+                return Err(issue("绕过 TUN 仅支持自定义直连规则"));
+            }
             match &mut p.r#match {
                 Match::Source { source_id } => {
                     crate::rulesets::definition(source_id)?;
@@ -202,6 +160,12 @@ impl Routing {
                     }
                     let mut keys = std::collections::BTreeSet::new();
                     for (i, d) in domains.iter_mut().enumerate() {
+                        if p.bypass_tun && d.include_subdomains {
+                            return Err(format!(
+                                "{name} / 域名 {}：绕过 TUN 仅支持精确域名",
+                                i + 1
+                            ));
+                        }
                         d.value = domain(&d.value)
                             .map_err(|e| format!("{name} / 域名 {}：{e}", i + 1))?;
                         if !keys.insert(format!("{}:{}", d.include_subdomains, d.value)) {
@@ -212,6 +176,10 @@ impl Routing {
                     for (i, value) in ip_cidrs.iter_mut().enumerate() {
                         let net =
                             network(value).map_err(|e| format!("{name} / IP {}：{e}", i + 1))?;
+                        if p.bypass_tun {
+                            super::bypass::validate_address(value)
+                                .map_err(|e| format!("{name} / IP {}：{e}", i + 1))?;
+                        }
                         if p.exit == Action::Proxy
                             && PRIVATE_NETWORKS
                                 .iter()
@@ -237,6 +205,7 @@ impl Routing {
         if count > 1000 {
             return Err("自定义匹配项总数最多 1,000 个".into());
         }
+        super::bypass::Targets::collect(&out)?;
         Ok(out)
     }
     pub fn validate(&self) -> Result<(), String> {
@@ -271,6 +240,7 @@ mod tests {
             id: id.into(),
             name: id.into(),
             enabled: true,
+            bypass_tun: false,
             exit: Action::Direct,
             r#match: Match::Custom {
                 domains: vec![Domain {

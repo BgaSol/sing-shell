@@ -70,7 +70,7 @@ impl CoreService {
                     .as_ref()
                     .map(|r| r.version.as_str())
                     .unwrap_or("1.14.4");
-                crate::profile::config::build(&s.profile, &self.store.root, version)
+                crate::profile::config::build_check(&s.profile, &self.store.root, version)
                     .map(|c| Some(c.path))
             }
         } else {

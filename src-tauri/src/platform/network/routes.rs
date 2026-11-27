@@ -83,20 +83,59 @@ pub(super) fn covered<'a>(destinations: impl IntoIterator<Item = &'a str>, v6: b
     }
 }
 
+pub(super) fn matches<'a>(
+    destinations: impl IntoIterator<Item = &'a str>,
+    excluded: &[String],
+    v6: bool,
+) -> bool {
+    let destinations: Vec<_> = destinations.into_iter().collect();
+    let excluded: Vec<_> = excluded.iter().filter(|p| p.contains(':') == v6).collect();
+    let ranges: Vec<_> = destinations.iter().filter_map(|p| range(p, v6)).collect();
+    for prefix in &excluded {
+        let Some((first, last)) = range(prefix, v6) else {
+            return false;
+        };
+        if ranges.iter().any(|&(a, b)| a <= last && b >= first) {
+            return false;
+        }
+    }
+    covered(
+        destinations
+            .into_iter()
+            .chain(excluded.into_iter().map(String::as_str)),
+        v6,
+    )
+}
+
 #[cfg(any(test, target_os = "macos"))]
 pub(super) fn macos(text: &str, interface: &str, v6: bool) -> bool {
-    covered(
+    macos_expected(text, interface, v6, &[])
+}
+#[cfg(any(test, target_os = "macos"))]
+pub(super) fn macos_expected(text: &str, interface: &str, v6: bool, excluded: &[String]) -> bool {
+    matches(
         text.lines().filter_map(|line| {
             let mut parts = line.split_whitespace();
             let destination = parts.next()?;
             parts.any(|part| part == interface).then_some(destination)
         }),
+        excluded,
         v6,
     )
 }
 
 #[cfg(any(test, target_os = "linux"))]
 pub(super) fn linux(routes: &str, rules: &str, interface: &str, v6: bool) -> Result<bool, String> {
+    linux_expected(routes, rules, interface, v6, &[])
+}
+#[cfg(any(test, target_os = "linux"))]
+pub(super) fn linux_expected(
+    routes: &str,
+    rules: &str,
+    interface: &str,
+    v6: bool,
+    excluded: &[String],
+) -> Result<bool, String> {
     let routes: Vec<serde_json::Value> =
         serde_json::from_str(routes).map_err(|_| "系统路由输出无效")?;
     let rules: Vec<serde_json::Value> =
@@ -116,11 +155,12 @@ pub(super) fn linux(routes: &str, rules: &str, interface: &str, v6: bool) -> Res
             .iter()
             .any(|rule| table(&rule["table"]) == t && rule.get("table").is_some());
         active
-            && covered(
+            && matches(
                 routes
                     .iter()
                     .filter(|r| r["dev"] == interface && table(&r["table"]) == t)
                     .filter_map(|r| r["dst"].as_str()),
+                excluded,
                 v6,
             )
     }))
@@ -128,6 +168,15 @@ pub(super) fn linux(routes: &str, rules: &str, interface: &str, v6: bool) -> Res
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn exclusions_require_both_actual_holes_and_complete_remaining_coverage() {
+        let excluded = vec!["128.0.0.0/2".to_string()];
+        assert!(matches(["0.0.0.0/1", "192.0.0.0/2"], &excluded, false));
+        assert!(!matches(["0.0.0.0/0"], &excluded, false));
+        assert!(!matches(["0.0.0.0/2", "192.0.0.0/2"], &excluded, false));
+        assert!(matches(["::/1", "c000::/2"], &["8000::/2".into()], true));
+        assert!(!matches(["::/0"], &["8000::/2".into()], true));
+    }
     #[test]
     fn fakeip_conflicts_exclude_default_routes_but_include_real_pool_routes() {
         assert!(super::conflicts_with_fakeip("198.18.0.0/15"));

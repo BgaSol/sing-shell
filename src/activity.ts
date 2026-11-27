@@ -222,6 +222,7 @@ export function createActivity(error: (e: unknown) => void) {
   };
   return {
     render(s: Snapshot) {
+      element("activity-bypass").hidden=!s.core.runningBypass;
       const id = s.core.sessionId ?? s.core.activity?.sessionId ?? null;
       if (id !== sessionId) {
         sessionId = id;

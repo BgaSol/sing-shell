@@ -84,6 +84,7 @@ try{
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
   const input={node:{tags:[],id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultExit:'direct',policies:[{id:'github',name:'GitHub',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}},{id:'echo',name:'Echo',enabled:true,exit:'proxy',match:{kind:'custom',domains:[],ipCidrs:['198.51.100.1/32','2001:db8:198::99/128']}}]},coreVersion,coreProgram:core,material:JSON.parse(await fs.readFile(process.env.CORE_MATERIAL??`src-tauri/resources/cores/${coreVersion}.json`)),control};
   input.routing.policies.push({id:'dns-domain',name:'DNS domain',enabled:true,exit:'proxy',match:{kind:'custom',domains:[{value:'example.com',includeSubdomains:true}],ipCidrs:[]}});
+  input.routing.policies.push({id:'bypass',name:'Bypass',enabled:true,exit:'direct',bypassTun:true,match:{kind:'custom',domains:[{value:'example.org',includeSubdomains:false}],ipCidrs:['203.0.113.71/32','2001:db8:71::1/128']}});
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
     for(const file of ['started.json','stopped.json','stop','activity.json','query-activity','replace.json','replace-1.json','replace-2.json'])await fs.rm(path.join(control,file),{force:true});
@@ -105,6 +106,17 @@ try{
   const started=await launch();
   console.log('Authorized TUN running; verifying selected-node traffic');
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
+  assert.equal(started.runningBypass,true);
+  const realAddresses=await lookup('example.org',{all:true});assert.ok(realAddresses.length&&realAddresses.every(a=>!/^198\.(18|19)\./.test(a.address)),'bypass domain receives fixed real DNS');
+  function excludesRoute(address){
+    const result=process.platform==='win32'?spawnSync('powershell.exe',['-NoProfile','-Command',`@(Find-NetRoute -RemoteIPAddress '${address}' -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceAlias -eq 'sing-shell' }).Count`],{encoding:'utf8',windowsHide:true,timeout:5000}):process.platform==='darwin'?spawnSync('/sbin/route',['-n','get',...(net.isIP(address)===6?['-inet6']:[]),address],{encoding:'utf8',timeout:5000}):spawnSync('ip',['-j',net.isIP(address)===6?'-6':'-4','route','get',address],{encoding:'utf8',timeout:5000});
+    assert.ok(!result.error,'native route query finishes');
+    if(process.platform==='win32'){assert.equal(result.status,0);assert.equal(result.stdout.trim(),'0');}
+    else if(result.status===0)assert.ok(!/sing-shell|utun223/.test(result.stdout),'bypass effective route excludes our TUN');
+    else assert.match(result.stderr,/unreachable|not in table|No route|Network is unreachable/i,'only absent address-family route is acceptable');
+  }
+  for(const address of ['203.0.113.71','2001:db8:71::1',...realAddresses.map(a=>a.address)])excludesRoute(address);
+  report.verified.push('production worker resolves exact bypass domain, pins real DNS and confirms remaining dual-stack routes; native effective routes exclude TUN');
   report.coreVersion=coreVersion;
   if(!approvedMac)assert.ok((await fs.stat(path.join(protectedRoot,`trusted-${coreVersion}.json`))).isFile());
   report.verified.push('production network worker authenticates control channel and independently verifies official core','typed node and routing become checked private TUN config','native interface and IPv4/IPv6 routes are confirmed');
