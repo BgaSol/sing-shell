@@ -297,13 +297,7 @@ impl Tray {
                     "settings" => app.desktop.navigate(handle, "settings"),
                     "status" | "problem" => app.desktop.navigate(handle, "activity"),
                     "stop" => app.session.action(Action::Stop).map(|_| ()),
-                    "raw-start" => {
-                        if app.store.snapshot().profile.mode == Mode::ExternalConfig {
-                            app.session.action(Action::Start).map(|_| ())
-                        } else {
-                            Err("连接模式已改变，请重新打开菜单".into())
-                        }
-                    }
+                    "raw-start" => app.session.start_external().map(|_| ()),
                     _ => {
                         if let Some(node) = id.strip_prefix("connect:") {
                             app.session.connect(node.into()).map(|_| ())

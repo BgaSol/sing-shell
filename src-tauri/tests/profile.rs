@@ -29,6 +29,8 @@ fn explicit_selection_is_persistent_without_changing_successful_restore_input() 
     let b = first.profile.nodes[1].clone();
     assert!(app.session.snapshot().can_select_node);
     assert!(!app.session.snapshot().can_connect);
+    assert!(app.session.start_external().is_err());
+    assert!(!app.gate.runtime_busy());
     app.session
         .select_node(a.id.clone(), first.nodes_revision)
         .unwrap();

@@ -287,16 +287,26 @@ impl SessionService {
         })
     }
     pub fn action(self: &Arc<Self>, action: Action) -> Result<Receipt, String> {
-        if matches!(action, Action::Start)
-            && self.store.snapshot().profile.mode == crate::profile::Mode::Generated
-        {
-            return self.connect_selected();
-        }
         let op = self.gate.begin(if matches!(action, Action::Stop) {
             Kind::Stop
         } else {
             Kind::Runtime
         })?;
+        if matches!(action, Action::Start)
+            && self.store.snapshot().profile.mode == crate::profile::Mode::Generated
+        {
+            return self.connect_owned(None, op);
+        }
+        self.schedule_action(action, op)
+    }
+    pub fn start_external(self: &Arc<Self>) -> Result<Receipt, String> {
+        let op = self.gate.begin(Kind::Runtime)?;
+        if self.store.snapshot().profile.mode != crate::profile::Mode::ExternalConfig {
+            return Err("连接模式已改变，请重新打开菜单".into());
+        }
+        self.schedule_action(Action::Start, op)
+    }
+    fn schedule_action(self: &Arc<Self>, action: Action, op: Operation) -> Result<Receipt, String> {
         if matches!(action, Action::Start | Action::Stop | Action::Apply) {
             self.invalidate_restore();
         }
@@ -410,13 +420,14 @@ impl SessionService {
         Ok(())
     }
     pub fn connect(self: &Arc<Self>, node_id: String) -> Result<Receipt, String> {
-        self.connect_request(Some(node_id))
-    }
-    fn connect_selected(self: &Arc<Self>) -> Result<Receipt, String> {
-        self.connect_request(None)
-    }
-    fn connect_request(self: &Arc<Self>, node_id: Option<String>) -> Result<Receipt, String> {
         let op = self.gate.begin(Kind::Runtime)?;
+        self.connect_owned(Some(node_id), op)
+    }
+    fn connect_owned(
+        self: &Arc<Self>,
+        node_id: Option<String>,
+        op: Operation,
+    ) -> Result<Receipt, String> {
         let receipt = op.receipt();
         let session = self.clone();
         let settings = self.store.snapshot();
