@@ -6466,5 +6466,111 @@
         }
       ]
     }
-  ]
+  ],
+  "published": {
+    "releaseId": 460384822,
+    "url": "https://github.com/BgaSol/sing-shell/releases/tag/v0.8.0",
+    "publishedAt": "2026-11-27T09:26:40Z",
+    "assets": [
+      {
+        "name": "core-update.json",
+        "size": 4360,
+        "sha256": "9ae52507d6147a04cf6665a60b40faff9c2307806d76f7e308fabbfcb5b3dc49",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_aarch64.app.tar.gz",
+        "size": 6413822,
+        "sha256": "defe8a09da124015e207de23f3f7177f0fb523f554d645b2770c9a02d77fee84",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "sha256": "e4358ceff859b2ccc7c5a8cc801be3501c0c499b656dca769e26b32517d8c8d6",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_aarch64.AppImage",
+        "size": 83290632,
+        "sha256": "5bbcad97464b4367f9034bc62a29facf365c567b3bebaa60d38778b073d87cc4",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_aarch64.AppImage.sig",
+        "size": 444,
+        "sha256": "b801a65d1b0464b5809ff92e5f5bd931e5759cc75bf4a52add8268edb4deea88",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_aarch64.dmg",
+        "size": 6273266,
+        "sha256": "755f0a7720133e22fa03871b759451997fd2027ca798fefd60d97aabe6dd6e0c",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_amd64.AppImage",
+        "size": 85633528,
+        "sha256": "50946fa0fc1b9042580d1921b3c60bc1708b46cf5700fbba5e78abfb758ce10f",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_amd64.AppImage.sig",
+        "size": 440,
+        "sha256": "ac7c07eec54e42ae727c74939776f0a8894868015b668c26f2cad1551b419a34",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_amd64.deb",
+        "size": 7558698,
+        "sha256": "088afb8da8cc667922ff1edf938b67e7624f9af6fdb1b015bde1565f934bf7bb",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_amd64.deb.sig",
+        "size": 436,
+        "sha256": "2521636d6bc1cd3a4de9ab3b8ee7ad4b8a6762656897ae270b0ec3996880237f",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_arm64-setup.exe",
+        "size": 4184573,
+        "sha256": "e4b07a9f07fdb63ef8ac11d21a92c0e576ab60965a7ff390fe65236797b6bcfc",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_arm64-setup.exe.sig",
+        "size": 444,
+        "sha256": "7cdbce57d0c7f75f89680d8cddc5a48398f14135b51ad6eaffa2fa0a390bffde",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_arm64.deb",
+        "size": 7134264,
+        "sha256": "a3fa10288badd5290d7f940114799b15c2fe156331d156e92d5b6db297bfd2c6",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_arm64.deb.sig",
+        "size": 436,
+        "sha256": "cfe18e93ec69095e6817f0b55e50c7dbe69c48c97b332a5de794eb0386548743",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_x64-setup.exe",
+        "size": 4720113,
+        "sha256": "2e3f7cd32c6f49a0fdf84abdaa81a52751d8f595af7ada0516e31de251c004ed",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.8.0_x64-setup.exe.sig",
+        "size": 440,
+        "sha256": "e4d4eec8236389d404a6d5ca61825b345ffface5989d69cf5e576d2f6a7e1f3c",
+        "anonymousDownload": true
+      }
+    ],
+    "latestTag": "v0.8.0",
+    "tagSource": "d8cbc61bc811e9c6eb39b01928bab16612261007",
+    "verifiedAt": "2026-11-27T09:28:33.553Z"
+  }
 }
