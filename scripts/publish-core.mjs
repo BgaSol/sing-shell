@@ -20,12 +20,13 @@ const file='artifacts/core-publish/material.json';fs.writeFileSync(file,JSON.str
 const gh=args=>execFileSync('gh',args,{encoding:'utf8',stdio:['ignore','pipe','inherit']});
 const releases=JSON.parse(gh(['api','repos/BgaSol/sing-shell/releases?per_page=100']));
 const tag=`core-v${data.version}`;
-if(!releases.some(r=>r.tag_name===tag))gh(['release','create',tag,'--prerelease','--latest=false','--title',`Verified sing-box ${data.version}`,'--notes',`Official SagerNet/sing-box ${data.version} material, verified on five native platforms. Signed by Sing Shell for offline protected installation.`]);
+const source=process.env.GITHUB_SHA??execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();assert.match(source,/^[a-f0-9]{40}$/);
+if(!releases.some(r=>r.tag_name===tag))gh(['release','create',tag,'--target',source,'--prerelease','--latest=false','--title',`Verified sing-box ${data.version}`,'--notes',`Official SagerNet/sing-box ${data.version} material, verified on five native platforms. Signed by Sing Shell for offline protected installation.`]);
 const asset=JSON.parse(gh(['release','view',tag,'--json','assets'])).assets.find(a=>a.name==='material.json');
 if(asset)assert.equal(asset.digest,`sha256:${hash(fs.readFileSync(file))}`,'refuse changed fixed-version material');
 else gh(['release','upload',tag,file]);
 const channel=releases.find(r=>r.tag_name==='core-channel');
-if(!channel)gh(['release','create','core-channel','--prerelease','--latest=false','--title','Verified core channel','--notes','Signed recommendation for independently updated official sing-box cores.']);
+if(!channel)gh(['release','create','core-channel','--target',source,'--prerelease','--latest=false','--title','Verified core channel','--notes','Signed recommendation for independently updated official sing-box cores.']);
 else if(channel.assets.some(a=>a.name==='recommended.json')){
   const previous=JSON.parse(gh(['api',`repos/BgaSol/sing-shell/releases/assets/${channel.assets.find(a=>a.name==='recommended.json').id}`,'-H','Accept: application/octet-stream']));
   const old=verifyMaterial(previous,createPublicKey(key));
