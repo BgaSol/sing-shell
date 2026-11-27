@@ -70,12 +70,30 @@ impl Transfer {
             hash: Some(asset.program_sha256),
             source: Some(candidate),
         };
+        let record = root.join(format!("trusted-{version}.json"));
+        package::owned(root, &record)?;
+        if let Ok(bytes) = fs::read(&record) {
+            if let Ok(previous) = serde_json::from_slice::<ManagedRef>(&bytes) {
+                previous.validate()?;
+                if previous.version != version
+                    || previous.hash.as_ref() != reference.hash.as_ref()
+                    || previous.source.as_ref().is_none_or(|source| {
+                        !crate::core::same_asset(source, reference.source.as_ref().unwrap())
+                    })
+                {
+                    return Err("同版本受保护核心来源与签名材料冲突，保留现有程序".into());
+                }
+            }
+        }
         let installed = settings::managed_path(root, &reference)?;
         package::owned(root, &installed)?;
         if material::program(&envelope, version, &installed, &AtomicBool::new(false)).is_ok() {
             package::verify_path(runtime, &reference, &installed, &AtomicBool::new(false))?;
             settings::write_json(&root.join(format!("trusted-{version}.json")), &reference)?;
             return Ok(None);
+        }
+        if runtime.snapshot().pid.is_some() {
+            return Err("运行中的受保护核心不可修复，请先断开连接".into());
         }
         crate::private_files::directory(installed.parent().ok_or("核心安装目录缺失")?)?;
         let path = installed.with_extension("upload");
@@ -283,7 +301,20 @@ mod tests {
         assert!(Transfer::begin(&root, &version, envelope.clone(), &runtime)
             .unwrap()
             .is_none());
-        fs::write(&installed, b"tampered").unwrap();
+        let record = root.join(format!("trusted-{version}.json"));
+        let original = fs::read(&record).unwrap();
+        let mut changed: ManagedRef = serde_json::from_slice(&original).unwrap();
+        changed.source.as_mut().unwrap().asset_id += 1;
+        settings::write_json(&record, &changed).unwrap();
+        assert!(Transfer::begin(&root, &version, envelope.clone(), &runtime).is_err());
+        assert_eq!(
+            package::hash(&installed).unwrap(),
+            envelope.verify(&version).unwrap().program_sha256
+        );
+        fs::write(&record, original).unwrap();
+        let mut tampered = bytes.clone();
+        tampered[512] ^= 1;
+        fs::write(&installed, tampered).unwrap();
         assert!(existing(&root, &version, &runtime, &cancel).is_err());
         let transfer = Transfer::begin(&root, &version, envelope, &runtime)
             .unwrap()
