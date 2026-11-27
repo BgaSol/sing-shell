@@ -16,7 +16,7 @@ const children=new Set();
 let output='';
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function port(){const s=net.createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;}
-async function stop(child){if(child.exitCode===null){child.kill('SIGTERM');const deadline=Date.now()+10_000;while(child.exitCode===null){assert.ok(Date.now()<deadline,'core exit timeout');await delay(50);}}children.delete(child);}
+async function stop(child){if(child.exitCode===null&&child.signalCode===null){child.kill('SIGTERM');const deadline=Date.now()+10_000;while(child.exitCode===null&&child.signalCode===null){assert.ok(Date.now()<deadline,'core exit timeout');await delay(50);}}children.delete(child);}
 async function run(name,config){
   const secret=randomBytes(24).toString('hex'),controller=await port();
   config.experimental={clash_api:{external_controller:`127.0.0.1:${controller}`,secret}};
@@ -41,7 +41,7 @@ try{
     log:{level:'info'},
     inbounds:[{type:'tun',tag:'tun-in',interface_name:iface,address:['172.19.0.1/30','fdfe:dcba:9876::1/126'],auto_route:true,strict_route:true,stack:'mixed',dns_mode:'hijack',dns_address:['172.19.0.2','fdfe:dcba:9876::2'],route_exclude_address:['203.0.113.71/32','2001:db8:71::1/128']}],
     dns:{servers:[{type:'hosts',tag:'old',predefined:{'example.com':['192.0.2.71']}},{type:'local',tag:'local'}],rules:[{domain:['example.com'],action:'route',server:'old'}],final:'local'},
-    outbounds:[{type:'direct',tag:'direct'}],route:{auto_detect_interface:true,rules:[{protocol:'dns',action:'hijack-dns'}],final:'direct'}
+    outbounds:[{type:'direct',tag:'direct',domain_resolver:'local'}],route:{auto_detect_interface:true,default_domain_resolver:'local',rules:[{protocol:'dns',action:'hijack-dns'}],final:'direct'}
   });
   assert.deepEqual(await old.query('example.com'),['192.0.2.71']);
   const candidate=await run('candidate',resolverConfig());
