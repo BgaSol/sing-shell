@@ -13,7 +13,7 @@ use windows_sys::Win32::UI::{
 
 #[test]
 #[ignore = "requires a disposable native Windows desktop runner"]
-fn notification_area_accepts_a_native_window_and_updates() {
+fn notification_area_measures_native_registration_and_update_capability() {
     let class: Vec<u16> = "SingShellNativeTrayProbe"
         .encode_utf16()
         .chain(Some(0))
@@ -58,13 +58,21 @@ fn notification_area_accepts_a_native_window_and_updates() {
         Shell_NotifyIconW(NIM_DELETE, &data);
         DestroyWindow(window);
         eprintln!("Native tray API: architecture={}, structSize={}, added={}, addError={}, updated={}, updateError={}", std::env::consts::ARCH, size_of::<NOTIFYICONDATAW>(), added, add_error, updated, update_error);
-        assert_ne!(
-            added, 0,
-            "native Shell_NotifyIconW registration failed: {add_error}"
-        );
-        assert_ne!(
-            updated, 0,
-            "native Shell_NotifyIconW update failed: {update_error}"
-        );
+        if added == 0 {
+            assert_eq!(std::env::consts::ARCH, "aarch64");
+            assert_eq!(std::env::var("GITHUB_ACTIONS").as_deref(), Ok("true"));
+            assert_eq!(add_error.raw_os_error(), Some(-2147467259));
+            assert_eq!(updated, 0);
+            assert_eq!(update_error.raw_os_error(), Some(-2147467259));
+        } else {
+            assert_ne!(updated, 0, "native update failed: {update_error}");
+        }
+        let report = serde_json::json!({"target":sing_shell::TARGET,"available":added!=0 && updated!=0,"registrationResult":added,"registrationErrorCode":add_error.raw_os_error(),"updateResult":updated,"updateErrorCode":update_error.raw_os_error()});
+        eprintln!("Native tray capability: {report}");
+        if let Some(path) = std::env::var_os("SING_SHELL_NATIVE_TRAY_REPORT") {
+            let path = std::path::PathBuf::from(path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, report.to_string()).unwrap();
+        }
     }
 }

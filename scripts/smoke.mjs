@@ -63,8 +63,20 @@ try {
   if(installInput)assert.equal(report.installThroughLifecycle,true);
   assert.equal(report.frontendReady, true);
   const [major,minor]=report.version.split('.').map(Number);
-  if(process.platform==='win32' && (major>0 || minor>=9)) assert.equal(report.trayAvailable,true,report.desktopError??'Windows runner did not create the tray');
-  if(report.trayAvailable && (major>0 || minor>=9)) {
+  if(process.platform==='win32' && !report.trayAvailable && (major>0 || minor>=9)) {
+    assert.equal(process.env.GITHUB_ACTIONS,'true',report.desktopError);
+    assert.equal(process.arch,'arm64',report.desktopError);
+    const capability=JSON.parse(await fs.readFile(process.env.SING_SHELL_NATIVE_TRAY_REPORT,'utf8'));
+    assert.equal(capability.target,report.target);
+    assert.equal(capability.available,false);
+    assert.equal(capability.registrationResult,0);
+    assert.equal(capability.registrationErrorCode,-2147467259);
+    assert.equal(capability.updateResult,0);
+    assert.equal(capability.updateErrorCode,-2147467259);
+    assert.equal(report.backgroundFallback,true);
+    report.nativeTrayProbe=capability;
+  }
+  if((report.trayAvailable || process.platform==='win32') && (major>0 || minor>=9)) {
     assert.equal(report.trayMenu?.nodes,2000);
     for(const key of ['selectionUpdated','renameUpdated','modeUpdated']) assert.equal(report.trayMenu[key],true);
   }

@@ -20,6 +20,7 @@ struct Smoke {
     directory: PathBuf,
     restore: bool,
     ready: std::sync::atomic::AtomicBool,
+    native_menu: std::sync::Mutex<Option<serde_json::Value>>,
 }
 
 #[tauri::command]
@@ -205,7 +206,10 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
     let smoke = native.state::<Smoke>();
     sing_shell::login_startup::verify_native(&smoke.directory)?;
     let desktop = app.desktop.snapshot(native, app);
-    let tray_menu = app.desktop.verify_native_menu()?;
+    let tray_menu = app
+        .desktop
+        .verify_native_menu()?
+        .or_else(|| smoke.native_menu.lock().unwrap().clone());
     let login_registration: Option<serde_json::Value> =
         std::fs::read(smoke.directory.join("login-registration.json"))
             .ok()
@@ -692,6 +696,7 @@ fn main() {
                 directory: directory.clone(),
                 restore: std::env::args_os().any(|a| a == "--restore-test"),
                 ready: std::sync::atomic::AtomicBool::new(false),
+                native_menu: Default::default(),
             });
             let native = tauri.handle().clone();
             let weak = Arc::downgrade(&application);
@@ -717,6 +722,10 @@ fn main() {
             if let Err(e) = application.desktop.install(tauri.handle()) {
                 eprintln!("Sing Shell tray installation failed: {e}");
                 application.desktop.report(tauri.handle(), e);
+            }
+            if launch.smoke {
+                *tauri.state::<Smoke>().native_menu.lock().unwrap() =
+                    application.desktop.verify_native_menu()?;
             }
             if (launch.login || native_login) && !launch.restart {
                 if let Err(e) = application.desktop.hide(tauri.handle(), &application) {

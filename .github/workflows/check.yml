@@ -76,7 +76,9 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           ./scripts/prepare-windows-desktop.ps1
+          $env:SING_SHELL_NATIVE_TRAY_REPORT = Join-Path (Get-Location) 'artifacts/native-tray.json'
           cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --test windows_tray -- --ignored --nocapture
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/smoke.mjs
       - name: Smoke (macOS bundle)
         if: runner.os == 'macOS'
