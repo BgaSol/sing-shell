@@ -9558,5 +9558,110 @@
   ],
   "originalBuildConclusion": "cancelled after all five signed package artifacts completed; verification restarted with corrected test-only fixtures",
   "previousVerificationRun": "46032882853",
-  "releaseDraftVerified": true
+  "releaseDraftVerified": true,
+  "published": {
+    "releaseId": 460885930,
+    "targetCommitish": "2eb47b2b2230635eb4be8af22164b48f5ee66d1a",
+    "assetsVerified": 16,
+    "assets": [
+      {
+        "name": "core-update.json",
+        "size": 3992,
+        "sha256": "e2a6cb5ce1ff4ef929e4297bb7a5ceeef7636ab7abac90a8753725d366411f93",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_aarch64.app.tar.gz",
+        "size": 6503230,
+        "sha256": "c9abd3c4ff3fb420a514f22713dcd21ecc3c38eedbbdda974e64d124f5decda0",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "sha256": "503cc2520fdab36e3bd9c0ea86ed0f3b90d3b299b8a33fd6bd0eb95d8ec18a78",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_aarch64.AppImage",
+        "size": 83409416,
+        "sha256": "7c33265fad46c868575d050e569726a8c909d6780af33c28177090349702838b",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_aarch64.AppImage.sig",
+        "size": 448,
+        "sha256": "070a95ed73535929e2f84e5a67df53fa92f0e79d1c64f442a797a8aef454d044",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_aarch64.dmg",
+        "size": 6353751,
+        "sha256": "eeca64be58a450bcd9223282960d8ba6136ab32491a5f5635902843e273f4de9",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_amd64.AppImage",
+        "size": 85744120,
+        "sha256": "900cc00bfd2f2091cae4c108ac439c1903446fd069837000ad5249f278947729",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_amd64.AppImage.sig",
+        "size": 444,
+        "sha256": "d2ecf7bf62c54cf87aea4c716ce98b08846d36a966cea0e2d36cff397a6614de",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_amd64.deb",
+        "size": 7694750,
+        "sha256": "115b72361ef902323e089f50bb43fa8c0a96f7b160bf5f82300c368fcfde8664",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_amd64.deb.sig",
+        "size": 436,
+        "sha256": "66b8b563aacb212a5824633aaa573aab3ae88500d03beec354873e388d14817f",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_arm64-setup.exe",
+        "size": 4252727,
+        "sha256": "2087404f7ca4380574dd64d8eddf869170dc2e697efaf7ef40010850b649e0e3",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_arm64-setup.exe.sig",
+        "size": 444,
+        "sha256": "2803755d3bd631aeffea4af9ba50deaf9f9b899252cce9abfaf565f2963fe5dc",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_arm64.deb",
+        "size": 7267808,
+        "sha256": "b7f718233304d3ff6358dc8f56bcfb7a6f45c0be52aaeaf8a8e88aebb519f210",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_arm64.deb.sig",
+        "size": 436,
+        "sha256": "59f2e5c609655cf6927ff0ad21021472945b79d53866ade2ba5a4b823af97f4b",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_x64-setup.exe",
+        "size": 4801258,
+        "sha256": "d75ba1c111d1b29fd0db7f612c76f0afa1346a2b0e4ff5a716234600bd6ba4be",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.10.0_x64-setup.exe.sig",
+        "size": 444,
+        "sha256": "af1098eba42f6973165368f8f3c0ab366a04c1b7c5eb54eb529071925e9da064",
+        "anonymousDownload": true
+      }
+    ],
+    "latestConfirmed": true,
+    "tagSourceConfirmed": true
+  }
 }
