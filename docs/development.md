@@ -66,7 +66,7 @@ profile 回归覆盖 schema 5 与旧结构显式备份初始化、独立修订�
 
 `import_links` 覆盖 VLESS `encryption=none` 的等价转换、严格单次解码、TLS 别名冲突、传输字段边界、行号与安全错误。profile 集成覆盖预览/提交/选择、存储重开、生成配置保真，以及新预览整体失败、取消、过期、修订冲突和原子写入失败；过期与迟到完成使用确定性状态测试。官方配置检查包含完整 VLESS + TLS + WebSocket 分享链接和显式 SNI 的 gRPC 样例。Windows 手动执行这些集成测试也须加 `--features test-fixtures`，使测试程序包含原生对话框 manifest；`npm run test` 已包含该参数。
 
-工程脚本回归覆盖严格 UTF-8 文件读取、编码字节限额、筛选拖拽保留隐藏槽位和前端 IPC 注册完整性。协议检查包含 VMess、WebSocket、gRPC、TLS 和 Reality；配置通过不能代替各远端协议的真实服务器互通。
+工程脚本回归覆盖严格 UTF-8 文件读取、编码字节限额、全局规则排序和前端 IPC 注册完整性。协议检查包含 VMess、WebSocket、gRPC、TLS 和 Reality；配置通过不能代替各远端协议的真实服务器互通。
 
 文件读取/严格 UTF-8 解码失败、预览异常、全部无效和部分有效时的票据/按钮状态，以及恶意名称按文本显示，由 `scripts/profiles.test.mjs` 回归。合法链接预览不启动核心；未提供 SNI 的链接能导入不代表远端握手已验证。
 
@@ -85,6 +85,8 @@ macOS 网络集成额外检查有效系统解析器，通过系统 getaddrinfo �
 ## 0.6 界面与规则回归
 
 `node scripts/ui-fixture.mjs` 在 127.0.0.1:1422 启动独立浏览器夹具，明确标示测试数据，复用真实前端页面但替换 IPC；不被应用导入或打入生产。用真实浏览器验证模态滚动、焦点、Esc、输入保留、设置二级、导入预览和活动详情。它不能证明真实代理或 TUN。
+
+分流模型回归使用可控 Promise，验证保存冻结、失败保留草稿、修订及迟到表单保护、单条合入不覆盖其他规则、全局排序和一次移除撤销。浏览器夹具 `?routingScenario=slow-save`、`slow-validation`、`save-failure`、`conflict` 分别注入慢保存、慢校验、写入失败和修订冲突；只模拟这些交互结果，域名／IP 完整校验继续由 Rust 测试负责。
 
 `src-tauri/tests/rules.rs` 覆盖独立修订、来源增删与偏好合并、固定输入指纹、缓存引用与回收；提供官方核心时额外加载全部包内 SRS 并拒绝坏格式。profile 官方集成验证多域名/IP 显式 OR、用户顺序、真实受控加密出口和鉴权活动 API，不改系统网络。
 

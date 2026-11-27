@@ -467,67 +467,6 @@ main {
   max-width: 42ch;
   margin: auto;
 }
-.policy-block {
-  border-bottom: 1px solid var(--line);
-}
-.policy-block > .list-row {
-  border-bottom: 0;
-}
-.policy-block.dragging {
-  opacity: 0.5;
-}
-.policy-block.drag-over {
-  background: var(--soft);
-}
-.policy-index {
-  min-width: 20px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
-}
-.policy-toggle {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  white-space: nowrap;
-}
-.policy-block select {
-  font-size: 12px;
-}
-.order-actions {
-  display: flex;
-  gap: 1px;
-}
-.order-actions .icon-button {
-  width: 26px;
-  min-width: 26px;
-}
-.policy-detail {
-  padding: 0 8px 13px 35px;
-  font-size: 12px;
-}
-.policy-detail summary {
-  cursor: pointer;
-  color: var(--muted);
-}
-.source-body {
-  padding-top: 10px;
-  display: grid;
-  gap: 7px;
-}
-.source-body code {
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-.source-body label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.source-body .actions {
-  margin-top: 3px;
-}
 .default-policy {
   display: flex;
   align-items: center;
@@ -789,11 +728,6 @@ dialog::backdrop {
   font-size: 12px;
   font-weight: 600;
 }
-.modal-content .bypass-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
 .modal-content .hint {
   margin: 0;
   font-weight: 400;
@@ -804,35 +738,6 @@ dialog::backdrop {
 }
 .modal-content h3 {
   margin-top: 3px;
-}
-.modal-content .field-pair {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
-  gap: 12px;
-}
-.modal-content .domain-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px 30px;
-  gap: 6px;
-  align-items: center;
-}
-.modal-content .domain-row input,
-.modal-content .domain-row select {
-  font-weight: 400;
-}
-.modal-content .domain-fields {
-  display: grid;
-  gap: 6px;
-}
-.modal-content .subhead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.modal-content .subhead button {
-  font-size: 12px;
-  min-height: 28px;
-  padding: 4px 8px;
 }
 .modal-actions {
   display: flex;
@@ -940,22 +845,6 @@ dialog::backdrop {
   }
   .list-row {
     gap: 8px;
-  }
-  .order-actions {
-    flex-direction: column;
-  }
-  .order-actions .icon-button {
-    height: 24px;
-    min-height: 24px;
-  }
-  .policy-block > .list-row {
-    flex-wrap: wrap;
-  }
-  .policy-block .row-info {
-    min-width: 130px;
-  }
-  .policy-toggle {
-    margin-left: auto;
   }
   .toolbar input[type="search"] {
     width: 160px;

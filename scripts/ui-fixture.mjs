@@ -1,7 +1,10 @@
 // Isolated browser fixture: never imported by the application or included in its build.
 import { createServer } from "vite";
-function bootstrap() {
+import { readFileSync } from "node:fs";
+const appVersion = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
+function bootstrap(appVersion) {
   const clone = (value) => structuredClone(value);
+  const scenario = new URLSearchParams(location.search).get("routingScenario");
   const callbacks = new Map();
   let callbackId = 0,
     ticket = 0,
@@ -34,6 +37,14 @@ function bootstrap() {
       exit: "direct",
       match: { kind: "source", sourceId: d.id },
     }));
+  policies.push({
+    id: "remote",
+    name: "远程控制",
+    enabled: true,
+    exit: "direct",
+    bypassTun: true,
+    match: { kind: "custom", domains: [{ value: "id.example.com", includeSubdomains: false }], ipCidrs: ["203.0.113.10/32", "2001:db8:71::1/128"] },
+  });
   policies.push({
     id: "work",
     name: "工作服务",
@@ -180,6 +191,7 @@ function bootstrap() {
     if (!node) throw Error("节点不存在");
     coreState.runningNode = clone(node);
     coreState.runningConnectionOptions = clone(settings.profile.connection);
+    coreState.runningBypass = settings.profile.routing.policies.some(p => p.enabled && p.bypassTun);
     coreState.canStop = true;
     coreState.canImport = false;
     coreState.phase = "running";
@@ -223,7 +235,7 @@ function bootstrap() {
     async invoke(command, args = {}) {
       switch (command) {
         case "plugin:app|version":
-          return "0.6.0 · 浏览器测试数据";
+          return `${appVersion} · 浏览器测试数据`;
         case "plugin:event|listen":
           return ++callbackId;
         case "plugin:event|unlisten":
@@ -319,6 +331,7 @@ function bootstrap() {
           if (args.action === "apply") {
             coreState.pendingChanges = false;
             coreState.runningConnectionOptions = clone(settings.profile.connection);
+            coreState.runningBypass = settings.profile.routing.policies.some(p => p.enabled && p.bypassTun);
           }
           return;
         case "profile_rename_node": {
@@ -375,8 +388,14 @@ function bootstrap() {
           pending = null;
           return;
         case "routing_validate":
+          if (scenario === "slow-validation") await new Promise(resolve => setTimeout(resolve, 2500));
+          // Only this interaction fault is simulated here; native tests own the complete validator.
+          if (args.routing.policies.some(p => p.bypassTun && p.match.kind === "custom" && p.match.domains.some(d => d.includeSubdomains))) throw Error("绕过 TUN 仅支持精确域名");
           return clone(args.routing);
         case "profile_set_routing":
+          if (scenario === "slow-save") await new Promise(resolve => setTimeout(resolve, 2500));
+          if (scenario === "save-failure") throw Error("演示：设置写入失败，草稿已保留");
+          if (scenario === "conflict") { settings.routingRevision++; throw Error("分流已改变，草稿已保留，请载入最新规则核对"); }
           if (args.expectedRevision !== settings.routingRevision)
             throw Error("分流修订冲突");
           settings.profile.routing = clone(args.routing);
@@ -478,7 +497,7 @@ const server = await createServer({
       configureServer(server) {
         server.middlewares.use("/__fixture.js", (_req, res) => {
           res.setHeader("Content-Type", "application/javascript");
-          res.end(`(${bootstrap.toString()})();`);
+          res.end(`(${bootstrap.toString()})(${JSON.stringify(appVersion)});`);
         });
       },
     },

@@ -12,6 +12,7 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [v0.11.0 发行记录](releases/v0.11.0.md)：分流行内连接设置、表单与草稿重构
 - [v0.10.0 发行记录](releases/v0.10.0.md)：自定义直连绕过 TUN、固定 DNS 与连接准备
 - [v0.10.0 包验证证据](releases/v0.10.0-verification.json)：固定签名原包、五原生安装升级、复验与附件核对
 - [v0.10.0 网络验证证据](releases/v0.10.0-network-verification.json)：独立解析、排除路由、失败保留旧连接和异常清理

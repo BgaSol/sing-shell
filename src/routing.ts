@@ -1,693 +1,179 @@
-import {
-  core,
-  type Snapshot,
-  type Routing,
-  type Policy,
-  type RuleSource,
-  type RouteAction,
-  type DomainMatch,
-} from "./core";
-import { element, el, button, iconButton, empty } from "./dom";
-import { reorderVisible, setExit } from "./routing-model";
+import "./routing.css";
+import { core, type Snapshot, type Policy } from "./core";
+import { element, el, button, icon } from "./dom";
+import { RoutingDraft, bypassDomains, canBypass, setExit } from "./routing-model";
+import { editRoutingPolicy } from "./routing-editor";
+import { createRoutingSources } from "./routing-sources";
+import { exitControl, routingSwitch } from "./routing-controls";
+import { connectionReady } from "./session-model";
 import type { Modal } from "./modal";
-export function createRouting(
-  modal: Modal,
-  changed: () => Promise<void>,
-  error: (e: unknown) => void,
-) {
-  let snapshot: Snapshot | null = null,
-    draft: Routing | null = null,
-    baseline = "",
-    revision = 0,
-    filter = "all",
-    saving = false,
-    dragged: string | null = null,
-    sources: RuleSource[] = [],
-    signature = "";
-  const expanded = new Set<string>();
-  const cells = new Map<
-    string,
-    {
-      version: HTMLElement;
-      status: HTMLElement;
-      error: HTMLElement;
-      update: HTMLButtonElement;
-      cancel: HTMLButtonElement;
-      auto: HTMLInputElement;
-      period: HTMLSelectElement;
-    }
-  >();
-  const dirty = () => !!draft && JSON.stringify(draft) !== baseline;
-  function mark() {
-    element("routing-state").textContent = dirty()
-      ? "未保存"
-      : snapshot?.core.pendingChanges
-        ? "待应用"
-        : "已保存";
-    element<HTMLButtonElement>("save-routing").disabled =
-      !dirty() ||
-      saving ||
-      snapshot?.settings.profile.mode !== "generated" ||
-      !!snapshot?.storageError;
-    element("reload-routing").hidden =
-      !snapshot || snapshot.settings.routingRevision === revision;
+
+export function createRouting(modal: Modal, changed: () => Promise<void>, error: (e: unknown) => void, apply: () => Promise<void>) {
+  const draft = new RoutingDraft(), rows = new Map<string, ReturnType<typeof createRow>>();
+  let snapshot: Snapshot | null = null, message = "", savingTask: Promise<boolean> | null = null, awaitingSnapshot = false, editorMode = 0;
+  const list = element("policy-list"), result = element("routing-result"), panel = element("routing-panel");
+  const writable = () => !!snapshot && snapshot.settings.profile.mode === "generated" && !snapshot.storageError && !snapshot.closing && !draft.saving;
+  const editable = () => writable() && !modal.open;
+  const sources = createRoutingSources(editable, error);
+  const shape = (p: Policy) => p.match.kind === "source" ? `source:${p.match.sourceId}` : "custom";
+  function state() {
+    const raw = snapshot?.settings.profile.mode !== "generated", locked = !writable();
+    const conflict = !!snapshot && snapshot.settings.routingRevision !== draft.revision;
+    element("routing-state").textContent = raw ? "原始配置模式 · 分流只读" : draft.saving ? "正在保存" : draft.issues.length ? "请先处理标出的域名问题" :
+      draft.dirty ? conflict ? "未保存 · 远端规则已改变" : "未保存" : awaitingSnapshot ? "已保存，正在确认连接状态" : snapshot?.core.pendingChanges ? "已保存 · 待应用" : "已保存";
+    element<HTMLButtonElement>("save-routing").disabled = locked || !draft.dirty || draft.issues.length > 0;
+    element<HTMLButtonElement>("reload-routing").hidden = !conflict;
+    element<HTMLButtonElement>("reload-routing").disabled = locked;
+    for (const id of ["add-custom", "add-source"]) element<HTMLButtonElement>(id).disabled = locked || draft.value.policies.length >= 100;
+    element<HTMLSelectElement>("routing-default").disabled = locked;
+    element<HTMLButtonElement>("undo-routing-remove").hidden = !draft.removed;
+    element<HTMLButtonElement>("undo-routing-remove").disabled = locked;
+    result.textContent = message;
+    result.hidden = !message;
+    const running = !!snapshot && connectionReady(snapshot), applyButton = element<HTMLButtonElement>("apply-routing");
+    applyButton.hidden = raw || !running || (!snapshot?.core.pendingChanges && !snapshot?.core.runningBypass);
+    applyButton.disabled = locked || draft.dirty || !!snapshot?.runtimeBusy || awaitingSnapshot;
+    element("routing-apply-hint").textContent = draft.dirty ? "保存后再应用，当前连接保持原设置。" : !running ? "保存后，下次连接采用。" : "仅应用已保存配置；重新连接会刷新绕过地址。";
+    element("routing-count").textContent = `${draft.value.policies.length} 条规则`;
+    element("routing-bypass-note").hidden = !draft.value.policies.some(p => p.bypassTun);
+    for (const [id, row] of rows) row.update(draft.value.policies.find(p => p.id === id)!, locked);
+    sources.update();
   }
-  async function save() {
-    if (!draft || saving) return false;
-    saving = true;
-    mark();
-    try {
-      const saved = await core.profileRouting(structuredClone(draft), revision);
-      draft = structuredClone(saved.routing);
-      revision = saved.routingRevision;
-      baseline = JSON.stringify(draft);
-      draw(true);
-      await changed();
-      return true;
-    } catch (e) {
-      error(e);
-      return false;
-    } finally {
-      saving = false;
-      mark();
+  function mutate(change: () => void) {
+    if (!editable()) return;
+    message = "";
+    try { change(); reconcile(); } catch (reason) { message = String(reason); state(); }
+  }
+  function edit(id?: string) {
+    if (!editable()) return;
+    const policy = draft.value.policies.find(p => p.id === id), generation = draft.generation, mode = editorMode;
+    editRoutingPolicy(modal, policy, () => writable() && generation === draft.generation && mode === editorMode, next => {
+      draft.replace(next, !policy, generation); message = ""; reconcile();
+    });
+    state();
+  }
+  function createRow(policy: Policy) {
+    const block = el("article", "routing-rule"), index = el("span", "routing-index"), info = el("div", "routing-info"),
+      name = el("h3"), summary = el("p", "routing-summary"), head = el("div", "routing-rule-head"), settings = el("div", "routing-rule-settings");
+    block.dataset.policy = policy.id;
+    const enabled = routingSwitch("已启用", `启用 ${policy.name}`, checked => mutate(() => { draft.change(policy.id, p => { p.enabled = checked; }); }));
+    head.append(name, enabled.wrapper); info.append(head, summary);
+    const connection = el("div", "routing-connection");
+    const exit = exitControl(policy.exit, `exit-${policy.id}`, `${policy.name} 的连接方式`, choice => mutate(() => { draft.change(policy.id, p => setExit(p, choice)); }));
+    const bypass = routingSwitch("绕过 TUN", `${policy.name} 绕过 TUN`, checked => mutate(() => { draft.change(policy.id, p => { if (canBypass(p)) p.bypassTun = checked; }); }));
+    connection.append(exit, bypass.wrapper);
+    const actions = el("div", "routing-row-actions"), editButton = button(policy.match.kind === "custom" ? "编辑" : "来源与更新", () => {
+      if (policy.match.kind === "custom") edit(policy.id);
+      else if (detail) { detail.hidden = !detail.hidden; editButton.setAttribute("aria-expanded", String(!detail.hidden)); }
+    }, "routing-text");
+    editButton.dataset.action = "edit";
+    const order = el("div", "routing-order");
+    const up = button("上移", () => mutate(() => draft.move(policy.id, -1)), "routing-text"), down = button("下移", () => mutate(() => draft.move(policy.id, 1)), "routing-text");
+    up.prepend(icon("up")); down.prepend(icon("down"));
+    up.dataset.action = "up"; down.dataset.action = "down"; order.append(up, down);
+    const remove = button("移除", () => {
+      const position = draft.value.policies.findIndex(p => p.id === policy.id);
+      mutate(() => draft.remove(policy.id));
+      if (!rows.has(policy.id)) (rows.get(draft.value.policies[Math.min(position, draft.value.policies.length - 1)]?.id)?.editButton ?? element("add-custom")).focus();
+    }, "routing-text routing-remove");
+    remove.dataset.action = "remove"; actions.append(editButton, order, remove); settings.append(connection, actions);
+    const issue = el("div", "routing-row-error"), issueText = el("span"), fix = button("修改域名", () => edit(policy.id), "routing-text");
+    issue.setAttribute("role", "alert"); issue.append(issueText, fix); info.append(settings, issue); block.append(index, info);
+    const detail = policy.match.kind === "source" ? sources.attach(policy.match.sourceId) : null;
+    if (detail) { block.append(detail); editButton.setAttribute("aria-controls", detail.id); editButton.setAttribute("aria-expanded", "false"); }
+    return { block, editButton, shape: shape(policy), update(p: Policy, locked: boolean) {
+      const position = draft.value.policies.findIndex(item => item.id === p.id);
+      index.textContent = String(position + 1); name.textContent = p.name;
+      summary.textContent = p.match.kind === "custom" ? `${p.match.domains.length} 个域名 · ${p.match.ipCidrs.length} 个 IP / 网段${p.match.domains[0] ? ` · ${p.match.domains[0].value}` : ""}` : `站点规则 · ${sources.name(p.match.sourceId) ?? p.name}`;
+      enabled.input.checked = p.enabled; enabled.caption.textContent = p.enabled ? "已启用" : "已停用";
+      enabled.input.setAttribute("aria-label", `启用 ${p.name}`);
+      block.classList.toggle("routing-disabled", !p.enabled);
+      for (const input of exit.querySelectorAll<HTMLInputElement>("input")) {
+        input.checked = input.value === p.exit;
+        input.setAttribute("aria-label", `${p.name} 的连接方式：${input.value === "proxy" ? "代理" : "直连"}`);
+      }
+      exit.setAttribute("aria-label", `${p.name} 的连接方式`);
+      bypass.wrapper.hidden = !canBypass(p); bypass.input.checked = !!p.bypassTun;
+      bypass.input.setAttribute("aria-label", `${p.name} 绕过 TUN`);
+      const invalid = bypassDomains(p).length > 0;
+      issue.hidden = !invalid; issueText.textContent = invalid ? "绕过 TUN 需要精确域名，请修改“包含子域名”的目标。" : "";
+      for (const control of block.querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button")) control.disabled = locked;
+      up.disabled = locked || position === 0; down.disabled = locked || position === draft.value.policies.length - 1;
+      for (const [b, action] of [[editButton, p.match.kind === "custom" ? "编辑" : "来源与更新"], [up, "上移"], [down, "下移"], [remove, "移除"], [fix, "修改域名"]] as const) b.setAttribute("aria-label", `${action} ${p.name}`);
+    } };
+  }
+  function reconcile() {
+    for (const [id, row] of rows) if (!draft.value.policies.some(p => p.id === id && shape(p) === row.shape)) {
+      const sourceId = row.block.querySelector<HTMLElement>(".routing-source")?.id.replace("routing-source-", "");
+      if (sourceId) sources.detach(sourceId);
+      row.block.remove(); rows.delete(id);
     }
+    // Move existing nodes only when their order changed; ordinary toggles keep native focus.
+    draft.value.policies.forEach((p, index) => {
+      if (!rows.has(p.id)) rows.set(p.id, createRow(p));
+      const block = rows.get(p.id)!.block;
+      if (list.children[index] !== block) list.insertBefore(block, list.children[index] ?? null);
+    });
+    element("routing-empty").hidden = draft.value.policies.length > 0;
+    element<HTMLSelectElement>("routing-default").value = draft.value.defaultExit;
+    state();
   }
   function load() {
-    if (!snapshot) return;
-    draft = structuredClone(snapshot.settings.profile.routing);
-    baseline = JSON.stringify(draft);
-    revision = snapshot.settings.routingRevision;
-    draw(true);
+    if (!snapshot || draft.saving) return;
+    draft.load(snapshot.settings.profile.routing, snapshot.settings.routingRevision); message = ""; reconcile();
   }
-  function exitSelect(value: RouteAction, label: string) {
-    const select = el("select");
-    select.setAttribute("aria-label", label);
-    for (const [id, text] of [
-      ["proxy", "代理"],
-      ["direct", "直连"],
-    ] as const) {
-      const option = el("option", "", text);
-      option.value = id;
-      select.append(option);
-    }
-    select.value = value;
-    return select;
-  }
-  function edit(policy?: Policy) {
-    if (!draft) return;
-    const initial = policy
-      ? structuredClone(policy)
-      : {
-          id: crypto.randomUUID(),
-          name: "",
-          enabled: true,
-          exit: "proxy" as const,
-          bypassTun: false,
-          match: { kind: "custom" as const, domains: [], ipCidrs: [] },
-        };
-    if (initial.match.kind !== "custom") return;
-    const name = el("input");
-    name.value = initial.name;
-    name.maxLength = 64;
-    const exit = exitSelect(initial.exit, "规则出口");
-    const bypass = el("input");
-    bypass.type = "checkbox";
-    bypass.checked = !!initial.bypassTun;
-    const bypassLabel = el("label", "bypass-toggle");
-    bypassLabel.append(bypass, document.createTextNode("绕过 TUN"));
-    const bypassHelp = el("p", "hint");
-    bypassHelp.id = "bypass-help";
-    bypass.setAttribute("aria-describedby", bypassHelp.id);
-    const domains: {
-      input: HTMLInputElement;
-      kind: HTMLSelectElement;
-      row: HTMLElement;
-    }[] = [];
-    const domainFields = el("div", "domain-fields");
-    const ip = el("textarea");
-    ip.rows = 3;
-    ip.value = initial.match.ipCidrs.join("\n");
-    ip.spellcheck = false;
-    ip.placeholder = "192.0.2.0/24\n2001:db8::/32";
-    ip.setAttribute("aria-label", "IP 和网段，每行一个");
-    const value = () => ({
-      name: name.value,
-      exit: exit.value,
-      bypassTun: bypass.checked,
-      domains: domains
-        .filter((d) => d.input.value.trim())
-        .map((d) => ({
-          value: d.input.value.trim(),
-          includeSubdomains: d.kind.value === "suffix",
-        })),
-      ipCidrs: ip.value
-        .split(/\n/)
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
-    let original = "";
-    modal.show(policy ? "编辑规则" : "新建规则", {
-      dirty: () => JSON.stringify(value()) !== original,
-    });
-    const pair = el("div", "field-pair");
-    const nameLabel = el("label", "", "名称");
-    nameLabel.append(name);
-    const exitLabel = el("label", "", "统一出口");
-    exitLabel.append(exit);
-    pair.append(nameLabel, exitLabel);
-    modal.content.append(pair);
-    modal.content.append(bypassLabel, bypassHelp);
-    function updateBypass() {
-      bypassLabel.hidden = exit.value !== "direct";
-      bypassHelp.hidden = exit.value !== "direct";
-      const suffix = domains.some(
-        (d) => d.input.value.trim() && d.kind.value === "suffix",
-      );
-      bypass.disabled = suffix && !bypass.checked;
-      bypassHelp.textContent = suffix
-        ? "绕过 TUN 仅支持精确域名，请先修改匹配方式。"
-        : "目标直接使用系统网络，优先于其他分流规则；相同 IP 的其他服务也会绕过。域名地址变更后请应用并重连。";
-    }
-    exit.onchange = () => {
-      const choice = { exit: initial.exit, bypassTun: bypass.checked };
-      if (setExit(choice, exit.value as RouteAction))
-        modal.error("切换为代理后已关闭绕过 TUN");
-      bypass.checked = !!choice.bypassTun;
-      updateBypass();
-    };
-    function addDomain(
-      domain: DomainMatch = { value: "", includeSubdomains: true },
-    ) {
-      if (domains.length >= 1000) {
-        modal.error("匹配项总数最多 1,000 个");
-        return;
-      }
-      const row = el("div", "domain-row"),
-        input = el("input"),
-        kind = el("select");
-      input.value = domain.value;
-      input.placeholder = "example.com";
-      input.spellcheck = false;
-      input.setAttribute("aria-label", `域名 ${domains.length + 1}`);
-      for (const [id, text] of [
-        ["suffix", "包含子域名"],
-        ["exact", "精确匹配"],
-      ]) {
-        const option = el("option", "", text);
-        option.value = id;
-        kind.append(option);
-      }
-      kind.value = domain.includeSubdomains ? "suffix" : "exact";
-      kind.onchange = updateBypass;
-      input.addEventListener("input", updateBypass);
-      kind.setAttribute("aria-label", "域名匹配方式");
-      const entry = { input, kind, row };
-      const remove = iconButton("remove", "删除此域名", () => {
-        const index = domains.indexOf(entry);
-        domains.splice(index, 1);
-        row.remove();
-        relabelDomains();
-        updateBypass();
-        (domains[index]?.input ?? domains.at(-1)?.input ?? ip).focus();
-      });
-      row.append(input, kind, remove);
-      domains.push(entry);
-      domainFields.append(row);
-      relabelDomains();
-      updateBypass();
-      input.onkeydown = (e) => {
-        if (e.key === "Enter" && !e.isComposing && !e.ctrlKey && !e.metaKey) {
-          e.preventDefault();
-          addDomain();
-          domains.at(-1)?.input.focus();
-        }
-      };
-    }
-    function relabelDomains() {
-      domains.forEach((d, index) => {
-        d.input.setAttribute("aria-label", `域名 ${index + 1}`);
-        d.kind.setAttribute("aria-label", `域名 ${index + 1} 的匹配方式`);
-      });
-    }
-    const subhead = el("div", "subhead");
-    subhead.append(
-      el("h3", "", "域名"),
-      button("添加域名", () => {
-        addDomain();
-        domains.at(-1)?.input.focus();
-      }),
-    );
-    modal.content.append(subhead, domainFields);
-    for (const d of initial.match.domains) addDomain(d);
-    if (!domains.length) addDomain();
-    updateBypass();
-    const ipLabel = el("label", "", "IP / 网段");
-    ipLabel.append(ip);
-    modal.content.append(
-      ipLabel,
-      el(
-        "p",
-        "hint",
-        "域名和 IP 任意一项命中即使用本规则出口。组间按列表顺序匹配；IP 规则不会在解析前决定 DNS 出口。",
-      ),
-    );
-    original = JSON.stringify(value());
-    const complete = () => {
-      const v = value();
-      if (!v.name.trim()) {
-        modal.error("请填写规则名称");
-        name.focus();
-        return;
-      }
-      if (!v.domains.length && !v.ipCidrs.length) {
-        modal.error("至少填写一个域名或 IP");
-        domains[0]?.input.focus();
-        return;
-      }
-      const next: Policy = {
-        ...initial,
-        name: v.name.trim(),
-        exit: v.exit as RouteAction,
-        bypassTun: v.bypassTun,
-        match: { kind: "custom", domains: v.domains, ipCidrs: v.ipCidrs },
-      };
-      const proposed = structuredClone(draft!);
-      if (policy) {
-        const index = proposed.policies.findIndex((p) => p.id === policy.id);
-        if (index < 0) {
-          modal.error("规则已不存在，请返回列表");
-          return;
-        }
-        proposed.policies[index] = next;
-      } else proposed.policies.push(next);
-      void modal
-        .run(async () => {
-          draft = await core.validateRouting(proposed);
-        })
-        .then((ok) => {
-          if (ok) {
-            draw(true);
-            modal.close();
-          } else {
-            const message = element("modal-error").textContent ?? "";
-            const domain = message.match(/域名 (\d+)/);
-            if (domain)
-              domains
-                .filter((d) => d.input.value.trim())
-                [Number(domain[1]) - 1]?.input.focus();
-            else if (message.includes("IP ")) ip.focus();
-          }
-        });
-    };
-    modal.actions.append(
-      button("取消", () => void modal.mayLeave()),
-      button("完成", complete, "primary"),
-    );
-    const keydown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.isComposing) {
-        e.preventDefault();
-        complete();
-      }
-    };
-    modal.content.onkeydown = keydown;
-    name.focus();
-  }
-  function addSource() {
-    if (!draft) return;
-    const existing = new Set(
-      draft.policies.flatMap((p) =>
-        p.match.kind === "source" ? [p.match.sourceId] : [],
-      ),
-    );
-    const available = sources.filter((s) => !existing.has(s.definition.id));
-    modal.show("添加开源规则");
-    const checked = new Set<string>();
-    if (!available.length)
-      modal.content.append(
-        el(
-          "p",
-          "hint",
-          "固定来源已全部添加。可以在列表中调整出口、顺序和更新设置。",
-        ),
-      );
-    for (const s of available) {
-      const label = el("label", "source-choice"),
-        box = el("input");
-      box.type = "checkbox";
-      box.onchange = () => {
-        if (box.checked) checked.add(s.definition.id);
-        else checked.delete(s.definition.id);
-      };
-      const text = el("div");
-      text.append(
-        el("strong", "", s.definition.name),
-        el(
-          "p",
-          "",
-          `${s.definition.repository} · ${s.definition.domains ? "域名" : "IP"}`,
-        ),
-      );
-      label.append(box, text);
-      modal.content.append(label);
-    }
-    const exit = exitSelect("proxy", "新增开源规则出口");
-    const label = el("label", "", "新增规则的统一出口");
-    label.append(exit);
-    modal.content.append(
-      label,
-      el(
-        "p",
-        "hint",
-        "添加后可分别修改。固定来源支持自动更新，保存规则后开始调度。",
-      ),
-    );
-    modal.actions.append(
-      button("取消", () => modal.close()),
-      button(
-        "添加规则",
-        () => {
-          if (!checked.size) {
-            modal.error("请选择至少一个来源");
-            return;
-          }
-          for (const id of checked) {
-            const source = sources.find((s) => s.definition.id === id)!;
-            draft!.policies.push({
-              id: crypto.randomUUID(),
-              name: source.definition.name,
-              enabled: true,
-              exit: exit.value as RouteAction,
-              match: { kind: "source", sourceId: id },
-            });
-          }
-          modal.close();
-          draw(true);
-        },
-        "primary",
-      ),
-    );
-  }
-  function visible() {
-    return (
-      draft?.policies.filter(
-        (p) => filter === "all" || p.match.kind === filter,
-      ) ?? []
-    );
-  }
-  function reorder(from: string, to: string) {
-    if (!draft) return;
-    draft.policies = reorderVisible(
-      draft.policies,
-      visible().map((p) => p.id),
-      from,
-      to,
-    );
-    draw(true);
-    element("policy-list")
-      .querySelector<HTMLButtonElement>(`[data-policy="${from}"] button`)
-      ?.focus();
-  }
-  function draw(force = false) {
-    if (!draft || !snapshot) return;
-    const key = JSON.stringify([
-      draft,
-      filter,
-      snapshot.settings.profile.mode,
-      saving,
-    ]);
-    if (!force && key === signature) {
-      mark();
-      return;
-    }
-    signature = key;
-    const list = element("policy-list");
-    list.replaceChildren();
-    cells.clear();
-    const raw = snapshot.settings.profile.mode !== "generated";
-    for (const b of ["add-source", "add-custom", "routing-default"])
-      element<HTMLButtonElement>(b).disabled = raw;
-    const rules = visible();
-    for (const p of rules) {
-      const block = el("div", "policy-block");
-      block.dataset.policy = p.id;
-      const row = el("div", "list-row");
-      const drag = iconButton("grip", "拖拽调整规则顺序", () => {});
-      drag.draggable = !raw;
-      drag.ondragstart = (e) => {
-        dragged = p.id;
-        e.dataTransfer?.setData("text/plain", p.id);
-        block.classList.add("dragging");
-      };
-      drag.ondragend = () => {
-        dragged = null;
-        block.classList.remove("dragging");
-        for (const r of list.children) r.classList.remove("drag-over");
-      };
-      block.ondragover = (e) => {
-        if (dragged && dragged !== p.id) {
-          e.preventDefault();
-          block.classList.add("drag-over");
-        }
-      };
-      block.ondragleave = () => block.classList.remove("drag-over");
-      block.ondrop = (e) => {
-        e.preventDefault();
-        if (dragged) reorder(dragged, p.id);
-        dragged = null;
-      };
-      const info = el("div", "row-info");
-      info.append(
-        el("strong", "", p.name),
-        el(
-          "p",
-          "",
-          p.match.kind === "custom"
-            ? `${p.match.domains.length} 个域名 · ${p.match.ipCidrs.length} 个 IP / 网段`
-            : "固定开源规则",
-        ),
-      );
-      if (p.bypassTun) info.append(el("span", "hint", "直连 · 绕过 TUN"));
-      const enabled = el("input");
-      enabled.type = "checkbox";
-      enabled.checked = p.enabled;
-      enabled.disabled = raw;
-      enabled.onchange = () => {
-        p.enabled = enabled.checked;
-        draw(true);
-      };
-      const enabledLabel = el("label", "policy-toggle");
-      enabledLabel.append(
-        enabled,
-        document.createTextNode(p.enabled ? "启用" : "关闭"),
-      );
-      const exit = exitSelect(p.exit, `${p.name} 的出口`);
-      exit.disabled = raw;
-      exit.onchange = () => {
-        const cleared=setExit(p,exit.value as RouteAction);
-        draw(true);
-        if(cleared)element("routing-state").textContent="切换为代理后已关闭绕过 TUN · 未保存";
-      };
-      const order = el("div", "order-actions");
-      const index = rules.indexOf(p);
-      for (const [type, offset, label] of [
-        ["up", -1, "上移"],
-        ["down", 1, "下移"],
-      ] as const) {
-        const move = iconButton(type, `${label} ${p.name}`, () =>
-          reorder(p.id, rules[index + offset].id),
-        );
-        move.disabled = raw || !rules[index + offset];
-        order.append(move);
-      }
-      row.append(
-        drag,
-        el("span", "policy-index", String(draft.policies.indexOf(p) + 1)),
-        info,
-        enabledLabel,
-        exit,
-        order,
-      );
-      if (p.match.kind === "custom")
-        row.append(iconButton("edit", `编辑 ${p.name}`, () => edit(p)));
-      row.append(
-        iconButton("remove", `移除 ${p.name}`, () => {
-          draft!.policies = draft!.policies.filter((item) => item.id !== p.id);
-          draw(true);
-        }),
-      );
-      block.append(row);
-      if (p.match.kind === "source") {
-        const id = p.match.sourceId;
-        const detail = el("details", "policy-detail");
-        detail.open = expanded.has(p.id);
-        detail.ontoggle = () => {
-          if (detail.open) expanded.add(p.id);
-          else expanded.delete(p.id);
-        };
-        detail.append(el("summary", "", "来源与更新"));
-        const source = sources.find((s) => s.definition.id === id);
-        const body = el("div", "source-body");
-        if (source) {
-          body.append(
-            el(
-              "code",
-              "",
-              `https://raw.githubusercontent.com/${source.definition.repository}/${source.definition.branch}/${source.definition.file}`,
-            ),
-          );
-        }
-        const version = el("p"),
-          status = el("p"),
-          issue = el("p");
-        issue.setAttribute("role", "alert");
-        const auto = el("input");
-        auto.type = "checkbox";
-        auto.setAttribute("aria-label", `${p.name} 自动更新`);
-        const period = el("select");
-        period.setAttribute("aria-label", `${p.name} 更新周期`);
-        for (const [hours, text] of [
-          [6, "每 6 小时"],
-          [24, "每天"],
-          [168, "每周"],
-        ] as const) {
-          const opt = el("option", "", text);
-          opt.value = String(hours);
-          period.append(opt);
-        }
-        const preference = () => {
-          void core
-            .sourcePreference({
-              sourceId: id,
-              automatic: auto.checked,
-              intervalHours: Number(period.value) as 6 | 24 | 168,
-            })
-            .then(refreshSources)
-            .catch(error);
-        };
-        auto.onchange = preference;
-        period.onchange = preference;
-        const autoLabel = el("label");
-        autoLabel.append(auto, document.createTextNode("自动更新"), period);
-        const update = button("立即更新", () => {
-          void core.updateSource(id).then(refreshSources).catch(error);
-        });
-        const cancel = button("取消更新", () => {
-          void core.cancelRules().then(refreshSources).catch(error);
-        });
-        body.append(version, status, issue, autoLabel);
-        const actions = el("div", "actions");
-        actions.append(update, cancel);
-        body.append(actions);
-        detail.append(body);
-        block.append(detail);
-        cells.set(id, {
-          version,
-          status,
-          error: issue,
-          update,
-          cancel,
-          auto,
-          period,
-        });
-      }
-      if (raw) {
-        for (const b of block.querySelectorAll<HTMLButtonElement>("button"))
-          b.disabled = true;
-      }
-      list.append(block);
-    }
-    if (!rules.length && filter !== "default")
-      list.append(
-        empty("没有此类规则", "新建自定义规则，或从固定目录添加开源规则。"),
-      );
-    list.hidden = filter === "default";
-    element("default-policy").hidden = !["all", "default"].includes(filter);
-    element<HTMLSelectElement>("routing-default").value = draft.defaultExit;
-    updateSources();
-    mark();
-  }
-  function updateSources() {
-    for (const [id, c] of cells) {
-      const s = sources.find((s) => s.definition.id === id);
-      if (!s) continue;
-      const available = !!s.preference;
-      c.version.textContent = `已准备版本：${s.version?.commit.slice(0, 12) ?? "暂无"} · ${s.definition.license}`;
-      c.status.textContent = !available
-        ? "保存规则后可更新"
-        : s.status.phase === "preparing"
-          ? "正在下载并校验，当前连接保持原版本"
-          : s.status.lastSuccess
-            ? `最近更新 ${new Date(s.status.lastSuccess).toLocaleString()} · 重连后采用`
-            : "随包版本可离线使用";
-      c.error.textContent = s.status.error ?? "";
-      c.error.hidden = !s.status.error;
-      c.update.disabled =
-        !available || sources.some((s) => s.status.phase === "preparing");
-      c.cancel.hidden = s.status.phase !== "preparing";
-      c.auto.disabled = !available;
-      c.period.disabled = !available;
-      if (document.activeElement !== c.period)
-        c.period.value = String(s.preference?.intervalHours ?? 24);
-      c.auto.checked = s.preference?.automatic ?? true;
-    }
-  }
-  async function refreshSources() {
-    try {
-      sources = await core.sources();
-      if (cells.size) updateSources();
-    } catch (e) {
-      error(e);
-    }
+  function save(): Promise<boolean> {
+    if (savingTask) return savingTask;
+    if (!writable() || modal.open || !draft.dirty || draft.issues.length) return Promise.resolve(false);
+    const pending = draft.save(core.profileRouting); message = ""; state();
+    savingTask = (async () => {
+      try {
+        const ok = await pending; awaitingSnapshot = ok; reconcile();
+        try { await changed(); awaitingSnapshot = !snapshot || snapshot.settings.routingRevision < draft.revision; }
+        catch (reason) { message = `已保存，读取连接状态失败：${reason}`; }
+        return ok;
+      } catch (reason) { message = String(reason); return false; }
+      finally { savingTask = null; state(); }
+    })();
+    return savingTask;
   }
   element("add-custom").onclick = () => edit();
-  element("add-source").onclick = addSource;
-  element<HTMLSelectElement>("routing-default").onchange = (e) => {
-    if (draft) {
-      draft.defaultExit = (e.target as HTMLSelectElement).value as RouteAction;
-      mark();
-    }
+  element("add-source").onclick = () => {
+    if (!editable()) return;
+    const generation = draft.generation, mode = editorMode;
+    sources.add(modal, draft.value.policies, () => writable() && draft.generation === generation && editorMode === mode, policies => { draft.addSources(policies); reconcile(); });
+    state();
   };
   element("save-routing").onclick = () => void save();
-  element("reload-routing").onclick = () => {
-    void modal
-      .decision(
-        "载入最新规则",
-        "本地草稿尚未合并。保存会先校对修订；放弃将载入后端最新规则。",
-      )
-      .then(async (choice) => {
-        if (choice === "save") await save();
-        else if (choice === "discard") load();
-      });
-  };
-  for (const b of element("routing-filter").querySelectorAll<HTMLButtonElement>(
-    "button",
-  ))
-    b.onclick = () => {
-      filter = b.dataset.filter!;
-      for (const item of element("routing-filter").querySelectorAll("button"))
-        item.setAttribute("aria-pressed", String(item === b));
-      draw(true);
-    };
+  element("apply-routing").onclick = () => { if (editable() && !draft.dirty && !snapshot?.runtimeBusy) void apply(); };
+  element("undo-routing-remove").onclick = () => mutate(() => draft.undo());
+  element<HTMLSelectElement>("routing-default").onchange = event => mutate(() => draft.setDefault((event.target as HTMLSelectElement).value as "proxy" | "direct"));
+  element("reload-routing").onclick = () => void (async () => {
+    if (!editable()) return;
+    if (draft.dirty) {
+      const decision = await modal.decision("分流规则已改变", "保存会校对修订；放弃本次草稿后载入最新规则。");
+      if (decision === "save") { await save(); return; }
+      if (decision !== "discard") return;
+    }
+    load();
+  })();
+  panel.addEventListener("focusin", () => state());
   return {
-    render(s: Snapshot) {
-      snapshot = s;
-      if (!draft || (!dirty() && revision !== s.settings.routingRevision))
-        load();
-      else draw();
+    render(next: Snapshot) {
+      if (snapshot?.settings.profile.mode !== next.settings.profile.mode || snapshot?.storageError !== next.storageError || snapshot?.closing !== next.closing) editorMode++;
+      snapshot = next;
+      if (awaitingSnapshot && next.settings.routingRevision >= draft.revision) awaitingSnapshot = false;
+      if (draft.revision < 0 || (!awaitingSnapshot && !draft.dirty && !draft.saving && !savingTask && !modal.open && draft.revision !== next.settings.routingRevision)) load();
+      else state();
     },
-    refreshSources,
-    dirty,
+    refreshSources: sources.refresh,
+    dirty: () => draft.dirty,
     async mayLeave() {
-      if (!dirty()) return true;
-      const choice = await modal.decision(
-        "分流规则尚未保存",
-        "保存整张规则表，或放弃本次草稿后继续退出。",
-      );
+      if (savingTask) await savingTask;
+      if (!draft.dirty) return true;
+      const choice = await modal.decision("分流规则尚未保存", "保存整张规则表，或放弃本次草稿后继续退出。");
       if (choice === "save") return save();
-      if (choice === "discard") {
-        load();
-        return true;
-      }
+      if (choice === "discard") { load(); return true; }
       return false;
     },
   };

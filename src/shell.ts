@@ -21,8 +21,9 @@ export function createShell(changed: () => Promise<void>) {
   element("stop").onclick = () => void action(() => core.action("stop"));
   element("start").onclick = () => void action(() => core.action("start"));
   element("check").onclick = () => void action(() => core.action("check"));
-  element("apply-connection").onclick = () =>
-    void action(() => core.action("apply"));
+  const applyConnection = () => action(() => core.action("apply"));
+  element("apply-connection").onclick = () => void applyConnection();
+  element("apply-connection").setAttribute("title", "应用已保存配置并重新连接，不保存页面草稿");
   element("choose-core").onclick = () => void action(() => core.choose("core"));
   element("choose-config").onclick = () =>
     void action(() => core.choose("config"));
@@ -34,6 +35,7 @@ export function createShell(changed: () => Promise<void>) {
   };
   return {
     error,
+    applyConnection,
     render(s: Snapshot) {
       const c = s.core,
         raw = s.settings.profile.mode === "externalConfig",
