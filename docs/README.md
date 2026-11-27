@@ -13,6 +13,8 @@
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
 - [v0.9.0 发行记录](releases/v0.9.0.md)：托盘服务器选择、明确连接与状态同步
+- [v0.9.0 包验证证据](releases/v0.9.0-verification.json)：五原生原包、升级、菜单与 Windows ARM64 宿主限制
+- [v0.9.0 网络验证证据](releases/v0.9.0-network-verification.json)：选择不打断连接、应用实际节点与首次失败
 - [v0.8.0 发行记录](releases/v0.8.0.md)：签名核心材料、离线受保护安装与独立更新渠道
 - [v0.8.0 包验证证据](releases/v0.8.0-verification.json)：固定原包、两版核心安装、升级与公开附件核对
 - [v0.8.0 网络验证证据](releases/v0.8.0-network-verification.json)：五原生 TUN、签名材料、离线安装和异常清理
