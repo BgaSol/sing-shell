@@ -201,6 +201,8 @@ export interface CoreState {
   configError: string | null;
   restore: "none" | "waiting" | "starting" | "finished";
   canStart: boolean;
+  canSelectNode: boolean;
+  canConnect: boolean;
   canStop: boolean;
   canImport: boolean;
   canRetry: boolean;
@@ -278,6 +280,7 @@ export const core = {
       }
     >("session_snapshot"),
   connect: (nodeId: string) => invoke("session_connect", { nodeId }),
+  selectNode: (nodeId: string, expectedRevision: number) => invoke("session_select_node", { nodeId, expectedRevision }),
   sources: () => invoke<RuleSource[]>("rule_sources"),
   updateSource: (sourceId: string) => invoke("rule_update", { sourceId }),
   cancelRules: () => invoke("rule_cancel"),

@@ -229,6 +229,10 @@ export function createNodes(
       limit,
       busy,
       s.core.usable,
+      s.core.canConnect,
+      s.core.canStop,
+      s.storageError,
+      s.closing,
     ]);
     if (!force && signature === key) return;
     signature = key;
@@ -270,6 +274,7 @@ export function createNodes(
         title = el("div", "row-title");
       title.append(button(node.name, () => edit(node), "link-button"));
       if (current) title.append(el("span", "tag running", "使用中"));
+      if (!current && s.settings.profile.selectedNode === node.id) title.append(el("span", "tag", "已选择"));
       if (target) title.append(el("span", "tag", "正在连接"));
       const meta = el("div", "row-meta");
       meta.append(el("span", "", `${node.server}:${node.port}`));
@@ -287,12 +292,7 @@ export function createNodes(
       );
       play.disabled = current
         ? !s.core.canStop
-        : raw ||
-          busy ||
-          s.runtimeBusy ||
-          s.closing ||
-          !s.core.usable ||
-          !!s.storageError;
+        : busy || !s.core.canConnect;
       const remove = iconButton("remove", `删除 ${node.name}`, () => {
         modal.show("删除节点");
         modal.content.append(

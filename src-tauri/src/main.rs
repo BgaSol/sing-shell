@@ -205,6 +205,7 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
     let smoke = native.state::<Smoke>();
     sing_shell::login_startup::verify_native(&smoke.directory)?;
     let desktop = app.desktop.snapshot(native, app);
+    let tray_menu = app.desktop.verify_native_menu()?;
     let login_registration: Option<serde_json::Value> =
         std::fs::read(smoke.directory.join("login-registration.json"))
             .ok()
@@ -216,7 +217,7 @@ fn smoke_finish(native: &tauri::AppHandle, app: &App, intercepted: bool) -> Resu
             .items
             .get(&Component::App)
             .is_some_and(|i| i.phase == "ready");
-    let report = serde_json::json!({"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"loginRegistration":login_registration,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot().public(),"storageError":app.store.error()});
+    let report = serde_json::json!({"trayMenu":tray_menu,"completed":true,"frontendReady":true,"closeRequestIntercepted":intercepted,"restoredPid":app.runtime.snapshot().pid,"reactivated":smoke.restore && desktop.visible,"installThroughLifecycle":install,"loginSource":std::env::args_os().any(|a|a=="--login-start"),"restartArgsNormalized":!native.env().args_os.iter().any(|a|a=="--login-start"),"draftRetained":app.dirty.load(Ordering::Acquire),"trayAvailable":desktop.tray_available,"backgroundFallback":!cfg!(target_os="linux") && !desktop.tray_available,"loginIO":true,"loginRegistration":login_registration,"version":native.package_info().version.to_string(),"target":sing_shell::TARGET,"settings":app.store.snapshot().public(),"storageError":app.store.error()});
     std::fs::write(
         smoke.directory.join("smoke-result.json"),
         report.to_string(),
@@ -429,6 +430,14 @@ fn set_connection_options(
         .store
         .connection_options(expected_revision, options)?
         .public())
+}
+#[tauri::command]
+fn session_select_node(
+    node_id: String,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<(), String> {
+    app.session.select_node(node_id, expected_revision)
 }
 #[tauri::command]
 fn session_connect(node_id: String, app: State<App>) -> Result<Receipt, String> {
@@ -742,6 +751,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            session_select_node,
             frontend_ready,
             desktop_snapshot,
             desktop_navigation_done,

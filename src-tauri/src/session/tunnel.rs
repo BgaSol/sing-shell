@@ -917,7 +917,7 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
     let tunnel = &application.session.tunnel;
     let cancel = AtomicBool::new(false);
     crate::settings::write_json(&input.control.join("started.json"), &tunnel.snapshot())?;
-    let deadline = Instant::now() + Duration::from_secs(60);
+    let deadline = Instant::now() + Duration::from_secs(90);
     while !input.control.join("stop").exists() {
         if Instant::now() >= deadline {
             tunnel.close()?;
@@ -956,6 +956,41 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
             crate::settings::write_json(
                 &input.control.join(format!("replace-{}.json", request.id)),
                 &serde_json::json!({"succeeded":result.is_ok(),"error":result.err(),"snapshot":tunnel.snapshot(),"session":application.session.snapshot(),"settings":application.store.snapshot().public()}),
+            )?;
+        }
+        let selection = input.control.join("selection.json");
+        if selection.exists() {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct Selection {
+                node: Node,
+                options: Option<crate::profile::ConnectionOptions>,
+            }
+            let request: Selection =
+                serde_json::from_slice(&std::fs::read(&selection).map_err(|e| e.to_string())?)
+                    .map_err(|e| e.to_string())?;
+            std::fs::remove_file(selection).map_err(|e| e.to_string())?;
+            let id = import_node(&application, &request.node)?;
+            application
+                .session
+                .select_node(id, application.store.snapshot().nodes_revision)?;
+            if let Some(options) = request.options {
+                application.store.connection_options(
+                    application.store.snapshot().connection_revision,
+                    options,
+                )?;
+                application.session.action(super::Action::Apply)?;
+                let deadline = Instant::now() + Duration::from_secs(30);
+                while application.gate.runtime_busy() {
+                    if Instant::now() >= deadline {
+                        return Err("fixture apply timed out".into());
+                    }
+                    thread::sleep(Duration::from_millis(25));
+                }
+            }
+            crate::settings::write_json(
+                &input.control.join("selection-result.json"),
+                &serde_json::json!({"session":application.session.snapshot(),"settings":application.store.snapshot().public()}),
             )?;
         }
         let query = input.control.join("query-activity");

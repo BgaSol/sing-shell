@@ -196,6 +196,14 @@ impl Admission {
             .values()
             .any(|a| matches!(a.kind, Kind::Runtime | Kind::Selection | Kind::Stop))
     }
+    pub fn stopping(&self) -> bool {
+        self.0
+            .lock()
+            .unwrap()
+            .active
+            .values()
+            .any(|a| a.kind == Kind::Stop)
+    }
     pub fn begin(self: &Arc<Self>, kind: Kind) -> Result<Operation, String> {
         let mut state = self.0.lock().unwrap();
         if state.closing {

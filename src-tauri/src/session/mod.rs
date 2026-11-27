@@ -45,6 +45,8 @@ pub struct Snapshot {
     pub core: core::Snapshot,
     pub restore: Restore,
     pub can_start: bool,
+    pub can_select_node: bool,
+    pub can_connect: bool,
     pub can_stop: bool,
     pub can_import: bool,
     pub runtime: runtime::RuntimeSnapshot,
@@ -126,8 +128,8 @@ impl SessionService {
         let busy = self.gate.runtime_busy() || self.gate.closing() || !core.initialized;
         let restore = self.intent.lock().unwrap().restore;
         let applied = self.applied.lock().unwrap();
-        let desired = settings.profile.selected().and_then(|node| {
-            self.connection_for(settings, node.clone(), String::new())
+        let desired = applied.as_ref().and_then(|input| {
+            self.connection_for(settings, input.node.clone(), input.core_version.clone())
                 .ok()
         });
         Snapshot {
@@ -136,6 +138,15 @@ impl SessionService {
             target: self.target.lock().unwrap().clone(),
             operation: tunnel.operation.clone(),
             activity: tunnel.activity_summary.clone(),
+            can_select_node: generated
+                && !busy
+                && !r.cleanup_pending
+                && self.store.error().is_none(),
+            can_connect: generated
+                && !busy
+                && !r.cleanup_pending
+                && core.usable
+                && self.store.error().is_none(),
             can_start: !busy
                 && r.pid.is_none()
                 && !r.cleanup_pending
@@ -147,6 +158,7 @@ impl SessionService {
                     settings.config_path.is_some()
                 },
             can_stop: !self.gate.closing()
+                && !self.gate.stopping()
                 && (self.tunnel.occupied()
                     || r.pid.is_some()
                     || r.cleanup_pending
@@ -163,7 +175,15 @@ impl SessionService {
             runtime: r.clone(),
             network: tunnel.network,
             running_node: if generated {
-                tunnel.running_node.clone()
+                tunnel.running_node.clone().map(|node| {
+                    settings
+                        .profile
+                        .nodes
+                        .iter()
+                        .find(|n| n.id == node.id)
+                        .map(|n| n.summary())
+                        .unwrap_or(node)
+                })
             } else {
                 None
             },
@@ -179,7 +199,9 @@ impl SessionService {
                     != applied
                         .as_ref()
                         .map(crate::profile::ConnectionInput::fingerprint),
-            phase: if generated {
+            phase: if self.gate.stopping() {
+                "stopping".into()
+            } else if generated {
                 tunnel.phase.as_str().into()
             } else {
                 r.status.clone()
@@ -265,6 +287,11 @@ impl SessionService {
         })
     }
     pub fn action(self: &Arc<Self>, action: Action) -> Result<Receipt, String> {
+        if matches!(action, Action::Start)
+            && self.store.snapshot().profile.mode == crate::profile::Mode::Generated
+        {
+            return self.connect_selected();
+        }
         let op = self.gate.begin(if matches!(action, Action::Stop) {
             Kind::Stop
         } else {
@@ -373,24 +400,54 @@ impl SessionService {
             self.engine.check_local(&op.cancel)
         }
     }
+    pub fn select_node(&self, id: String, expected: u64) -> Result<(), String> {
+        let _op = self.gate.begin(Kind::Selection)?;
+        if !self.engine.snapshot().initialized || self.runtime_snapshot().cleanup_pending {
+            return Err("请等待初始化或完成网络清理".into());
+        }
+        self.store.select_node(&id, expected)?;
+        self.wake.notify_one();
+        Ok(())
+    }
     pub fn connect(self: &Arc<Self>, node_id: String) -> Result<Receipt, String> {
-        self.invalidate_restore();
+        self.connect_request(Some(node_id))
+    }
+    fn connect_selected(self: &Arc<Self>) -> Result<Receipt, String> {
+        self.connect_request(None)
+    }
+    fn connect_request(self: &Arc<Self>, node_id: Option<String>) -> Result<Receipt, String> {
         let op = self.gate.begin(Kind::Runtime)?;
         let receipt = op.receipt();
         let session = self.clone();
-        {
-            let settings = self.store.snapshot();
-            if settings.profile.mode != crate::profile::Mode::Generated {
-                return Err("请先停止并切换到节点模式".into());
-            }
-            let node = settings
-                .profile
-                .nodes
-                .iter()
-                .find(|n| n.id == node_id)
-                .ok_or("节点不存在")?;
-            *self.target.lock().unwrap() = Some(node.summary());
+        let settings = self.store.snapshot();
+        let core = self.engine.snapshot();
+        if settings.profile.mode != crate::profile::Mode::Generated {
+            return Err("请先停止并切换到节点模式".into());
         }
+        if !core.initialized || !core.usable {
+            return Err("请等待官方核心就绪".into());
+        }
+        if self.runtime_snapshot().cleanup_pending {
+            return Err("请先停止并完成网络清理".into());
+        }
+        if node_id.is_none() && self.runtime_snapshot().pid.is_some() {
+            return Err("连接已经运行，请明确选择切换节点".into());
+        }
+        let id = node_id
+            .or_else(|| settings.profile.selected_node.clone())
+            .ok_or("请先选择一个节点")?;
+        let node = settings
+            .profile
+            .nodes
+            .iter()
+            .find(|n| n.id == id)
+            .ok_or("节点不存在")?
+            .clone();
+        let mut input = self.connection_for(&settings, node, String::new())?;
+        self.store.select_node(&id, settings.nodes_revision)?;
+        self.invalidate_restore();
+        self.runtime.clear_error();
+        *self.target.lock().unwrap() = Some(input.node.summary());
         self.runtime.events.push(
             "connection",
             "started",
@@ -408,14 +465,6 @@ impl SessionService {
                         session.engine.managed.error(e);
                     }
                 }
-                let settings = session.store.snapshot();
-                let node = settings
-                    .profile
-                    .nodes
-                    .iter()
-                    .find(|n| n.id == node_id)
-                    .ok_or("节点不存在")?
-                    .clone();
                 let version = if switching {
                     session
                         .applied
@@ -426,7 +475,9 @@ impl SessionService {
                         .core_version
                         .clone()
                 } else {
-                    settings
+                    session
+                        .store
+                        .snapshot()
                         .managed
                         .active
                         .as_ref()
@@ -434,7 +485,7 @@ impl SessionService {
                         .version
                         .clone()
                 };
-                let input = session.connection_for(&settings, node, version)?;
+                input.core_version = version;
                 session.execute_connection(&op, input, !switching)
             })();
             if let Err(e) = result {
@@ -584,10 +635,14 @@ impl SessionService {
         if self.store.snapshot().profile.mode != crate::profile::Mode::Generated {
             return Err("原始配置请停止后重新启动".into());
         }
-        let mut candidate = self.desired_connection()?;
-        if let Some(actual) = self.applied.lock().unwrap().as_ref() {
-            candidate.core_version = actual.core_version.clone();
-        }
+        let actual = self
+            .applied
+            .lock()
+            .unwrap()
+            .clone()
+            .ok_or("当前连接信息缺失")?;
+        let candidate =
+            self.connection_for(&self.store.snapshot(), actual.node, actual.core_version)?;
         self.execute_connection(op, candidate, false)
     }
     pub fn activity(&self, query: crate::activity::Query) -> Result<crate::activity::Page, String> {
@@ -849,6 +904,42 @@ impl Drop for SessionService {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn pending_settings_and_apply_keep_the_actual_node_when_selection_differs() {
+        let root = std::env::temp_dir().join(format!(
+            "sing-shell-selected-{}-{}",
+            std::process::id(),
+            crate::logs::now()
+        ));
+        let app = crate::app::Application::open(root.clone(), "0.9.0".into()).unwrap();
+        let preview = app
+            .profiles
+            .preview("trojan://private-a@example.test:443#A\ntrojan://private-b@example.test:444#B")
+            .unwrap();
+        app.profiles.commit(preview.ticket, 0).unwrap();
+        let mut settings = app.store.snapshot();
+        let a = settings.profile.nodes[0].clone();
+        let b = settings.profile.nodes[1].clone();
+        let actual = app
+            .session
+            .connection_for(&settings, a.clone(), "1.14.4".into())
+            .unwrap();
+        settings.profile.selected_node = Some(b.id);
+        let same = app
+            .session
+            .connection_for(&settings, actual.node.clone(), actual.core_version.clone())
+            .unwrap();
+        assert_eq!(actual.fingerprint(), same.fingerprint());
+        settings.profile.connection.ipv4_compatibility = true;
+        let changed = app
+            .session
+            .connection_for(&settings, actual.node, actual.core_version)
+            .unwrap();
+        assert_eq!(changed.node.id, a.id);
+        assert_ne!(changed.fingerprint(), same.fingerprint());
+        drop(app);
+        let _ = std::fs::remove_dir_all(root);
+    }
     #[test]
     fn node_restore_does_not_require_an_external_configuration() {
         let mut settings = crate::settings::Settings::default();

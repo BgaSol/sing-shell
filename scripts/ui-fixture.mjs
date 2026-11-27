@@ -127,6 +127,8 @@ function bootstrap() {
     configError: null,
     restore: "none",
     canStart: false,
+    canSelectNode: true,
+    canConnect: true,
     canStop: false,
     canImport: true,
     canRetry: true,
@@ -184,8 +186,10 @@ function bootstrap() {
     runtime.pid = 12345;
     runtime.status = "running";
     runtime.version = "1.14.4";
-    settings.profile.selectedNode = id;
-    settings.nodesRevision++;
+    if (settings.profile.selectedNode !== id) {
+      settings.profile.selectedNode = id;
+      settings.nodesRevision++;
+    }
     coreState.activity = {
       sessionId: "fixture-session",
       state: "ready",
@@ -286,6 +290,14 @@ function bootstrap() {
           return;
         case "session_connect":
           connect(args.nodeId);
+          return;
+        case "session_select_node":
+          if (args.expectedRevision !== settings.nodesRevision) throw Error("节点列表已改变");
+          if (settings.profile.mode !== "generated" || !settings.profile.nodes.some(n => n.id === args.nodeId)) throw Error("节点不可选择");
+          if (settings.profile.selectedNode !== args.nodeId) {
+            settings.profile.selectedNode = args.nodeId;
+            settings.nodesRevision++;
+          }
           return;
         case "set_connection_options":
           if (args.expectedRevision !== settings.connectionRevision) throw Error("连接设置修订冲突");
@@ -390,6 +402,8 @@ function bootstrap() {
           };
         case "profile_mode":
           settings.profile.mode = args.mode;
+          coreState.canSelectNode = args.mode === "generated";
+          coreState.canConnect = args.mode === "generated";
           settings.nodesRevision++;
           return;
         case "activity_snapshot":

@@ -15,6 +15,101 @@ fn directory() -> std::path::PathBuf {
     path
 }
 #[test]
+fn explicit_selection_is_persistent_without_changing_successful_restore_input() {
+    let root = directory();
+    let app = sing_shell::app::Application::open(root.clone(), "0.9.0".into()).unwrap();
+    app.session.initialize().unwrap();
+    let preview = app
+        .profiles
+        .preview("trojan://private-a@example.test:443#A\ntrojan://private-b@example.test:444#B")
+        .unwrap();
+    app.profiles.commit(preview.ticket, 0).unwrap();
+    let first = app.store.snapshot();
+    let a = first.profile.nodes[0].clone();
+    let b = first.profile.nodes[1].clone();
+    assert!(app.session.snapshot().can_select_node);
+    assert!(!app.session.snapshot().can_connect);
+    app.session
+        .select_node(a.id.clone(), first.nodes_revision)
+        .unwrap();
+    let input = profile::ConnectionInput::from_profile(
+        &first.profile,
+        a.clone(),
+        sing_shell::rulesets::selected(&root, &first.profile.routing).unwrap(),
+        "1.14.4".into(),
+    )
+    .unwrap();
+    app.store
+        .confirm_connection(first.core_revision, Some(input.clone()))
+        .unwrap();
+    let selected_a = app.store.snapshot();
+    app.session
+        .select_node(b.id.clone(), selected_a.nodes_revision)
+        .unwrap();
+    let selected_b = app.store.snapshot();
+    assert_eq!(selected_b.profile.selected_node.as_ref(), Some(&b.id));
+    assert_eq!(selected_b.routing_revision, first.routing_revision);
+    assert_eq!(selected_b.connection_revision, first.connection_revision);
+    assert_eq!(
+        selected_b.startup.last_connection.as_ref().unwrap().node.id,
+        a.id
+    );
+    app.session
+        .select_node(b.id.clone(), selected_b.nodes_revision)
+        .unwrap();
+    assert_eq!(
+        app.store.snapshot().nodes_revision,
+        selected_b.nodes_revision
+    );
+    assert!(app
+        .session
+        .select_node(a.id.clone(), first.nodes_revision)
+        .is_err());
+    assert!(app
+        .session
+        .select_node("missing".into(), selected_b.nodes_revision)
+        .is_err());
+    app.store
+        .confirm_connection(first.core_revision, Some(input))
+        .unwrap();
+    assert_eq!(
+        app.store.snapshot().profile.selected_node.as_ref(),
+        Some(&b.id)
+    );
+    let operation = app.gate.begin(sing_shell::app::Kind::Runtime).unwrap();
+    assert!(!app.session.snapshot().can_select_node);
+    assert!(app
+        .session
+        .select_node(a.id.clone(), selected_b.nodes_revision)
+        .is_err());
+    drop(operation);
+    let stop = app.gate.begin(sing_shell::app::Kind::Stop).unwrap();
+    assert!(!app.session.snapshot().can_stop);
+    assert_eq!(app.session.snapshot().phase, "stopping");
+    drop(stop);
+    // A failed atomic write must not publish a new in-memory selection.
+    fs::rename(root.join("settings.json"), root.join("saved.json")).unwrap();
+    fs::create_dir(root.join("settings.json")).unwrap();
+    assert!(app
+        .session
+        .select_node(a.id, selected_b.nodes_revision)
+        .is_err());
+    assert_eq!(
+        app.store.snapshot().profile.selected_node.as_ref(),
+        Some(&b.id)
+    );
+    fs::remove_dir(root.join("settings.json")).unwrap();
+    fs::rename(root.join("saved.json"), root.join("settings.json")).unwrap();
+    drop(app);
+    let reopened = sing_shell::settings::SettingsStore::open(root.clone()).unwrap();
+    assert_eq!(
+        reopened.snapshot().profile.selected_node.as_ref(),
+        Some(&b.id)
+    );
+    drop(reopened);
+    fs::remove_dir_all(root).unwrap();
+}
+#[test]
 fn application_drop_removes_generated_credentials_without_an_active_process() {
     let root = directory();
     let app = sing_shell::app::Application::open(root.clone(), "0.5.0".into()).unwrap();
