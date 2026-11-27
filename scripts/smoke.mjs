@@ -63,6 +63,7 @@ try {
   if(installInput)assert.equal(report.installThroughLifecycle,true);
   assert.equal(report.frontendReady, true);
   const [major,minor]=report.version.split('.').map(Number);
+  if(process.platform==='win32' && (major>0 || minor>=9)) assert.equal(report.trayAvailable,true,report.desktopError??'Windows runner did not create the tray');
   if(report.trayAvailable && (major>0 || minor>=9)) {
     assert.equal(report.trayMenu?.nodes,2000);
     for(const key of ['selectionUpdated','renameUpdated','modeUpdated']) assert.equal(report.trayMenu[key],true);
