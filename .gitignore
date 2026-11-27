@@ -8,4 +8,5 @@
 /src-tauri/icons/StoreLogo.png
 /src-tauri/icons/64x64.png
 /artifacts/
+/fakeip-*-report.json
 *.log

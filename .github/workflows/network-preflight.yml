@@ -86,4 +86,5 @@ jobs:
           path: |
             artifacts/network-preflight/**/*report.json
             artifacts/network-preflight/**/service-diagnostics.log
+            fakeip-*-report.json
           if-no-files-found: warn
