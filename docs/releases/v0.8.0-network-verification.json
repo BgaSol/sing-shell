@@ -1,0 +1,842 @@
+{
+  "version": "0.8.0",
+  "source": "d8cbc61bc811e9c6eb39b01928bab16612261007",
+  "networkRun": "45970128829",
+  "coreRun": "45965884819",
+  "reports": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "basic": {
+        "target": "x86_64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26100",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-amd64.zip",
+          "digest": "sha256:99185d75d314a07dbba4a130c8ad986cbeb629a07927975636b341ca61f991df"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-amd64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface Ethernet 3, index 14\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.92s)\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;172m168186012\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:64569\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;172m168186012\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;172m168186012\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;169m2658571417\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:58305\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;169m2658571417\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;169m2658571417\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;107m2906498139\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:64571\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;107m2906498139\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;107m2906498139\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;121m1054087529\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:58307\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;121m1054087529\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:60026\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;121m1054087529\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "x86_64-pc-windows-msvc",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "1d734ce897e93f7e809981fcb0019bdae34c1ed6fe1d6511a7c22f4acef26385",
+        "integration": "767af704508149bea68ef577ea5e8a6beb2ed2874296acf2ef605eeb39ff534d",
+        "fakeip": "5dec84d120da8a46208cf979134cc712c5559e1634292f36dc993781cb5b8d0a"
+      }
+    },
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "basic": {
+        "target": "aarch64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26200",
+        "archive": {
+          "name": "sing-box-1.14.4-windows-arm64.zip",
+          "digest": "sha256:8cd0a4d0cd8cd480be5731ac31f17038969a42d12add9feb6e031fd43d85bbae"
+        },
+        "resources": [
+          "sing-box-1.14.4-windows-arm64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0001] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0001] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0001] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.21s)\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;192m619620016\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:63686\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;192m619620016\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;192m619620016\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;122m111135341\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:55587\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;122m111135341\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;122m111135341\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;50m2416739065\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:63688\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;50m2416739065\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;50m2416739065\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;226m549597660\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:55589\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;226m549597660\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:55995\n\u001b[36mINFO\u001b[0m[0028] [\u001b[38;5;226m549597660\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-pc-windows-msvc",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "25454b0c6fb0d290cb365a720fbe7f1b2c05133b32c72eec38145ed660dfcb2c",
+        "integration": "2b9b013e97c48c5668f58658904497cb5911fdfbc1d8b9cbc0d3f97ec9745dd4",
+        "fakeip": "4d7b904024cf7910a36377829e1add4b2acf823de77fa1d90c6bde927836ef92"
+      }
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "basic": {
+        "target": "x86_64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "x64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-amd64.tar.gz",
+          "digest": "sha256:699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-amd64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.00s)\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;155m4098524043\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 10.1.0.19:54372\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;155m4098524043\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;155m4098524043\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m45432752\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:44724\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m45432752\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m45432752\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;49m1908058657\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:46058\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;49m1908058657\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;49m1908058657\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;68m3749710388\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:58322\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;68m3749710388\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:55549\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;68m3749710388\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "x86_64-unknown-linux-gnu",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "bcd2aeb145b6e4dd0da6d6f9e22bf3e39c70451692e0895d5c3903ceb538d3e2",
+        "integration": "1fbb57666115454199f9f08dff652c7488ba0c7edd452c0e9dbee0a0678c24ef",
+        "fakeip": "2fa03b43bfc25911249469c136960ed3781e9149fccb73f83d80293bb5be9a3f"
+      }
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "basic": {
+        "target": "aarch64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.4-linux-arm64.tar.gz",
+          "digest": "sha256:436441f76ee2f7fe21b5b2d426d3cb261a480455a704865789ad533e4273ec26"
+        },
+        "resources": [
+          "sing-box-1.14.4-linux-arm64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.00s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;172m3733686428\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:58868\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;172m3733686428\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;172m3733686428\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m975928008\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:36763\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m975928008\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;216m975928008\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;140m632300924\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:41270\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;140m632300924\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;140m632300924\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m867653043\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:60689\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m867653043\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:52622\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m867653043\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-unknown-linux-gnu",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "502ddfda3cfe3a6c4faa61f64be2ddb2e5c7fde315278c61a090867aba4adc27",
+        "integration": "ea0b14784c3d88f25ea88ed5ec39314e5b8f3ed0c38112cf5caa174f31ba67c1",
+        "fakeip": "95619819f38aeacf39e28b48baa6684d3f80ed342f3b77faed85961f3ac69a6a"
+      }
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "basic": {
+        "target": "aarch64-apple-darwin",
+        "platform": "darwin",
+        "arch": "arm64",
+        "version": "1.14.4",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "25.6.0",
+        "archive": {
+          "name": "sing-box-1.14.4-darwin-arm64.tar.gz",
+          "digest": "sha256:0d8c7f5ed5d587b0f1a5e9772a708ec3bfa4ac4c9329604b01d8d9c2ba406838"
+        },
+        "resources": [],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at utun223\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface en0, index 7\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 192.168.64.1, gateway_mac a6:77:f3:20:33:64\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.04s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;123m939743084\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:49177\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;123m939743084\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;123m939743084\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m517060862\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:59994\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m517060862\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;192m517060862\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m904119010\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:49179\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m904119010\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;220m904119010\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;158m3572452425\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:57806\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;158m3572452425\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:60649\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;158m3572452425\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "macOS system Fake-IP reaches its restored real destination through TCP and UDP TUN traffic",
+          "macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "temporary resolver released and all existing network-service DNS preferences preserved",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.4",
+        "cachedFake": "198.18.0.3",
+        "dnsReleaseMs": [
+          9,
+          26
+        ],
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-apple-darwin",
+        "coreVersion": "1.14.4",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "b5610e817dab5dcd3ddd3212f2305d946418f868afef18aad52cc55db36a2b8e",
+        "integration": "87af8a544451c54905c88f7c0fb5c93147dd7e7522c8dbffb7e6487caaa5d928",
+        "fakeip": "7833ab325772415dc956169207c397d7bfc60e9f03111885b122952591ff9702"
+      }
+    }
+  ],
+  "approvedCore": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "basic": {
+        "target": "x86_64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "x64",
+        "version": "1.14.5",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26100",
+        "archive": {
+          "name": "sing-box-1.14.5-windows-amd64.zip",
+          "digest": "sha256:b935f7b38bffcc1f600165e79e5d0c2d58b547942ac1b6cf61a27b5447c089e7"
+        },
+        "resources": [
+          "sing-box-1.14.5-windows-amd64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface Ethernet 4, index 15\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.02s)\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m3781150640\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:49571\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m3781150640\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;192m3781150640\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;220m1501380619\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:60798\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;220m1501380619\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;220m1501380619\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;179m1049932195\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:49573\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;179m1049932195\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;179m1049932195\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;113m648585825\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:60800\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;113m648585825\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:65050\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;113m648585825\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.5",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "x86_64-pc-windows-msvc",
+        "coreVersion": "1.14.5",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "4b05836dfed8206bd1743587313b5e37fd7aaf9ba9d181595259d4ff7c8bc70a",
+        "integration": "2409a3a3bf576fc9ba09437d360ca9576be8b8ae754234df91171711803e901c",
+        "fakeip": "c54860213b162396fe2436e1cbe25fc58da3c8ef4cea6a32b0f872e849564083"
+      }
+    },
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "basic": {
+        "target": "aarch64-pc-windows-msvc",
+        "platform": "win32",
+        "arch": "arm64",
+        "version": "1.14.5",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "10.0.26200",
+        "archive": {
+          "name": "sing-box-1.14.5-windows-arm64.zip",
+          "digest": "sha256:6c309af5981d40517a84144cb0df8434779ae98774846b04923feefbc74af9d4"
+        },
+        "resources": [
+          "sing-box-1.14.5-windows-arm64/libcronet.dll"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0001] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0001] network: updated default interface Ethernet 5, index 16\n\u001b[36mINFO\u001b[0m[0001] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.15s)\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;224m4013807838\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:50254\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;224m4013807838\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;224m4013807838\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;188m3980741419\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:60566\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;188m3980741419\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;188m3980741419\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;193m1303657137\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:50256\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;193m1303657137\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;193m1303657137\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;204m1795957180\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:60568\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;204m1795957180\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:64848\n\u001b[36mINFO\u001b[0m[0027] [\u001b[38;5;204m1795957180\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-pc-windows-msvc",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.5",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-pc-windows-msvc",
+        "coreVersion": "1.14.5",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "a4c9fa6f17f4e5b51b53ebddaf0fdc36c3493fbee5d017bf2c66f0935f34b935",
+        "integration": "d12131572ad19cd1ca64c839580eeb349dcbb9e31cf6b79ab44f2730870ff0ff",
+        "fakeip": "dffe6631cd476c60a08b1760dc0767ddebc32312d73fd8268b643077fdd22b8f"
+      }
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "basic": {
+        "target": "x86_64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "x64",
+        "version": "1.14.5",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.5-linux-amd64.tar.gz",
+          "digest": "sha256:ca57e405be6b7dc79a0efa91823a0cc4d81138cbe4a9aacbfd749c65e6fca3b2"
+        },
+        "resources": [
+          "sing-box-1.14.5-linux-amd64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0001] sing-box started (1.00s)\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;187m1995805611\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 10.1.0.112:44418\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;187m1995805611\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;187m1995805611\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;42m3870444273\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:39217\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;42m3870444273\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;42m3870444273\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;226m478280412\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:45934\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;226m478280412\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;226m478280412\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;144m1827991168\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:45828\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;144m1827991168\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:50231\n\u001b[36mINFO\u001b[0m[0001] [\u001b[38;5;144m1827991168\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "x86_64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.5",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "x86_64-unknown-linux-gnu",
+        "coreVersion": "1.14.5",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "03ee6b61da9dbf44abdcca95cc4d2da728038eb15cda7379952b533794da31b4",
+        "integration": "d5f4db8e6ad12663d358b9db5c5023ea372a838dba1b9f644dcfadd427b7519d",
+        "fakeip": "7d4ce43b7f1461c4a69b6fa436f3c6ff84ed10a0531b5fb2ffc691bfdf4a3769"
+      }
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "basic": {
+        "target": "aarch64-unknown-linux-gnu",
+        "platform": "linux",
+        "arch": "arm64",
+        "version": "1.14.5",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "6.8.0-1070-azure",
+        "archive": {
+          "name": "sing-box-1.14.5-linux-arm64.tar.gz",
+          "digest": "sha256:1bd0560b1afd4695fb29a28f86131f8426f6cd3ac5f6e844cafae0ab6f493023"
+        },
+        "resources": [
+          "sing-box-1.14.5-linux-arm64/libcronet.so"
+        ],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at ss-preflight\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface eth0, index 2\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 10.1.0.1, gateway_mac 12:34:56:78:9a:bc\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.00s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;191m1463845039\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:55822\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;191m1463845039\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;191m1463845039\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m2057712051\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:50074\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m2057712051\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;195m2057712051\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;176m3572328096\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:34860\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;176m3572328096\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;176m3572328096\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;114m2249573474\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:60074\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;114m2249573474\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:51805\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;114m2249573474\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-unknown-linux-gnu",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.5",
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-unknown-linux-gnu",
+        "coreVersion": "1.14.5",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "2c256fe1975ec9b4e28c7189684aad89557122dc1d19d026813faf0f56bf380f",
+        "integration": "9c20fcb83b0435c88795b5633eb9a900892edd4d08c36bc32bc2f524ed2c06f7",
+        "fakeip": "bbbefaaa1a3449dbff0f75c0200095e4cc59e9cad959f5038c43efc5be957215"
+      }
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "basic": {
+        "target": "aarch64-apple-darwin",
+        "platform": "darwin",
+        "arch": "arm64",
+        "version": "1.14.5",
+        "passed": true,
+        "verified": [
+          "official archive identity, native executable and controlled TUN configuration",
+          "actual privileged TUN interface created",
+          "TCP IPv4 through controlled TUN route",
+          "UDP IPv4 through controlled TUN route",
+          "TCP IPv6 through controlled TUN route",
+          "UDP IPv6 through controlled TUN route",
+          "TUN interface released after actual process exit"
+        ],
+        "skipped": [
+          "interactive system authorization and installed application identity"
+        ],
+        "kernel": "25.6.0",
+        "archive": {
+          "name": "sing-box-1.14.5-darwin-arm64.tar.gz",
+          "digest": "sha256:8550351d344ba28b6358d2b011d96384b70b299e6c4c254df7a5dae47430fcd4"
+        },
+        "resources": [],
+        "log": "\u001b[36mINFO\u001b[0m[0000] inbound/tun[test-tun]: started at utun223\n\u001b[36mINFO\u001b[0m[0000] network: updated default interface en0, index 7\n\u001b[36mINFO\u001b[0m[0000] network: updated network environment: gateway 192.168.64.1, gateway_mac a6:77:f3:60:61:64\n\u001b[36mINFO\u001b[0m[0000] sing-box started (0.05s)\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;32m3098309863\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from 172.29.255.1:49219\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;32m3098309863\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to 198.51.100.1:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;32m3098309863\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m2389883170\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from 172.29.255.1:63834\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m2389883170\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to 198.51.100.1:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;50m2389883170\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;184m767985832\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection from [fdfe:dbca:199::1]:49221\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;184m767985832\u001b[0m 0ms] inbound/tun[test-tun]: inbound connection to [fdfe:dbca:199::99]:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;184m767985832\u001b[0m 0ms] outbound/direct[direct]: outbound connection to 127.0.0.1:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;31m2355815910\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection from [fdfe:dbca:199::1]:59180\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;31m2355815910\u001b[0m 0ms] inbound/tun[test-tun]: inbound packet connection to [fdfe:dbca:199::99]:52691\n\u001b[36mINFO\u001b[0m[0000] [\u001b[38;5;31m2355815910\u001b[0m 0ms] outbound/direct[direct]: outbound packet connection\n"
+      },
+      "integration": {
+        "target": "aarch64-apple-darwin",
+        "passed": true,
+        "verified": [
+          "production network worker authenticates control channel and independently verifies official core",
+          "typed node and routing become checked private TUN config",
+          "native interface and IPv4/IPv6 routes are confirmed",
+          "TCP and UDP IPv4 forwarded through selected encrypted Shadowsocks node",
+          "TCP and UDP IPv6 forwarded through selected encrypted Shadowsocks node",
+          "native system resolver receives production IPv4 Fake-IP for a proxy domain",
+          "macOS system Fake-IP reaches its restored real destination through TCP and UDP TUN traffic",
+          "macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)",
+          "loopback bypass remains direct",
+          "worker collects authenticated core connections with session identity and real matched policy tags",
+          "invalid protected candidate is rejected while the existing core PID and forwarding survive",
+          "node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP",
+          "production worker replacement preserves cached Fake-IP mappings",
+          "saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6",
+          "stop releases actual TUN and terminates authorization worker",
+          "worker diagnostics do not return known node credential",
+          "temporary resolver released and all existing network-service DNS preferences preserved",
+          "unexpected official core exit is cleaned without crash reconnection",
+          "controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown",
+          "authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session"
+        ],
+        "skipped": [
+          "interactive UAC/polkit approval",
+          "macOS administrator authorization dialog",
+          "suspend and physical network switching"
+        ],
+        "freshProtectedInstall": true,
+        "coreVersion": "1.14.5",
+        "cachedFake": "198.18.0.3",
+        "dnsReleaseMs": [
+          8,
+          31
+        ],
+        "log": ""
+      },
+      "fakeip": {
+        "target": "aarch64-apple-darwin",
+        "coreVersion": "1.14.5",
+        "passed": true,
+        "offlineFirstInstall": true,
+        "verified": [
+          "production DNS rules return IPv4 Fake-IP and empty AAAA",
+          "core resolves real business addresses while node bootstrap uses IPv6",
+          "IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS",
+          "candidate check leaves the running cache usable",
+          "cached Fake-IP survives real core reconnect and changed DNS default",
+          "real IP policy selects the encrypted exit after domain restoration"
+        ],
+        "error": null
+      },
+      "originalReportSha256": {
+        "basic": "4d1aec913dc6a6969963ab91626c8f350d4bbbdedd3ce9a12577070b20214730",
+        "integration": "3755bef4512e99411eb150eb303989fb80cecf5685a1457638949d3db2194979",
+        "fakeip": "a8bee4da6efc384278beafb7a9c475f26e816049338fb103258ac8ff2dd922a2"
+      }
+    }
+  ]
+}

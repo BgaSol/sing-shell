@@ -12,7 +12,9 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
-- [核心交付与受保护安装设计](plans/core-delivery-design.md)：就绪定义、离线信任材料与独立更新边界（实现中）
+- [v0.8.0 发行记录](releases/v0.8.0.md)：签名核心材料、离线受保护安装与独立更新渠道
+- [v0.8.0 包验证证据](releases/v0.8.0-verification.json)：固定原包、两版核心安装、升级与公开附件核对
+- [v0.8.0 网络验证证据](releases/v0.8.0-network-verification.json)：五原生 TUN、签名材料、离线安装和异常清理
 - [v0.7.0 发行记录](releases/v0.7.0.md)：内置 Fake-IP、IPv4 兼容与连接链路重构
 - [v0.7.0 包验证证据](releases/v0.7.0-verification.json)：固定原包、五原生安装升级、公开附件及验收工具修正
 - [v0.7.0 网络验证证据](releases/v0.7.0-network-verification.json)：五原生 Fake-IP、受控 TLS、真实目标与清理
