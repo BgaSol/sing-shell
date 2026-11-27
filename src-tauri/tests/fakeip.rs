@@ -211,7 +211,7 @@ fn official_core_restores_domains_uses_real_ipv4_and_keeps_maps_across_reconnect
                 &StartSpec {
                     executable: core.clone(),
                     config,
-                    version: Some("1.14.4".into()),
+                    version: Some(runtime.probe(&core, &AtomicBool::new(false)).unwrap()),
                 },
                 cancel.clone(),
             )

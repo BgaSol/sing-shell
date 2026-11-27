@@ -115,7 +115,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
                 &StartSpec {
                     executable: core.clone(),
                     config: path,
-                    version: Some("1.14.4".into()),
+                    version: Some(runtime.probe(&core, &AtomicBool::new(false)).unwrap()),
                 },
                 Arc::new(AtomicBool::new(false)),
             )
