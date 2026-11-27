@@ -24,6 +24,7 @@ export async function collect(version) {
   assert.equal(release.draft, false); assert.equal(release.prerelease, false); assert.equal(release.tag_name, `v${version}`);
   const suffixes = ['windows-amd64.zip','windows-arm64.zip','linux-amd64.tar.gz','linux-arm64.tar.gz','darwin-arm64.tar.gz'];
   const platforms = {};
+  const tar = process.platform==='linux'?'bsdtar':'tar';
   for (const [index,target] of targets.entries()) {
     const name = `sing-box-${version}-${suffixes[index]}`;
     const asset = release.assets.find(a=>a.name===name); assert.match(asset?.digest??'', /^sha256:[a-f0-9]{64}$/);
@@ -34,11 +35,11 @@ export async function collect(version) {
       fs.writeFileSync(archive,Buffer.from(await response.arrayBuffer()));
     }
     const bytes=fs.readFileSync(archive); assert.equal(bytes.length,asset.size);assert.equal(hash(bytes),asset.digest.slice(7));
-    const entries = execFileSync('tar',['-tf',archive],{encoding:'utf8'}).trim().split(/\r?\n/);
+    const entries = execFileSync(tar,['-tf',archive],{encoding:'utf8'}).trim().split(/\r?\n/);
     assert.ok(entries.length<128);for(const entry of entries)assert.ok(!path.isAbsolute(entry)&&!entry.split(/[\\/]/).includes('..'));
     const programName = name.endsWith('.zip')?'sing-box.exe':'sing-box';
     const programs=entries.filter(e=>e.split('/').pop()===programName);assert.equal(programs.length,1);
-    const program=execFileSync('tar',['-xOf',archive,programs[0]],{maxBuffer:256*1024*1024});
+    const program=execFileSync(tar,['-xOf',archive,programs[0]],{maxBuffer:256*1024*1024});
     platforms[target]={assetId:asset.id,archiveSha256:hash(bytes),archiveSize:bytes.length,programSha256:hash(program),programSize:program.length};
     console.log(`Verified official ${version} ${target}`);
   }

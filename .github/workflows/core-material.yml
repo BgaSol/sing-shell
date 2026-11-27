@@ -25,6 +25,8 @@ jobs:
           node-version-file: .node-version
       - id: matrix
         run: node scripts/ci-matrix.mjs
+      - name: Install the archive reader for Windows ZIP and Unix tar formats
+        run: sudo apt-get update && sudo apt-get install -y libarchive-tools
       - name: Collect upstream identity and program bytes without the production key
         env:
           GH_TOKEN: ${{ github.token }}
