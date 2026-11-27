@@ -74,7 +74,9 @@ jobs:
         run: dbus-run-session -- xvfb-run -a sh -c 'openbox >/dev/null 2>&1 & node scripts/smoke.mjs'
       - name: Smoke (Windows)
         if: runner.os == 'Windows'
-        run: node scripts/smoke.mjs
+        run: |
+          ./scripts/prepare-windows-desktop.ps1
+          node scripts/smoke.mjs
       - name: Smoke (macOS bundle)
         if: runner.os == 'macOS'
         run: node scripts/smoke.mjs "src-tauri/target/release/bundle/macos/Sing Shell.app/Contents/MacOS/sing-shell"
