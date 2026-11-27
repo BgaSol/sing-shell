@@ -84,7 +84,8 @@ fn frozen_input_ignores_metadata_and_disabled_policies_but_tracks_priority_and_c
         .nodes
         .remove(0);
     let routing = profile::routing::Routing::default();
-    let mut input = sing_shell::session::tunnel::Connection {
+    let mut input = sing_shell::profile::ConnectionInput {
+        options: Default::default(),
         node,
         routing: routing.clone(),
         versions: rulesets::selected(&d.0, &routing).unwrap(),
@@ -100,6 +101,39 @@ fn frozen_input_ignores_metadata_and_disabled_policies_but_tracks_priority_and_c
     input.routing.policies.swap(0, 1);
     input.versions[0].sha256 = "0".repeat(64);
     assert_ne!(before, input.fingerprint());
+    let content_fingerprint = input.fingerprint();
+    input.options.ipv4_compatibility = true;
+    assert_ne!(content_fingerprint, input.fingerprint());
+}
+
+#[test]
+fn connection_options_are_independent_and_legacy_schema_five_remains_readable() {
+    use sing_shell::profile::ConnectionOptions;
+    let d = Directory::new();
+    let store = SettingsStore::open(d.0.clone()).unwrap();
+    let before = store.snapshot();
+    let changed = store
+        .connection_options(
+            0,
+            ConnectionOptions {
+                ipv4_compatibility: true,
+            },
+        )
+        .unwrap();
+    assert_eq!(changed.connection_revision, 1);
+    assert_eq!(changed.nodes_revision, before.nodes_revision);
+    assert_eq!(changed.routing_revision, before.routing_revision);
+    assert_eq!(changed.preferences_revision, before.preferences_revision);
+    assert!(store.connection_options(0, Default::default()).is_err());
+    let mut legacy = serde_json::to_value(before).unwrap();
+    legacy.as_object_mut().unwrap().remove("connectionRevision");
+    legacy["profile"]
+        .as_object_mut()
+        .unwrap()
+        .remove("connection");
+    let restored: sing_shell::settings::Settings = serde_json::from_value(legacy).unwrap();
+    assert_eq!(restored.connection_revision, 0);
+    assert!(!restored.profile.connection.ipv4_compatibility);
 }
 #[test]
 fn fixed_sources_reject_paths_and_corrupted_content_without_reordering_settings() {

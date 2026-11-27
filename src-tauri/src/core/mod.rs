@@ -62,7 +62,15 @@ impl CoreService {
                 self.runtime
                     .logs
                     .redact(s.profile.selected().unwrap().spec.secrets());
-                crate::profile::config::build(&s.profile, &self.store.root).map(|c| Some(c.path))
+                // First-install checks may precede adopting the verified candidate.
+                let version = s
+                    .managed
+                    .active
+                    .as_ref()
+                    .map(|r| r.version.as_str())
+                    .unwrap_or("1.14.4");
+                crate::profile::config::build(&s.profile, &self.store.root, version)
+                    .map(|c| Some(c.path))
             }
         } else {
             Ok(s.config_path.clone())

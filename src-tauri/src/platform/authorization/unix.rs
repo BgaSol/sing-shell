@@ -179,7 +179,7 @@ pub async fn connect(
     }
     direct_connect(root, cancel, progress).await
 }
-pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
+pub async fn worker(endpoint: &Path, parent: u32) -> Result<WorkerPeer, String> {
     if !elevated() {
         return Err("网络进程必须由系统授权启动".into());
     }
@@ -192,13 +192,17 @@ pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         .await
         .map_err(|e| e.to_string())?;
     verify(&stream, Some(parent), false)?;
+    let uid = stream.peer_cred().map_err(|e| e.to_string())?.uid();
     handshake::bounded(
         &AtomicBool::new(false),
         Duration::from_secs(3),
         handshake::server(&mut stream),
     )
     .await?;
-    Ok(Box::new(stream))
+    Ok(WorkerPeer {
+        channel: Box::new(stream),
+        owner_key: crate::rulesets::digest(format!("uid:{uid}").as_bytes()),
+    })
 }
 pub fn protected_root() -> Result<PathBuf, String> {
     Ok(PathBuf::from(if cfg!(target_os = "macos") {

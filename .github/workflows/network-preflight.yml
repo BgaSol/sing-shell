@@ -67,6 +67,8 @@ jobs:
       - run: npm ci
       - run: npm run web:build
       - run: cargo build --release --manifest-path src-tauri/Cargo.toml --features test-fixtures --bin network-fixture --locked
+      - name: Official core Fake-IP and verified TLS contract
+        run: node scripts/fakeip-check.mjs ${{ matrix.target }}
       - name: Production worker and generated TUN integration (Windows)
         if: runner.os == 'Windows'
         env:

@@ -270,6 +270,13 @@
             </section>
           </div>
           <div id="settings-network" hidden>
+            <section aria-labelledby="connection-settings-title">
+              <h2 id="connection-settings-title">连接兼容性</h2>
+              <label><input id="ipv4-compatibility" type="checkbox" aria-describedby="connection-settings-hint" /> IPv4 兼容模式</label>
+              <p id="connection-settings-hint" class="hint">网站访问仅使用 IPv4；仅支持 IPv6 的网站将无法访问。仅对节点模式生效，节点服务器入口独立连接。</p>
+              <div class="actions"><button id="save-connection-settings" class="primary" type="button" disabled>保存连接设置</button><button id="reload-connection-settings" type="button" hidden>载入最新设置</button></div>
+              <p id="connection-settings-result" role="status"></p>
+            </section>
             <section aria-labelledby="network-title">
               <h2 id="network-title">
                 <svg class="icon" aria-hidden="true">

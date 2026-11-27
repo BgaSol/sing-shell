@@ -172,7 +172,7 @@ pub async fn connect(
     }
     Ok(connection)
 }
-pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
+pub async fn worker(endpoint: &Path, parent: u32) -> Result<WorkerPeer, String> {
     if !elevated() {
         return Err("网络进程必须由系统授权启动".into());
     }
@@ -192,6 +192,15 @@ pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         return Err("网络控制端身份无效".into());
     }
     same_executable(&process_path(pid, false)?)?;
+    let owner = unsafe {
+        let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if process.is_null() {
+            return Err(std::io::Error::last_os_error().to_string());
+        }
+        let sid = crate::instance::process_user_sid(process);
+        CloseHandle(process);
+        sid?
+    };
     let mut client = client;
     handshake::bounded(
         &AtomicBool::new(false),
@@ -199,7 +208,10 @@ pub async fn worker(endpoint: &Path, parent: u32) -> Result<Channel, String> {
         handshake::server(&mut client),
     )
     .await?;
-    Ok(Box::new(client))
+    Ok(WorkerPeer {
+        channel: Box::new(client),
+        owner_key: crate::rulesets::digest(format!("sid:{owner}").as_bytes()),
+    })
 }
 pub fn protected_root() -> Result<PathBuf, String> {
     let mut path = vec![0u16; 32768];

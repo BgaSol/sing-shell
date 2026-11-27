@@ -1,4 +1,4 @@
-use super::Connection;
+use super::ConnectionInput;
 use crate::{
     logs::Log,
     platform::{authorization, network},
@@ -13,7 +13,7 @@ pub(super) const DISCONNECT_BUDGET: Duration = Duration::from_secs(65);
 #[serde(tag = "command", rename_all = "camelCase", deny_unknown_fields)]
 pub(super) enum Request {
     Start {
-        input: Connection,
+        input: ConnectionInput,
         core_version: String,
         operation_id: u64,
     },
@@ -40,6 +40,7 @@ pub struct Snapshot {
     pub authorization_stage: Option<authorization::Stage>,
     pub session_id: Option<String>,
     pub running_node: Option<crate::profile::NodeSummary>,
+    pub running_connection_options: Option<crate::profile::ConnectionOptions>,
     pub operation_id: u64,
     pub operation: Option<String>,
     pub operation_error: Option<String>,
@@ -100,6 +101,7 @@ impl Default for Snapshot {
             authorization_stage: None,
             session_id: None,
             running_node: None,
+            running_connection_options: None,
             operation_id: 0,
             operation: None,
             operation_error: None,

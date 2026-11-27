@@ -49,6 +49,10 @@ export interface Profile {
   nodes: NodeSummary[];
   selectedNode: string | null;
   routing: Routing;
+  connection: ConnectionOptions;
+}
+export interface ConnectionOptions {
+  ipv4Compatibility: boolean;
 }
 export interface ProfileSnapshot extends Profile {
   revision: number;
@@ -60,6 +64,7 @@ export interface Settings {
   nodesRevision: number;
   routingRevision: number;
   preferencesRevision: number;
+  connectionRevision: number;
   profile: Profile;
   rulePreferences: RulePreference[];
   coreSource: { mode: "managed" } | { mode: "external"; path: string };
@@ -208,6 +213,7 @@ export interface CoreState {
   phase: SessionPhase;
   pendingChanges: boolean;
   runningNode: NodeSummary | null;
+  runningConnectionOptions: ConnectionOptions | null;
   sessionId: string | null;
   target: NodeSummary | null;
   operation: string | null;
@@ -262,6 +268,7 @@ export interface Mirror {
   supportsApi: boolean;
 }
 export const core = {
+  saveConnection: (expectedRevision: number, options: ConnectionOptions) => invoke<Settings>("set_connection_options", { expectedRevision, options }),
   snapshot: () => invoke<Snapshot>("app_snapshot"),
   session: () =>
     invoke<

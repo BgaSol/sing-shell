@@ -1,4 +1,4 @@
-use super::{Connection, Failure, Phase, Snapshot};
+use super::{ConnectionInput, Failure, Phase, Snapshot};
 use crate::{
     activity::{Collector, Context},
     platform::{dns::Dns, network},
@@ -22,11 +22,11 @@ pub(super) struct Resources {
 struct Started {
     resources: Resources,
     result: Result<network::Observation, (Failure, String)>,
-    actual: Option<Connection>,
+    actual: Option<ConnectionInput>,
     error: Option<String>,
 }
 struct Prepared {
-    input: Connection,
+    input: ConnectionInput,
     executable: PathBuf,
     config: PathBuf,
     directory: PathBuf,
@@ -35,17 +35,18 @@ struct Prepared {
 }
 pub(super) struct Worker {
     pub(super) root: PathBuf,
+    owner_key: String,
     pub(super) runtime: Arc<RuntimeService>,
     pub(super) state: Arc<Mutex<Snapshot>>,
     pub(super) cancel: Arc<AtomicBool>,
     start: Option<JoinHandle<Started>>,
     resources: Resources,
-    actual: Option<Connection>,
+    actual: Option<ConnectionInput>,
     collector: Arc<Mutex<Option<Collector>>>,
     observed: Instant,
 }
 impl Worker {
-    pub(super) fn new(root: PathBuf) -> Self {
+    pub(super) fn new(root: PathBuf, owner_key: String) -> Self {
         Self {
             resources: Resources {
                 directory: recorded_directory(&root),
@@ -53,6 +54,7 @@ impl Worker {
                 ..Default::default()
             },
             root,
+            owner_key,
             runtime: Arc::new(Default::default()),
             state: Arc::new(Mutex::new(Snapshot::default())),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -74,6 +76,11 @@ impl Worker {
         }
         s.running_node = if s.phase == Phase::Running && s.runtime.pid.is_some() {
             self.actual.as_ref().map(|c| c.node.summary())
+        } else {
+            None
+        };
+        s.running_connection_options = if s.running_node.is_some() {
+            self.actual.as_ref().map(|c| c.options)
         } else {
             None
         };
@@ -179,7 +186,7 @@ impl Worker {
     }
     pub(super) fn start(
         &mut self,
-        input: Connection,
+        input: ConnectionInput,
         version: String,
         operation_id: u64,
     ) -> Result<(), String> {
@@ -200,6 +207,7 @@ impl Worker {
         let runtime = self.runtime.clone();
         let state = self.state.clone();
         let root = self.root.clone();
+        let owner_key = self.owner_key.clone();
         let collector = self.collector.clone();
         let old = self.actual.clone();
         let mut resources = std::mem::take(&mut self.resources);
@@ -213,7 +221,7 @@ impl Worker {
             }
         }
         self.start = Some(thread::spawn(move || {
-            let prepared = prepare(&root, input, &cancel);
+            let prepared = prepare(&root, &owner_key, input, &cancel);
             let candidate = match prepared {
                 Ok(v) => v,
                 Err(e) => {
@@ -280,7 +288,7 @@ impl Worker {
                     }
                     if !cancel.load(Ordering::Acquire) {
                         if let Some(previous) = old {
-                            let restored = prepare(&root, previous.clone(), &cancel)
+                            let restored = prepare(&root, &owner_key, previous.clone(), &cancel)
                                 .map_err(|e| (Failure::Preparation, e))
                                 .and_then(|p| {
                                     launch(
@@ -366,8 +374,14 @@ impl Worker {
         self.stop()
     }
 }
-fn prepare(root: &Path, input: Connection, cancel: &Arc<AtomicBool>) -> Result<Prepared, String> {
+fn prepare(
+    root: &Path,
+    owner_key: &str,
+    input: ConnectionInput,
+    cancel: &Arc<AtomicBool>,
+) -> Result<Prepared, String> {
     input.validate()?;
+    network::require_fakeip_clear()?;
     let mut keep = input.versions.clone();
     if let Ok(bytes) = std::fs::read(root.join("rules/pinned.json")) {
         if let Ok(pinned) = serde_json::from_slice::<Vec<crate::rulesets::Version>>(&bytes) {
@@ -406,14 +420,16 @@ fn prepare(root: &Path, input: Connection, cancel: &Arc<AtomicBool>) -> Result<P
     crate::private_files::directory(&directory)?;
     let config = directory.join("config.json");
     let result = (|| {
-        let mut value = crate::profile::config::compile(&input.profile(), &input.versions, root)?;
+        let cache = super::cache::prepare(root, owner_key)?;
+        let mut bindings = crate::profile::config::Bindings::prepare(root, &input.versions, cache)?;
         let mut secrets = input.node.spec.secrets();
         if let Some(context) = &context {
-            value["experimental"] = serde_json::json!({"clash_api":{"external_controller":format!("127.0.0.1:{}",context.port),"secret":context.secret}});
+            bindings.activity = Some((context.port, context.secret.clone()));
             secrets.push(context.secret.clone());
             secrets.push(format!("127.0.0.1:{}", context.port));
         }
         check.logs.redact(secrets);
+        let value = crate::profile::config::compile(&input, &bindings)?;
         crate::settings::write_json(&config, &value)?;
         check.validate(&executable, &config, cancel)
     })();
@@ -635,7 +651,7 @@ mod tests {
             crate::logs::now()
         ));
         std::fs::create_dir_all(root.join("runtime/generated.json")).unwrap();
-        let mut worker = Worker::new(root.clone());
+        let mut worker = Worker::new(root.clone(), "a".repeat(64));
         assert!(worker.stop().is_err());
         assert_eq!(worker.snapshot().phase, Phase::CleanupRequired);
         std::fs::remove_dir(root.join("runtime/generated.json")).unwrap();

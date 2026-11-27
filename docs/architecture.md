@@ -20,7 +20,7 @@
 
 ## 授权协议与资源释放
 
-控制线程独占通道和系统授权进程所有者，worker 持有机器级租约。握手协议 3 验证同构建、进程/安装身份和随机 nonce，之后只接收闭合节点/规则/官方版本，不接受任意管理员路径、命令或 URL。macOS 用系统管理员授权启动短期 worker，不登记持久网络服务；历史 helper 只按既有安全撤销路径处理。
+控制线程独占通道和系统授权进程所有者，worker 持有机器级租约。握手协议 4 验证同构建、进程/安装身份和随机 nonce，之后只接收闭合节点/规则/官方版本，不接受任意管理员路径、命令或 URL。macOS 用系统管理员授权启动短期 worker，不登记持久网络服务；历史 helper 只按既有安全撤销路径处理。
 
 轻量 Poll 不夹带完整日志或连接。活动、日志按需只读分页；控制队列、HTTP、字段、页数和编码字节均有界。Stop/Quit 取消准备和采集，等待真实子进程及任务结束后释放本次 DNS、核心、TUN、配置目录和通道；超时保持 cleanupRequired 和同一所有者供重试。
 
@@ -45,3 +45,11 @@ schema 5 使用 nodesRevision、routingRevision、coreRevision、preferencesRevi
 ## 平台与发行
 
 沿用现有 Windows Job、Unix 进程组、临时 DNS 与登录项适配。实际启动、授权、双栈、清理和签名包必须由五目标原生运行器验证，ARM64 不用交叉编译替代。工程命令见[开发](development.md)，发行交接见[分发](distribution.md)。
+
+## 连接输入与 DNS 编译
+
+profile/connection.rs 的 ConnectionInput 是冻结业务输入；SessionService 统一构造，恢复直接使用成功快照。connectionRevision 独立于节点、路由和下载偏好，新增字段缺省兼容 schema 5。公开状态携带 worker 的实际运行选项，随机路径/密钥不进入有效指纹。
+
+profile/config.rs 用固定材料路径与运行绑定一次编译，DNS 域名投影区分客户端 Fake-IP 回答与核心内部真实 Lookup；原有解析前后本地保护、用户全局优先级和 IP 规则语义保持。缓存与活动 API 一次组装，后续不补写 experimental。
+
+session/tunnel/cache.rs 只派生受保护路径和检查链接，不实现数据库或映射。认证平台层返回核验过的用户身份，缓存按用户稳定隔离；机器级租约保持单写者，候选 check 与正式启动分开。

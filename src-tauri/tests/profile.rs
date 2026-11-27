@@ -173,8 +173,8 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
         domain("deep", "deep.example.test", true, Action::Proxy),
         domain("github-custom", "github.com", false, Action::Proxy),
         domain("example", "example.test", true, Action::Direct),
-        ip("specific", "198.18.20.1/32", Action::Proxy),
-        ip("range", "198.18.20.0/24", Action::Direct),
+        ip("specific", "203.0.113.1/32", Action::Proxy),
+        ip("range", "203.0.113.0/24", Action::Direct),
     ];
     if let Match::Custom { domains, ip_cidrs } = &mut profile.routing.policies[5].r#match {
         domains.push(Domain {
@@ -198,7 +198,7 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
             },
         });
     }
-    let generated = profile::config::build(&profile, &root).unwrap();
+    let generated = profile::config::build(&profile, &root, "1.14.4").unwrap();
     let mut config: serde_json::Value =
         serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
     // Keep generated routing and SRS unchanged; replace only ingress, DNS transport and exit probes.
@@ -207,9 +207,12 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     let mut direct = spec(direct_port).outbound();
     direct["tag"] = serde_json::json!("direct");
     config["outbounds"][1] = direct;
-    let hosts = serde_json::json!({"example.test":["198.18.20.1"],"www.example.test":["198.18.20.1"],"a.example.test":["198.18.20.1"],"a.deep.example.test":["198.18.20.2"],"github.com":["198.18.77.1"],"api.github.com":["198.18.77.1"],"google.com":["198.18.77.1"],"unmatched.test":["198.18.77.1"],"or.example.net":["198.18.77.1"]});
-    config["dns"]["servers"] = serde_json::json!([{"type":"hosts","tag":"local","predefined":hosts},{"type":"hosts","tag":"proxy-dns","predefined":hosts}]);
-    config["experimental"] = serde_json::json!({"clash_api":{"external_controller":format!("127.0.0.1:{controller_port}"),"secret":"isolated-test-controller"}});
+    let hosts = serde_json::json!({"example.test":["203.0.113.1"],"www.example.test":["203.0.113.1"],"a.example.test":["203.0.113.1"],"a.deep.example.test":["203.0.113.2"],"github.com":["198.51.100.1"],"api.github.com":["198.51.100.1"],"google.com":["198.51.100.1"],"unmatched.test":["198.51.100.1"],"or.example.net":["198.51.100.1"]});
+    config["dns"]["servers"][0] =
+        serde_json::json!({"type":"hosts","tag":"local","predefined":hosts});
+    config["dns"]["servers"][1] =
+        serde_json::json!({"type":"hosts","tag":"proxy-dns","predefined":hosts});
+    config["experimental"]["clash_api"] = serde_json::json!({"external_controller":format!("127.0.0.1:{controller_port}"),"secret":"isolated-test-controller"});
     run(&client, "client.json", &config);
     let held = std::sync::Mutex::new(Vec::new());
     let request = |host: &str, expected: u8| {
@@ -268,11 +271,11 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     };
     for (host, expected) in [
         ("127.0.0.1", b'D'),
-        ("198.18.77.1", b'P'),
-        ("198.18.20.2", b'D'),
+        ("198.51.100.1", b'P'),
+        ("203.0.113.2", b'D'),
         ("2001:db8::5", b'D'),
         ("or.example.net", b'D'),
-        ("198.18.20.1", b'P'),
+        ("203.0.113.1", b'P'),
         ("example.test", b'D'),
         ("a.example.test", b'D'),
         ("www.example.test", b'P'),
@@ -321,12 +324,11 @@ fn official_core_routes_domains_cidrs_sites_and_default_to_expected_exit() {
     request("unmatched.test", b'D');
     client.stop().unwrap();
     profile.routing.policies.swap(0, 3);
-    let reversed = profile::config::compile(
-        &profile,
-        &sing_shell::rulesets::selected(&root, &profile.routing).unwrap(),
-        &root,
-    )
-    .unwrap();
+    let reversed_path = profile::config::build(&profile, &root, "1.14.4")
+        .unwrap()
+        .path;
+    let reversed: serde_json::Value =
+        serde_json::from_slice(&fs::read(reversed_path).unwrap()).unwrap();
     config["route"] = reversed["route"].clone();
     run(&client, "client.json", &config);
     request("www.example.test", b'D');
@@ -412,7 +414,7 @@ fn official_core_checks_every_supported_protocol_and_site_assets() {
                 },
             })
             .collect();
-        let config = profile::config::build(&profile, &root).unwrap();
+        let config = profile::config::build(&profile, &root, "1.14.4").unwrap();
         let output = std::process::Command::new(&core)
             .args(["check", "-c"])
             .arg(config.path)
@@ -468,7 +470,8 @@ fn imports_are_atomic_replay_safe_and_public_settings_hide_credentials() {
     store
         .confirm_connection(
             0,
-            Some(sing_shell::session::tunnel::Connection {
+            Some(sing_shell::profile::ConnectionInput {
+                options: Default::default(),
                 node: store.snapshot().profile.selected().unwrap().clone(),
                 routing: Default::default(),
                 versions: sing_shell::rulesets::selected(&root, &store.snapshot().profile.routing)
@@ -541,7 +544,7 @@ fn vless_import_survives_storage_reopen_and_generates_the_same_connection() {
     let selected = reopened.snapshot();
     assert_eq!(selected.profile.selected().unwrap().name, "zzz");
     assert!(selected.profile.selected().unwrap().spec == spec);
-    let generated = profile::config::build(&selected.profile, &root).unwrap();
+    let generated = profile::config::build(&selected.profile, &root, "1.14.4").unwrap();
     let value: serde_json::Value =
         serde_json::from_slice(&fs::read(generated.path).unwrap()).unwrap();
     assert_eq!(

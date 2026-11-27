@@ -454,6 +454,90 @@ pub fn require_clear() -> Result<(), String> {
     }
 }
 
+pub fn require_fakeip_clear() -> Result<(), String> {
+    #[cfg(windows)]
+    let conflict = unsafe {
+        use windows_sys::Win32::NetworkManagement::IpHelper::{
+            FreeMibTable, GetIfEntry2, GetIpForwardTable2, MIB_IF_ROW2, MIB_IPFORWARD_TABLE2,
+        };
+        use windows_sys::Win32::Networking::WinSock::AF_INET;
+        let mut table: *mut MIB_IPFORWARD_TABLE2 = std::ptr::null_mut();
+        let status = GetIpForwardTable2(AF_INET, &mut table);
+        if status != 0 || table.is_null() {
+            return Err("无法核对 Fake-IP 地址池的路由占用".into());
+        }
+        let rows =
+            std::slice::from_raw_parts((*table).Table.as_ptr(), (*table).NumEntries as usize);
+        let conflict = rows.iter().any(|route| {
+            let mut interface: MIB_IF_ROW2 = std::mem::zeroed();
+            interface.InterfaceIndex = route.InterfaceIndex;
+            let own = GetIfEntry2(&mut interface) == 0
+                && String::from_utf16_lossy(
+                    &interface.Alias[..interface
+                        .Alias
+                        .iter()
+                        .position(|&c| c == 0)
+                        .unwrap_or(interface.Alias.len())],
+                ) == interface_name();
+            !own && routes::conflicts_with_fakeip(&format!(
+                "{}/{}",
+                std::net::Ipv4Addr::from(
+                    route
+                        .DestinationPrefix
+                        .Prefix
+                        .Ipv4
+                        .sin_addr
+                        .S_un
+                        .S_addr
+                        .to_ne_bytes()
+                ),
+                route.DestinationPrefix.PrefixLength
+            ))
+        });
+        FreeMibTable(table.cast());
+        conflict
+    };
+    #[cfg(target_os = "linux")]
+    let conflict = {
+        let ip = if Path::new("/usr/sbin/ip").is_file() {
+            "/usr/sbin/ip"
+        } else {
+            "/sbin/ip"
+        };
+        let output =
+            crate::platform::command::output(ip, &["-j", "-4", "route", "show", "table", "all"])?;
+        if !output.status.success() {
+            return Err("无法核对 Fake-IP 地址池的路由占用".into());
+        }
+        let rows: Vec<serde_json::Value> =
+            serde_json::from_slice(&output.stdout).map_err(|_| "系统路由输出无效")?;
+        rows.iter().any(|row| {
+            row["dev"].as_str() != Some(interface_name())
+                && row["dst"]
+                    .as_str()
+                    .is_some_and(routes::conflicts_with_fakeip)
+        })
+    };
+    #[cfg(target_os = "macos")]
+    let conflict = {
+        let output = crate::platform::command::output("/usr/sbin/netstat", &["-rn", "-f", "inet"])?;
+        if !output.status.success() {
+            return Err("无法核对 Fake-IP 地址池的路由占用".into());
+        }
+        String::from_utf8_lossy(&output.stdout).lines().any(|line| {
+            let mut columns = line.split_whitespace();
+            let destination = columns.next().unwrap_or("");
+            !columns.any(|part| part == interface_name())
+                && routes::conflicts_with_fakeip(destination)
+        })
+    };
+    if conflict {
+        Err("当前网络已使用 Fake-IP 保留网段 198.18.0.0/15，请处理地址冲突后重新连接".into())
+    } else {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

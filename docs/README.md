@@ -12,6 +12,7 @@
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
+- [Fake-IP 与连接链路整改方案](plans/fakeip-network-remediation.md)：DNS、真实出口、映射缓存与生命周期整改
 - [v0.6.1 发行记录](releases/v0.6.1.md)：受管核心安装恢复、分阶段重试与取消边界
 - [v0.6.1 包验证证据](releases/v0.6.1-verification.json)：五原生原包、两条核心恢复升级路径及首次失败
 - [v0.6.1 网络验证证据](releases/v0.6.1-network-verification.json)：五原生实际 TUN、节点替换与清理

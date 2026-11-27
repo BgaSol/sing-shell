@@ -74,7 +74,7 @@ export function createShell(changed: () => Promise<void>) {
               : raw
                 ? "配置由 sing-box 校验，停止后才能更换。"
                 : running
-                  ? "TUN 双栈、路由与临时 DNS 已确认"
+                  ? `TUN 双栈、路由与临时 DNS 已确认${c.runningConnectionOptions?.ipv4Compatibility ? " · IPv4 兼容" : ""}`
                   : "点击节点播放按钮连接；本机与局域网固定直连。";
       element<HTMLButtonElement>("stop").disabled = !c.canStop;
       element("start").hidden = !raw;

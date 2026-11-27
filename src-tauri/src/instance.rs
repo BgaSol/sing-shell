@@ -207,6 +207,12 @@ pub(crate) fn current_user_sid() -> Result<String, String> {
     windows::sid()
 }
 #[cfg(windows)]
+pub(crate) fn process_user_sid(
+    process: windows_sys::Win32::Foundation::HANDLE,
+) -> Result<String, String> {
+    windows::sid_for(process)
+}
+#[cfg(windows)]
 pub(crate) fn network_pipe(
     path: &Path,
 ) -> Result<tokio::net::windows::named_pipe::NamedPipeServer, String> {
@@ -230,7 +236,9 @@ mod windows {
         sid_for(unsafe { GetCurrentProcess() })
     }
 
-    fn sid_for(process: windows_sys::Win32::Foundation::HANDLE) -> Result<String, String> {
+    pub(super) fn sid_for(
+        process: windows_sys::Win32::Foundation::HANDLE,
+    ) -> Result<String, String> {
         unsafe {
             let mut token = std::ptr::null_mut();
             if OpenProcessToken(process, TOKEN_QUERY, &mut token) == 0 {

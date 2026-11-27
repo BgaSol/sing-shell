@@ -81,3 +81,11 @@ macOS 网络集成额外检查有效系统解析器，通过系统 getaddrinfo �
 `src-tauri/tests/rules.rs` 覆盖独立修订、来源增删与偏好合并、固定输入指纹、缓存引用与回收；提供官方核心时额外加载全部包内 SRS 并拒绝坏格式。profile 官方集成验证多域名/IP 显式 OR、用户顺序、真实受控加密出口和鉴权活动 API，不改系统网络。
 
 五平台 network-integration 另外验证同一授权 worker 的候选替换、坏候选不停止旧 PID、核心活动采集和替换后双栈 TCP/UDP；不在维护者日常机器运行。安装包验证从 0.5.4 原生升级，确认旧设置原字节保留并阻止隐式恢复，再验证同代高版本候选升级。
+
+## Fake-IP 真实核心回归
+
+SING_SHELL_TEST_CORE 指向官方 1.14.4 后，执行 cargo test --manifest-path src-tauri/Cargo.toml --features test-fixtures --locked --test fakeip -- --ignored。测试复用生产 DNS/路由编译，使用回环 DNS、IPv6 节点入口、合成测试证书及受控 IPv4 TLS / IPv6 握手失败出口；检查候选 check 不锁库、跨核心重连旧映射和真实 IP 规则。证书与私钥只用于受控测试，不是发行签名材料。
+
+Native TUN Preflight 的 scripts/fakeip-check.mjs 在五原生运行器显式运行此测试，报告独立于基础 TCP/UDP 预检；实际包验收也运行同源测试。受控 TUN 另外核对系统解析得到 Fake-IP、候选替换后的映射和 IPv4 兼容实际状态及 IPv6 拒绝。未覆盖的真实节点、独立 DoH/ECH、物理切网和缓存池回绕长跑需按发行记录写明。
+
+真实网络夹具地址已移到 198.51.100.* / 203.0.113.*，避免与 198.18.0.0/15 Fake-IP 池冲突。

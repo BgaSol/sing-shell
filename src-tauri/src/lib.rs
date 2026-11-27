@@ -3,6 +3,8 @@ pub mod core;
 pub mod lifecycle;
 pub mod logs;
 mod platform;
+#[cfg(feature = "test-fixtures")]
+pub use platform::network_worker as prepare_network_test_processes;
 pub mod runtime;
 pub mod settings;
 pub mod updates;

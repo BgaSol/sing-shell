@@ -67,7 +67,7 @@ try{
   const holder=net.createServer();await new Promise(resolve=>holder.listen(0,'127.0.0.1',resolve));const proxyPort=holder.address().port;await new Promise(resolve=>holder.close(resolve));
   const secondHolder=net.createServer();await new Promise(resolve=>secondHolder.listen(0,'127.0.0.1',resolve));const secondProxyPort=secondHolder.address().port;await new Promise(resolve=>secondHolder.close(resolve));
   const password='sing-shell-fixture-password';
-  const serverConfig={log:{level:'warn'},inbounds:[{type:'shadowsocks',tag:'ss-in',listen:'127.0.0.1',listen_port:proxyPort,method:'aes-128-gcm',password}],outbounds:[{type:'direct',tag:'echo'}],route:{rules:[{ip_cidr:['198.18.77.1/32','2001:db8:198::99/128'],action:'route',outbound:'echo',override_address:'127.0.0.1',override_port:echoPort}],final:'echo'}};
+  const serverConfig={log:{level:'warn'},inbounds:[{type:'shadowsocks',tag:'ss-in',listen:'127.0.0.1',listen_port:proxyPort,method:'aes-128-gcm',password}],outbounds:[{type:'direct',tag:'echo'}],route:{rules:[{ip_cidr:['198.51.100.1/32','2001:db8:198::99/128'],action:'route',outbound:'echo',override_address:'127.0.0.1',override_port:echoPort}],final:'echo'}};
   if(process.platform==='darwin') {
     const route=spawnSync('/sbin/route',['-n','get','default'],{encoding:'utf8'});assert.equal(route.status,0);
     const physical=route.stdout.match(/interface:\s+(\S+)/)?.[1];assert.ok(physical&&!physical.startsWith('utun'));
@@ -75,12 +75,13 @@ try{
     serverConfig.route.rules.push({ip_cidr:['1.1.1.1/32'],port:[443],action:'route',outbound:'echo'});
   }
   // Unrelated runner traffic must not loop from the proxy server back into the TUN.
+  serverConfig.route.rules.push({port:[echoPort],action:'route',outbound:'echo',override_address:'127.0.0.1'});
   serverConfig.route.rules.push({action:'reject'});
   serverConfig.inbounds.push({...serverConfig.inbounds[0],tag:'ss-second',listen_port:secondProxyPort});
   const config=path.join(directory,'proxy-server.json');await fs.writeFile(config,JSON.stringify(serverConfig));
   proxy=spawn(core,['run','-c',config],{stdio:['ignore','pipe','pipe'],windowsHide:true});proxy.stdout.on('data',bytes=>{logs+=bytes;});proxy.stderr.on('data',bytes=>{logs+=bytes;});await delay(700);assert.equal(proxy.exitCode,null,'controlled proxy stays alive');
-  const input={node:{tags:[],id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultExit:'direct',policies:[{id:'github',name:'GitHub',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}},{id:'echo',name:'Echo',enabled:true,exit:'proxy',match:{kind:'custom',domains:[],ipCidrs:['198.18.77.1/32','2001:db8:198::99/128']}}]},coreVersion:'1.14.4',control};
-  if(process.platform==='darwin')input.routing.policies.push({id:'dns-domain',name:'DNS domain',enabled:true,exit:'proxy',match:{kind:'custom',domains:[{value:'example.com',includeSubdomains:false}],ipCidrs:[]}});
+  const input={node:{tags:[],id:'test-node',name:'Controlled Shadowsocks',source:'fixture',spec:{type:'shadowsocks',server:'127.0.0.1',server_port:proxyPort,method:'aes-128-gcm',password}},routing:{defaultExit:'direct',policies:[{id:'github',name:'GitHub',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}},{id:'echo',name:'Echo',enabled:true,exit:'proxy',match:{kind:'custom',domains:[],ipCidrs:['198.51.100.1/32','2001:db8:198::99/128']}}]},coreVersion:'1.14.4',control};
+  input.routing.policies.push({id:'dns-domain',name:'DNS domain',enabled:true,exit:'proxy',match:{kind:'custom',domains:[{value:'example.com',includeSubdomains:true}],ipCidrs:[]}});
   const inputFile=path.join(directory,'worker-input.json');await fs.writeFile(inputFile,JSON.stringify(input));
   async function launch(){
     for(const file of ['started.json','stopped.json','stop','activity.json','query-activity','replace.json','replace-1.json','replace-2.json'])await fs.rm(path.join(control,file),{force:true});
@@ -94,24 +95,41 @@ try{
   console.log('Authorized TUN running; verifying selected-node traffic');
   assert.equal(started.phase,'running');assert.ok(started.runtime.pid&&started.network.interface&&started.network.ipv4&&started.network.ipv6&&started.network.routes);
   report.verified.push('production network worker authenticates control channel and independently verifies official core','typed node and routing become checked private TUN config','native interface and IPv4/IPv6 routes are confirmed');
-  for(const address of ['198.18.77.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);report.verified.push(`TCP and UDP ${net.isIP(address)===6?'IPv6':'IPv4'} forwarded through selected encrypted Shadowsocks node`);}
+  for(const address of ['198.51.100.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);report.verified.push(`TCP and UDP ${net.isIP(address)===6?'IPv6':'IPv4'} forwarded through selected encrypted Shadowsocks node`);}
+  const fakeName=`sing-shell-${Date.now()}.example.com`;
+  const fakeAddresses=await lookup(fakeName,{all:true});
+  assert.ok(fakeAddresses.length&&fakeAddresses.every(a=>/^198\.(18|19)\./.test(a.address)),'system resolver uses production Fake-IP');
+  report.verified.push('native system resolver receives production IPv4 Fake-IP for a proxy domain');
   if(process.platform==='darwin') {
     const dns=macDns();assert.match(dns,/nameserver\[0\] : 172\.19\.0\.2/);
     const addresses=await Promise.race([lookup('example.com',{all:true}),delay(15000).then(()=>{throw Error('system DNS lookup timeout');})]);
     assert.ok(addresses.length&&addresses.every(a=>net.isIP(a.address)));
+    const cachedFake=addresses.find(a=>/^198\.(18|19)\./.test(a.address));assert.ok(cachedFake);
+    await tcpEcho(cachedFake.address,echoPort);await udpEcho(cachedFake.address,echoPort);
+    report.cachedFake=cachedFake.address;
+    report.verified.push('macOS system Fake-IP reaches its restored real destination through TCP and UDP TUN traffic');
     report.verified.push('macOS effective resolver selects temporary TUN DNS; system getaddrinfo resolves a domain through production DNS rules (external DoH upstream required)');
   }
   await tcpEcho('127.0.0.1',echoPort);report.verified.push('loopback bypass remains direct');
   const identity=authorizedProcess(worker.pid);
-  const observer=net.connect({host:'198.18.77.1',port:echoPort});observer.on('error',()=>{});await new Promise((resolve,reject)=>{observer.once('connect',resolve);observer.once('error',reject);});observer.write('activity-observation');
+  const observer=net.connect({host:'198.51.100.1',port:echoPort});observer.on('error',()=>{});await new Promise((resolve,reject)=>{observer.once('connect',resolve);observer.once('error',reject);});observer.write('activity-observation');
   let page,observed;const sampleDeadline=Date.now()+10_000;
-  do{await fs.rm(path.join(control,'activity.json'),{force:true});await fs.writeFile(path.join(control,'query-activity'),'read');page=await waitFile('activity.json');observed=page.items.some(c=>c.target===`198.18.77.1:${echoPort}`&&c.exit==='proxy'&&c.policyId==='echo');if(!observed)await delay(300);}while(!observed&&Date.now()<sampleDeadline);
+  do{await fs.rm(path.join(control,'activity.json'),{force:true});await fs.writeFile(path.join(control,'query-activity'),'read');page=await waitFile('activity.json');observed=page.items.some(c=>c.target===`198.51.100.1:${echoPort}`&&c.exit==='proxy'&&c.policyId==='echo');if(!observed)await delay(300);}while(!observed&&Date.now()<sampleDeadline);
   observer.destroy();assert.ok(['ready','overflow'].includes(page.summary.state));assert.ok(page.summary.sessionId);assert.ok(observed,JSON.stringify({summary:page.summary,items:page.items.length}));assert.ok(!JSON.stringify(page).includes(password));report.verified.push('worker collects authenticated core connections with session identity and real matched policy tags');
   const replacement={node:{...input.node,id:'replacement-node',name:'Replacement',spec:{...input.node.spec,server_port:secondProxyPort}},routing:input.routing,versions:[],coreVersion:input.coreVersion};
   const bundled=JSON.parse(await fs.readFile('src-tauri/resources/rules/manifest.json','utf8'));const enabled=new Set(input.routing.policies.filter(p=>p.enabled&&p.match.kind==='source').map(p=>p.match.sourceId));replacement.versions=bundled.filter(v=>enabled.has(v.sourceId));
   const invalid=structuredClone(replacement);if(invalid.versions.length)invalid.versions[0].sha256='0'.repeat(64);else{invalid.routing.policies.push({id:'invalid-source',name:'Invalid candidate',enabled:true,exit:'direct',match:{kind:'source',sourceId:'github'}});invalid.versions=bundled.filter(v=>v.sourceId==='github').map(v=>({...v,sha256:'0'.repeat(64)}));}
-  const failed=await replaceNode(1,invalid);assert.equal(failed.succeeded,false);assert.equal(failed.snapshot.runtime.pid,started.runtime.pid);await tcpEcho('198.18.77.1',echoPort);report.verified.push('invalid protected candidate is rejected while the existing core PID and forwarding survive');
-  const replaced=await replaceNode(2,replacement);assert.equal(replaced.succeeded,true,replaced.error);assert.equal(replaced.session.runningNode.id,replaced.settings.profile.selectedNode);assert.equal(replaced.settings.startup.resumeCore,true);assert.equal(replaced.session.pendingChanges,false);assert.ok(!JSON.stringify(replaced).includes(password));assert.notEqual(replaced.snapshot.runtime.pid,started.runtime.pid);assert.equal(authorizedProcess(worker.pid).helper,identity.helper);for(const address of ['198.18.77.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);}report.verified.push('node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP');
+  const failed=await replaceNode(1,invalid);assert.equal(failed.succeeded,false);assert.equal(failed.snapshot.runtime.pid,started.runtime.pid);await tcpEcho('198.51.100.1',echoPort);report.verified.push('invalid protected candidate is rejected while the existing core PID and forwarding survive');
+  const replaced=await replaceNode(2,replacement);assert.equal(replaced.succeeded,true,replaced.error);assert.equal(replaced.session.runningNode.id,replaced.settings.profile.selectedNode);assert.equal(replaced.settings.startup.resumeCore,true);assert.equal(replaced.session.pendingChanges,false);assert.ok(!JSON.stringify(replaced).includes(password));assert.notEqual(replaced.snapshot.runtime.pid,started.runtime.pid);assert.equal(authorizedProcess(worker.pid).helper,identity.helper);for(const address of ['198.51.100.1','2001:db8:198::99']){await tcpEcho(address,echoPort);await udpEcho(address,echoPort);}report.verified.push('node import and SessionService connect freeze saved routing, confirm and persist the actual selected node; replacement reuses the worker and preserves encrypted dual-stack TCP/UDP');
+  const fakeAfterReplacement=await lookup(fakeName,{all:true});assert.deepEqual(fakeAfterReplacement,fakeAddresses);
+  if(report.cachedFake){await tcpEcho(report.cachedFake,echoPort);await udpEcho(report.cachedFake,echoPort);}
+  report.verified.push('production worker replacement preserves cached Fake-IP mappings');
+  const compatible={...replacement,options:{ipv4Compatibility:true}};
+  const compatibilityResult=await replaceNode(3,compatible);assert.equal(compatibilityResult.succeeded,true,compatibilityResult.error);
+  assert.equal(compatibilityResult.session.runningConnectionOptions.ipv4Compatibility,true);assert.equal(compatibilityResult.session.pendingChanges,false);
+  await tcpEcho('198.51.100.1',echoPort);
+  await assert.rejects(()=>tcpEcho('2001:db8:198::99',echoPort));
+  report.verified.push('saved compatibility option reaches the actual worker, preserves IPv4 and rejects public IPv6');
 
   await fs.writeFile(path.join(control,'stop'),'stop');const stopped=await waitFile('stopped.json');assert.equal(stopped.runtime.pid,null);assert.equal(stopped.phase,'stopped');
   const exit=await new Promise(resolve=>{if(worker.exitCode!==null)resolve(worker.exitCode);else worker.once('exit',resolve);});assert.equal(exit,0);worker=null;
@@ -129,13 +147,13 @@ try{
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('unexpected official core exit is cleaned without crash reconnection');
   await launch();process.kill(authorizedProcess(worker.pid).controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(12_000);
-  const recovered=await launch();assert.equal(recovered.phase,'running');await tcpEcho('198.18.77.1',echoPort);
+  const recovered=await launch();assert.equal(recovered.phase,'running');await tcpEcho('198.51.100.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');
   assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('controller crash loses authorization channel; subsequent explicit connection confirms exclusive TUN ownership and clean shutdown');
   await launch();const crashed=authorizedProcess(worker.pid);process.kill(crashed.helper,'SIGKILL');process.kill(crashed.controller,'SIGKILL');await new Promise(resolve=>worker.exitCode!==null?resolve():worker.once('exit',resolve));worker=null;await delay(1000);
   if(process.platform==='darwin')await macDnsReleased();
-  const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.18.77.1',echoPort);
+  const afterWorkerCrash=await launch();assert.equal(afterWorkerCrash.phase,'running');await tcpEcho('198.51.100.1',echoPort);
   await fs.writeFile(path.join(control,'stop'),'stop');assert.equal((await waitFile('stopped.json')).phase,'stopped');assert.equal(await new Promise(resolve=>worker.exitCode!==null?resolve(worker.exitCode):worker.once('exit',resolve)),0);worker=null;
   report.verified.push('authorization worker crash recovers protected process identity and clears residual ownership before a new explicit session');
   }

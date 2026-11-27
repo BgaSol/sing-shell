@@ -1,8 +1,8 @@
 use crate::{
     platform::{authorization, network},
-    profile::{routing::Routing, Node, Profile},
+    profile::{routing::Routing, ConnectionInput, Node},
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{
     path::PathBuf,
     sync::{
@@ -13,68 +13,12 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::io::AsyncReadExt;
+mod cache;
 mod protocol;
 mod worker;
 use protocol::{exchange, read, write, Closed, Request, DISCONNECT_BUDGET, STOP_BUDGET};
 pub use protocol::{Failure, Phase, Snapshot};
 use worker::Worker;
-
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct Connection {
-    pub node: Node,
-    pub routing: Routing,
-    pub versions: Vec<crate::rulesets::Version>,
-    pub core_version: String,
-}
-impl Connection {
-    pub fn validate(&self) -> Result<(), String> {
-        self.profile().validate()?;
-        crate::profile::tun::require_version(&self.core_version)?;
-        let expected: Vec<_> = self
-            .routing
-            .policies
-            .iter()
-            .filter(|p| p.enabled)
-            .filter_map(|p| {
-                if let crate::profile::routing::Match::Source { source_id } = &p.r#match {
-                    Some(source_id)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        if expected.len() != self.versions.len() {
-            return Err("固定来源数量不符".into());
-        }
-        for v in &self.versions {
-            v.validate()?;
-            if !expected.contains(&&v.source_id) {
-                return Err("固定来源不符".into());
-            }
-        }
-        let unique: std::collections::BTreeSet<_> =
-            self.versions.iter().map(|v| &v.source_id).collect();
-        if unique.len() != self.versions.len() {
-            return Err("固定来源重复".into());
-        }
-        Ok(())
-    }
-    pub fn profile(&self) -> Profile {
-        Profile {
-            mode: crate::profile::Mode::Generated,
-            nodes: vec![self.node.clone()],
-            selected_node: Some(self.node.id.clone()),
-            routing: self.routing.clone(),
-        }
-    }
-    pub fn fingerprint(&self) -> String {
-        crate::rulesets::digest(
-            &serde_json::to_vec(&(&self.node.spec, self.routing.effective(), &self.versions))
-                .expect("connection serialization"),
-        )
-    }
-}
 
 struct Command {
     request: Request,
@@ -132,6 +76,7 @@ impl Tunnel {
             logs: vec![],
             session_id: state.session_id.clone(),
             running_node: state.running_node.clone(),
+            running_connection_options: state.running_connection_options,
             operation_id: state.operation_id,
             operation: state.operation.clone(),
             operation_error: state.operation_error.clone(),
@@ -285,7 +230,7 @@ impl Tunnel {
     }
     pub fn start(
         &self,
-        input: Connection,
+        input: ConnectionInput,
         core_version: String,
         cancel: &AtomicBool,
     ) -> Result<(), String> {
@@ -544,7 +489,7 @@ mod tests {
     }
     #[test]
     fn reading_worker_status_does_not_rewrite_or_clean_resources() {
-        let worker = Worker::new(std::env::temp_dir());
+        let worker = Worker::new(std::env::temp_dir(), "a".repeat(64));
         worker.state.lock().unwrap().phase = Phase::Running;
         assert_eq!(worker.snapshot().phase, Phase::Failed);
         assert!(worker.snapshot().running_node.is_none());
@@ -595,7 +540,7 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
             .build()
             .map_err(|e| e.to_string())?;
         runtime.block_on(async {
-            let mut channel = {
+            let peer = {
                 let endpoint = args.get(2).map(PathBuf::from).ok_or("缺少网络控制端点")?;
                 let parent = args
                     .get(3)
@@ -604,9 +549,10 @@ pub fn dispatch(args: &[std::ffi::OsString]) -> Option<Result<(), String>> {
                     .ok_or("缺少网络控制端身份")?;
                 authorization::worker(&endpoint, parent).await?
             };
+            let mut channel = peer.channel;
             let root = authorization::prepare_root()?;
             let lease = crate::instance::Lease::acquire(&root)?;
-            let mut worker = Worker::new(root);
+            let mut worker = Worker::new(root, peer.owner_key);
             worker.runtime.record_network(worker.root.clone());
             let result = loop {
                 worker.observe_exit();
@@ -767,6 +713,8 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
     struct Input {
         node: Node,
         routing: Routing,
+        #[serde(default)]
+        options: crate::profile::ConnectionOptions,
         core_version: String,
         control: PathBuf,
     }
@@ -847,6 +795,10 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
         Ok(())
     }
     let id = import_node(&application, &input.node)?;
+    application.store.connection_options(
+        application.store.snapshot().connection_revision,
+        input.options,
+    )?;
     application.profiles.routing(
         input.routing.clone(),
         application.store.snapshot().routing_revision,
@@ -867,7 +819,7 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
             #[serde(deny_unknown_fields)]
             struct Replace {
                 id: u64,
-                input: Connection,
+                input: ConnectionInput,
             }
             let request: Replace =
                 serde_json::from_slice(&std::fs::read(&command).map_err(|e| e.to_string())?)
@@ -880,6 +832,10 @@ pub fn fixture(args: &[std::ffi::OsString]) -> Result<(), String> {
                 application.profiles.routing(
                     request.input.routing,
                     application.store.snapshot().routing_revision,
+                )?;
+                application.store.connection_options(
+                    application.store.snapshot().connection_revision,
+                    request.input.options,
                 )?;
                 wait_connect(&application, id)
             };

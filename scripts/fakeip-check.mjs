@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+const target=process.argv[2];
+assert.ok(target);
+assert.equal(target.startsWith('aarch64-'),process.arch==='arm64','native runner required');
+const directory=path.resolve('artifacts/network-preflight',target);
+const platform={win32:'windows',darwin:'darwin',linux:'linux'}[process.platform];
+const core=path.join(directory,`sing-box-1.14.4-${platform}-${process.arch==='arm64'?'arm64':'amd64'}`,`sing-box${process.platform==='win32'?'.exe':''}`);
+const result=spawnSync('cargo',['test','--manifest-path','src-tauri/Cargo.toml','--features','test-fixtures','--locked','--test','fakeip','--','--ignored','--nocapture'],{stdio:'inherit',windowsHide:true,env:{...process.env,SING_SHELL_TEST_CORE:core},timeout:180000});
+fs.writeFileSync(path.join(directory,'fakeip-report.json'),JSON.stringify({target,coreVersion:'1.14.4',passed:result.status===0,verified:result.status===0?['production DNS rules return IPv4 Fake-IP and empty AAAA','core resolves real business addresses while node bootstrap uses IPv6','IPv6 fixture accepts TCP but fails TLS; IPv4 compatibility completes verified TLS','candidate check leaves the running cache usable','cached Fake-IP survives real core reconnect and changed DNS default','real IP policy selects the encrypted exit after domain restoration']:[],error:result.error?.message??null},null,2)+'\n');
+assert.equal(result.status,0,result.error?.message??'Fake-IP contract failed');

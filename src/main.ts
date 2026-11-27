@@ -11,6 +11,7 @@ import { createShell } from "./shell";
 import { createUpdates } from "./updates";
 import { createStartupSettings } from "./startup-settings";
 import { createDesktop } from "./desktop";
+import { createConnectionSettings } from "./connection-settings";
 const modal = new Modal();
 let snapshot: Snapshot | null = null,
   configurationRequest: Promise<void> | null = null,
@@ -26,6 +27,7 @@ const shell = createShell(refreshConfiguration),
   activity = createActivity(shell.error),
   updates = createUpdates(),
   startup = createStartupSettings();
+const connectionSettings = createConnectionSettings(modal, refreshConfiguration);
 function render() {
   if (!snapshot) return;
   shell.render(snapshot);
@@ -34,6 +36,7 @@ function render() {
   activity.render(snapshot);
   updates.runtime(snapshot);
   startup.render(snapshot);
+  connectionSettings.render(snapshot);
   const mode = element<HTMLSelectElement>("profile-mode");
   if (document.activeElement !== mode)
     mode.value = snapshot.settings.profile.mode;
@@ -114,6 +117,7 @@ const desktop = createDesktop(
   async () =>
     (await modal.mayLeave()) &&
     (await routing.mayLeave()) &&
+    (await connectionSettings.mayLeave()) &&
     (await updates.mayLeave()),
 );
 element<HTMLSelectElement>("profile-mode").onchange = (e) => {
@@ -145,6 +149,7 @@ async function refresh() {
         snapshot.settings.routingRevision,
         snapshot.settings.coreRevision,
         snapshot.settings.preferencesRevision,
+        snapshot.settings.connectionRevision,
       ];
       if (JSON.stringify(next.revisions) !== JSON.stringify(known))
         await refreshConfiguration();
@@ -167,7 +172,7 @@ async function refresh() {
       queuedNavigation = null;
       navigate(target);
     }
-    const dirty = modal.pending || routing.dirty() || updates.dirty();
+    const dirty = modal.pending || routing.dirty() || connectionSettings.dirty() || updates.dirty();
     if (dirty !== lastDirty) {
       lastDirty = dirty;
       await core.dirty(dirty);

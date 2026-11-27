@@ -12,6 +12,10 @@ mod macos;
 pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
 impl<T: AsyncRead + AsyncWrite + Unpin + Send> Stream for T {}
 pub type Channel = Box<dyn Stream>;
+pub struct WorkerPeer {
+    pub channel: Channel,
+    pub owner_key: String,
+}
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Stage {

@@ -1,4 +1,6 @@
 pub mod config;
+pub mod connection;
+pub use connection::{ConnectionInput, ConnectionOptions};
 pub mod import;
 pub mod routing;
 pub mod service;
@@ -414,6 +416,8 @@ pub struct Profile {
     pub nodes: Vec<Node>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
+    #[serde(default)]
+    pub connection: ConnectionOptions,
 }
 impl Default for Profile {
     fn default() -> Self {
@@ -422,6 +426,7 @@ impl Default for Profile {
             nodes: vec![],
             selected_node: None,
             routing: Default::default(),
+            connection: Default::default(),
         }
     }
 }
@@ -432,6 +437,7 @@ pub struct PublicProfile {
     pub nodes: Vec<NodeSummary>,
     pub selected_node: Option<String>,
     pub routing: routing::Routing,
+    pub connection: ConnectionOptions,
 }
 impl Profile {
     pub fn public(&self) -> PublicProfile {
@@ -440,6 +446,7 @@ impl Profile {
             nodes: self.nodes.iter().map(Node::summary).collect(),
             selected_node: self.selected_node.clone(),
             routing: self.routing.clone(),
+            connection: self.connection,
         }
     }
 }

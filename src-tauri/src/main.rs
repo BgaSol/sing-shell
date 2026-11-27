@@ -303,7 +303,7 @@ fn app_snapshot(app: State<App>) -> serde_json::Value {
 fn session_snapshot(app: State<App>) -> serde_json::Value {
     let s = app.store.snapshot();
     let core = app.session.snapshot_for(&s);
-    serde_json::json!({"core":core,"runtime":core.runtime,"runtimeBusy":app.gate.runtime_busy(),"closing":app.gate.closing(),"storageError":app.store.error(),"revisions":[s.nodes_revision,s.routing_revision,s.core_revision,s.preferences_revision],"startup":{"restoreCoreOnLaunch":s.startup.restore_core_on_launch,"resumeCore":s.startup.resume_core}})
+    serde_json::json!({"core":core,"runtime":core.runtime,"runtimeBusy":app.gate.runtime_busy(),"closing":app.gate.closing(),"storageError":app.store.error(),"revisions":[s.nodes_revision,s.routing_revision,s.core_revision,s.preferences_revision,s.connection_revision],"startup":{"restoreCoreOnLaunch":s.startup.restore_core_on_launch,"resumeCore":s.startup.resume_core}})
 }
 #[tauri::command]
 fn read_events(
@@ -417,6 +417,18 @@ fn profile_set_routing(
     let result = app.profiles.routing(routing, expected_revision)?;
     app.rules.reconcile();
     Ok(result)
+}
+#[tauri::command]
+fn set_connection_options(
+    options: sing_shell::profile::ConnectionOptions,
+    expected_revision: u64,
+    app: State<App>,
+) -> Result<serde_json::Value, String> {
+    let _operation = app.gate.begin(Kind::Profile)?;
+    Ok(app
+        .store
+        .connection_options(expected_revision, options)?
+        .public())
 }
 #[tauri::command]
 fn session_connect(node_id: String, app: State<App>) -> Result<Receipt, String> {
@@ -773,6 +785,7 @@ fn main() {
             profile_delete_node,
             profile_import_commit,
             profile_set_routing,
+            set_connection_options,
             routing_validate
         ])
         .build(tauri::generate_context!())

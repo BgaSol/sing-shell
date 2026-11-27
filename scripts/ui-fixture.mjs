@@ -54,8 +54,10 @@ function bootstrap() {
     routingRevision: 0,
     preferencesRevision: 0,
     coreRevision: 0,
+    connectionRevision: 0,
     profile: {
       mode: "generated",
+      connection: { ipv4Compatibility: false },
       selectedNode: null,
       nodes: [
         ["香港 · 主线路", ["工作", "常用"], "trojan"],
@@ -132,6 +134,7 @@ function bootstrap() {
     phase: "stopped",
     pendingChanges: false,
     runningNode: null,
+    runningConnectionOptions: null,
     target: null,
     operation: null,
     activity: null,
@@ -173,6 +176,7 @@ function bootstrap() {
     const node = settings.profile.nodes.find((n) => n.id === id);
     if (!node) throw Error("节点不存在");
     coreState.runningNode = clone(node);
+    coreState.runningConnectionOptions = clone(settings.profile.connection);
     coreState.canStop = true;
     coreState.canImport = false;
     coreState.phase = "running";
@@ -230,6 +234,7 @@ function bootstrap() {
               settings.routingRevision,
               settings.coreRevision,
               settings.preferencesRevision,
+              settings.connectionRevision,
             ],
             startup: clone(settings.startup),
           };
@@ -282,6 +287,12 @@ function bootstrap() {
         case "session_connect":
           connect(args.nodeId);
           return;
+        case "set_connection_options":
+          if (args.expectedRevision !== settings.connectionRevision) throw Error("连接设置修订冲突");
+          settings.profile.connection = clone(args.options);
+          settings.connectionRevision++;
+          if (runtime.pid) coreState.pendingChanges = true;
+          return clone(settings);
         case "core_action":
           if (args.action === "stop") {
             coreState.runningNode = null;
@@ -292,7 +303,10 @@ function bootstrap() {
             runtime.pid = null;
             runtime.status = "stopped";
           }
-          if (args.action === "apply") coreState.pendingChanges = false;
+          if (args.action === "apply") {
+            coreState.pendingChanges = false;
+            coreState.runningConnectionOptions = clone(settings.profile.connection);
+          }
           return;
         case "profile_rename_node": {
           const node = settings.profile.nodes.find((n) => n.id === args.id);

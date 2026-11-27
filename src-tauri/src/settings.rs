@@ -97,6 +97,8 @@ pub struct Settings {
     pub preferences_revision: u64,
     pub nodes_revision: u64,
     pub routing_revision: u64,
+    #[serde(default)]
+    pub connection_revision: u64,
     pub rule_preferences: Vec<crate::rulesets::service::Preference>,
     pub profile: crate::profile::Profile,
     pub core_source: CoreSource,
@@ -113,7 +115,7 @@ pub struct Startup {
     pub restore_core_on_launch: bool,
     pub resume_core: bool,
     #[serde(default)]
-    pub last_connection: Option<crate::session::tunnel::Connection>,
+    pub last_connection: Option<crate::profile::ConnectionInput>,
 }
 #[derive(Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -128,6 +130,7 @@ impl Default for Settings {
             preferences_revision: 0,
             nodes_revision: 0,
             routing_revision: 0,
+            connection_revision: 0,
             rule_preferences: crate::rulesets::service::defaults(),
             profile: Default::default(),
             core_source: Default::default(),
@@ -142,7 +145,7 @@ impl Default for Settings {
 }
 impl Settings {
     pub fn public(&self) -> serde_json::Value {
-        serde_json::json!({"schemaVersion":self.schema_version,"coreRevision":self.core_revision,"nodesRevision":self.nodes_revision,"routingRevision":self.routing_revision,"rulePreferences":self.rule_preferences,"preferencesRevision":self.preferences_revision,"profile":self.profile.public(),"coreSource":self.core_source,"managed":self.managed,"configPath":self.config_path,"pendingConfigPath":self.pending_config_path,"updatePreferences":self.update_preferences,"startup":{"restoreCoreOnLaunch":self.startup.restore_core_on_launch,"resumeCore":self.startup.resume_core},"desktop":self.desktop})
+        serde_json::json!({"schemaVersion":self.schema_version,"coreRevision":self.core_revision,"nodesRevision":self.nodes_revision,"routingRevision":self.routing_revision,"rulePreferences":self.rule_preferences,"preferencesRevision":self.preferences_revision,"connectionRevision":self.connection_revision,"profile":self.profile.public(),"coreSource":self.core_source,"managed":self.managed,"configPath":self.config_path,"pendingConfigPath":self.pending_config_path,"updatePreferences":self.update_preferences,"startup":{"restoreCoreOnLaunch":self.startup.restore_core_on_launch,"resumeCore":self.startup.resume_core},"desktop":self.desktop})
     }
     pub fn managed(&self) -> bool {
         self.core_source == CoreSource::Managed
@@ -382,6 +385,23 @@ impl SettingsStore {
             Ok(())
         })
     }
+    pub fn connection_options(
+        &self,
+        expected: u64,
+        options: crate::profile::ConnectionOptions,
+    ) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.connection_revision != expected {
+                return Err("连接设置已改变，草稿已保留，请载入最新设置后重试".into());
+            }
+            if s.profile.mode != crate::profile::Mode::Generated {
+                return Err("原始配置的连接行为由配置文件控制".into());
+            }
+            s.profile.connection = options;
+            s.connection_revision += 1;
+            Ok(())
+        })
+    }
     pub fn resume(&self, enabled: bool) -> Result<Settings, String> {
         self.write(|s| {
             s.startup.resume_core = enabled;
@@ -394,7 +414,7 @@ impl SettingsStore {
     pub fn confirm_connection(
         &self,
         expected: u64,
-        input: Option<crate::session::tunnel::Connection>,
+        input: Option<crate::profile::ConnectionInput>,
     ) -> Result<Settings, String> {
         self.write(|s| {
             if s.core_revision != expected {

@@ -85,7 +85,7 @@ try {
   const echo = await echoPair();
   tcp = echo.tcp; udp = echo.udp;
   const port = echo.port;
-  const addresses = ['198.18.77.1', 'fdfe:dbca:199::99'];
+  const addresses = ['198.51.100.1', 'fdfe:dbca:199::99'];
   const config = {
     log: {level: 'info'},
     inbounds: [{type: 'tun', tag: 'test-tun', interface_name: iface, address: ['172.29.255.1/30', 'fdfe:dbca:199::1/126'], auto_route: true, dns_mode: 'disabled', route_address: [`${addresses[0]}/32`, `${addresses[1]}/128`], stack: 'mixed', mtu: 1400}],

@@ -47,6 +47,13 @@ fn range(destination: &str, v6: bool) -> Option<(u128, u128)> {
     Some((start & !mask, start | mask))
 }
 
+pub(super) fn conflicts_with_fakeip(destination: &str) -> bool {
+    range(destination, false).is_some_and(|(first, last)| {
+        // Default and half-default routes express internet access, not a reserved local network.
+        last - first < (1u128 << 31) - 1 && first <= 0xc613ffff && last >= 0xc6120000
+    })
+}
+
 pub(super) fn covered<'a>(destinations: impl IntoIterator<Item = &'a str>, v6: bool) -> bool {
     let mut ranges: Vec<_> = destinations
         .into_iter()
@@ -121,6 +128,15 @@ pub(super) fn linux(routes: &str, rules: &str, interface: &str, v6: bool) -> Res
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn fakeip_conflicts_exclude_default_routes_but_include_real_pool_routes() {
+        assert!(super::conflicts_with_fakeip("198.18.0.0/15"));
+        assert!(super::conflicts_with_fakeip("198.19.3.4/32"));
+        assert!(super::conflicts_with_fakeip("198.0.0.0/8"));
+        for value in ["default", "0.0.0.0/0", "128.0.0.0/1", "203.0.113.0/24"] {
+            assert!(!super::conflicts_with_fakeip(value));
+        }
+    }
     use super::*;
     #[test]
     fn partial_routes_never_imply_default_coverage() {

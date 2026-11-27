@@ -50,6 +50,7 @@ pub struct Snapshot {
     pub runtime: runtime::RuntimeSnapshot,
     pub network: crate::platform::network::Observation,
     pub running_node: Option<crate::profile::NodeSummary>,
+    pub running_connection_options: Option<crate::profile::ConnectionOptions>,
     pub pending_changes: bool,
     pub target: Option<crate::profile::NodeSummary>,
     pub operation: Option<String>,
@@ -65,7 +66,7 @@ pub struct SessionService {
     wake: Arc<tokio::sync::Notify>,
     intent: Mutex<Intent>,
     tunnel: tunnel::Tunnel,
-    applied: Mutex<Option<tunnel::Connection>>,
+    applied: Mutex<Option<crate::profile::ConnectionInput>>,
     target: Mutex<Option<crate::profile::NodeSummary>>,
 }
 fn missing_restore_config(s: &settings::Settings) -> bool {
@@ -125,17 +126,9 @@ impl SessionService {
         let busy = self.gate.runtime_busy() || self.gate.closing() || !core.initialized;
         let restore = self.intent.lock().unwrap().restore;
         let applied = self.applied.lock().unwrap();
-        let desired = settings.profile.selected().map(|node| tunnel::Connection {
-            node: node.clone(),
-            routing: settings.profile.routing.clone(),
-            versions: crate::rulesets::selected(&self.store.root, &settings.profile.routing)
-                .unwrap_or_default(),
-            core_version: settings
-                .managed
-                .active
-                .as_ref()
-                .map(|r| r.version.clone())
-                .unwrap_or_default(),
+        let desired = settings.profile.selected().and_then(|node| {
+            self.connection_for(settings, node.clone(), String::new())
+                .ok()
         });
         Snapshot {
             mode: settings.profile.mode,
@@ -174,9 +167,18 @@ impl SessionService {
             } else {
                 None
             },
+            running_connection_options: if generated {
+                tunnel.running_connection_options
+            } else {
+                None
+            },
             pending_changes: r.pid.is_some()
-                && desired.as_ref().map(tunnel::Connection::fingerprint)
-                    != applied.as_ref().map(tunnel::Connection::fingerprint),
+                && desired
+                    .as_ref()
+                    .map(crate::profile::ConnectionInput::fingerprint)
+                    != applied
+                        .as_ref()
+                        .map(crate::profile::ConnectionInput::fingerprint),
             phase: if generated {
                 tunnel.phase.as_str().into()
             } else {
@@ -325,30 +327,43 @@ impl SessionService {
         }
         Ok(())
     }
-    fn desired_connection(&self) -> Result<tunnel::Connection, String> {
-        let s = self.store.snapshot();
-        let node = s
-            .profile
-            .selected()
-            .ok_or("请先导入并选择一个节点")?
-            .clone();
-        Ok(tunnel::Connection {
+    fn connection_for(
+        &self,
+        settings: &settings::Settings,
+        node: crate::profile::Node,
+        version: String,
+    ) -> Result<crate::profile::ConnectionInput, String> {
+        crate::profile::ConnectionInput::from_profile(
+            &settings.profile,
             node,
-            routing: s.profile.routing.clone(),
-            versions: crate::rulesets::selected(&self.store.root, &s.profile.routing)?,
-            core_version: s
-                .managed
+            crate::rulesets::selected(&self.store.root, &settings.profile.routing)?,
+            version,
+        )
+    }
+    fn desired_connection(&self) -> Result<crate::profile::ConnectionInput, String> {
+        let s = self.store.snapshot();
+        self.connection_for(
+            &s,
+            s.profile
+                .selected()
+                .ok_or("请先导入并选择一个节点")?
+                .clone(),
+            s.managed
                 .active
                 .as_ref()
                 .ok_or("核心尚未就绪")?
                 .version
                 .clone(),
-        })
+        )
     }
     fn check_owned(&self, op: &Operation) -> Result<(), String> {
         let s = self.store.snapshot();
         if s.profile.mode == crate::profile::Mode::Generated {
-            let config = crate::profile::config::build(&s.profile, &self.store.root)?;
+            let config = crate::profile::config::build(
+                &s.profile,
+                &self.store.root,
+                &s.managed.active.as_ref().ok_or("核心尚未就绪")?.version,
+            )?;
             self.runtime.validate(
                 &s.selected_path(&self.store.root)?,
                 &config.path,
@@ -419,15 +434,7 @@ impl SessionService {
                         .version
                         .clone()
                 };
-                let input = tunnel::Connection {
-                    node,
-                    routing: settings.profile.routing.clone(),
-                    versions: crate::rulesets::selected(
-                        &session.store.root,
-                        &settings.profile.routing,
-                    )?,
-                    core_version: version,
-                };
+                let input = session.connection_for(&settings, node, version)?;
                 session.execute_connection(&op, input, !switching)
             })();
             if let Err(e) = result {
@@ -442,7 +449,7 @@ impl SessionService {
     fn start_tunnel_owned(
         &self,
         op: &Operation,
-        input: Option<tunnel::Connection>,
+        input: Option<crate::profile::ConnectionInput>,
     ) -> Result<(), String> {
         self.ensure_stopped()?;
         let explicit = input.is_some();
@@ -460,7 +467,7 @@ impl SessionService {
     fn execute_connection(
         &self,
         op: &Operation,
-        mut input: tunnel::Connection,
+        mut input: crate::profile::ConnectionInput,
         allow_core_rollback: bool,
     ) -> Result<(), String> {
         if self.tunnel.status().phase == tunnel::Phase::CleanupRequired {
