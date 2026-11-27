@@ -7848,5 +7848,108 @@
     "target": "aarch64-apple-darwin",
     "commit": "71d68b7",
     "reason": "AppKit reads the displayed ampersand title; Windows/GTK read the mnemonic-escaped title. Expected read-back now follows the native platform contract."
+  },
+  "published": {
+    "releaseId": 460599473,
+    "url": "https://github.com/BgaSol/sing-shell/releases/tag/v0.9.0",
+    "publishedAt": "2026-11-27T13:08:47Z",
+    "assets": [
+      {
+        "name": "core-update.json",
+        "size": 4326,
+        "sha256": "7a1c4cfe63951e6ee94397131f4d144cdb47ea5b0d525b3d4a34a3088a94b827",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_aarch64.app.tar.gz",
+        "size": 6456729,
+        "sha256": "400afa2aeacf072f3cd7e51ede17921294829717957f044f3944f8ea620b3d5f",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_aarch64.app.tar.gz.sig",
+        "size": 428,
+        "sha256": "358f19315fbb7d2f36e0dda860bdeec15c5e3b4d7ef715aa471d3fb3aba7cb39",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_aarch64.AppImage",
+        "size": 83356168,
+        "sha256": "0910bb45c6fa658455d1e2bb9165b9282ab8a34df555ed2040fe6be5fe622836",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_aarch64.AppImage.sig",
+        "size": 444,
+        "sha256": "5a1baaaad01f89e6d10ada3339d56f04910d82857cc5cec90a13d8840ee484e6",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_aarch64.dmg",
+        "size": 6308518,
+        "sha256": "5c5ebb1299233cc9a8d91ad60a0bdd3d3e02795d20cc79774bede6c2339c8939",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_amd64.AppImage",
+        "size": 85690872,
+        "sha256": "f6f5f91d7617726fb2f1aa925654d9fcb6af2df9524d2f5c8213e691b50bf3f9",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_amd64.AppImage.sig",
+        "size": 440,
+        "sha256": "af8541fcf5c9bf05811300f6c262e00baba878ff35374d1057e24dbd2ed7822c",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_amd64.deb",
+        "size": 7625780,
+        "sha256": "7fc368ceca6ba7f3096c6d8bea394ec29d856088cca7c828422b78d533c670a8",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_amd64.deb.sig",
+        "size": 436,
+        "sha256": "83f8c60c8235509ed42d652871f2a3587a28d7475df8931821ed83bf6a119cc8",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_arm64-setup.exe",
+        "size": 4215138,
+        "sha256": "24b485ca9a33b303b66d08fc9612c1065b14c9cff6bf0a5622b0ef441c8c43ea",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_arm64-setup.exe.sig",
+        "size": 444,
+        "sha256": "e7ee7d9adbd0248f1bb9ca92b0e628a00f53ae97fe431a398738c0053ba73a5d",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_arm64.deb",
+        "size": 7202866,
+        "sha256": "ebde5b27a838fe12ed3de943b6043eb2efc7c25b7036e93da3236ea221a616b0",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_arm64.deb.sig",
+        "size": 436,
+        "sha256": "0f4f76fcb4450e7a8df831998cbbbe642414ec34b69cd0c001fa0aec3fca2aba",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_x64-setup.exe",
+        "size": 4751247,
+        "sha256": "c6f5943f81e349e9e50be953bba0177937418c1586016941d7493ad039770545",
+        "anonymousDownload": true
+      },
+      {
+        "name": "Sing.Shell_0.9.0_x64-setup.exe.sig",
+        "size": 440,
+        "sha256": "eb415d35f16b5cd18e582e69d9852c303b93d3249e1981ee5c869b883568be95",
+        "anonymousDownload": true
+      }
+    ]
   }
 }
