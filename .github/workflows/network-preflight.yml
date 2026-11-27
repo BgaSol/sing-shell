@@ -53,6 +53,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SING_SHELL_NETWORK_PREFLIGHT: '1'
         run: sudo -E "$(which node)" scripts/network-preflight.mjs ${{ matrix.target }}
+      - name: TUN bypass DNS prerequisite (Windows)
+        if: runner.os == 'Windows'
+        env:
+          SING_SHELL_NETWORK_PREFLIGHT: '1'
+        run: node scripts/bypass-preflight.mjs ${{ matrix.target }}
+      - name: TUN bypass DNS prerequisite (Unix)
+        if: runner.os != 'Windows'
+        env:
+          SING_SHELL_NETWORK_PREFLIGHT: '1'
+        run: sudo -E "$(which node)" scripts/bypass-preflight.mjs ${{ matrix.target }}
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.99.1

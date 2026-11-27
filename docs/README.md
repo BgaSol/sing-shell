@@ -3,6 +3,7 @@
 - [首次使用](usage.md)
 - [节点管理](features/nodes.md)：协议支持、预览提交、选择与数据保护
 - [分流](features/routing.md)：域名/IP/站点优先级、DNS 与规则更新
+- [TUN 绕过功能与代码方案（待实现）](plans/tun-bypass.md)：规则开关、连接准备重构、DNS 固定结果、路由核验与清理
 - [活动与诊断](features/activity.md)：结构化连接、命中归因、采样限制和本机日志
 - [核心与配置](features/core.md)：导入、校验、启停、日志及失败处理
 - [桌面与启动](features/desktop.md)：托盘、窗口、登录自启、核心恢复与退出
