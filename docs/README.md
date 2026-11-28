@@ -10,7 +10,8 @@
 - [图标与界面](features/appearance.md)：贝壳标识、多巴胺配色与界面状态
 - [设计规范](../DESIGN.md)：颜色角色、字体、组件与交互状态
 - [v0.12.0 发行记录](releases/v0.12.0.md)：统一多巴胺界面、自绘外壳、自动保存与操作链路重构
-- [界面与操作链路整改计划](plans/interface-workflow-refactor.md)：统一设计、自绘外壳、原子保存、模式转换与分阶段验收
+- [v0.12.0 包验证证据](releases/v0.12.0-verification.json)：固定签名原包、独立复验、升级与失败记录
+- [v0.12.0 网络验证证据](releases/v0.12.0-network-verification.json)：五原生 DNS、TUN 转发、核心替换与清理
 - [架构](architecture.md)：分层、数据、进程与平台边界
 - [开发与验证](development.md)：工具链、命令、测试及平台状态
 - [构建与分发](distribution.md)：GitHub Actions、安装包与 Releases
