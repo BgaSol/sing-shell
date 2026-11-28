@@ -23,6 +23,8 @@ updater 签名不等于 Windows 发行商证书或 macOS 公证。目前 Windows
 
 失败优先重跑失败的平台/verify/metadata。有效 Artifact 可通过明确原始 `package_run_id` 复验和汇总，构建跳过；不能填只有汇总的复用运行或猜最近一次运行。过期/缺失时重建固定源码，不能换来源覆盖同版本。
 
+同一运行重跑可能保留多份同名验收 Artifact。汇总按各目标最新上传的报告 ID 下载，不混入旧报告；最新报告缺失、过期或未通过时拒绝发布，不回退选择旧成功。原失败证据保留，独立复验仍使用明确的 `package_run_id`，原签名包不重建。
+
 机器清单 ID 为 `sing-shell.app`，包含唯一版本、说明及按 Rust target 区分的原始 URL、Tauri 签名、大小和 SHA-256，由验收产物生成。Windows 使用 NSIS，macOS 使用 app.tar.gz，Linux 使用 AppImage；DEB 通过系统安装方式升级。
 
 ## 实际验收
