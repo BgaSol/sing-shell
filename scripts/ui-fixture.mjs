@@ -1,8 +1,11 @@
 // Isolated browser fixture: never imported by the application or included in its build.
 import { createServer } from "vite";
 import { readFileSync } from "node:fs";
-const appVersion = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8")).version;
+const appVersion = JSON.parse(
+  readFileSync("src-tauri/tauri.conf.json", "utf8"),
+).version;
 function bootstrap(appVersion) {
+  window.__SING_SHELL_FIXTURE__ = true;
   const clone = (value) => structuredClone(value);
   const scenario = new URLSearchParams(location.search).get("routingScenario");
   const callbacks = new Map();
@@ -28,22 +31,24 @@ function bootstrap(appVersion) {
         : `geosite-${id === "cn-domain" ? "cn" : id}.srs`,
     license: id === "cn-ip" ? "CC-BY-SA-4.0" : "GPL-3.0-or-later",
   }));
-  const policies = definitions
-    .slice(0, 2)
-    .map((d) => ({
-      id: d.id,
-      name: d.name,
-      enabled: true,
-      exit: "direct",
-      match: { kind: "source", sourceId: d.id },
-    }));
+  const policies = definitions.slice(0, 2).map((d) => ({
+    id: d.id,
+    name: d.name,
+    enabled: true,
+    exit: "direct",
+    match: { kind: "source", sourceId: d.id },
+  }));
   policies.push({
     id: "remote",
     name: "远程控制",
     enabled: true,
     exit: "direct",
     bypassTun: true,
-    match: { kind: "custom", domains: [{ value: "id.example.com", includeSubdomains: false }], ipCidrs: ["203.0.113.10/32", "2001:db8:71::1/128"] },
+    match: {
+      kind: "custom",
+      domains: [{ value: "id.example.com", includeSubdomains: false }],
+      ipCidrs: ["203.0.113.10/32", "2001:db8:71::1/128"],
+    },
   });
   policies.push({
     id: "work",
@@ -148,7 +153,7 @@ function bootstrap(appVersion) {
     pendingChanges: false,
     runningNode: null,
     runningConnectionOptions: null,
-    runningBypass:false,
+    runningBypass: false,
     target: null,
     operation: null,
     activity: null,
@@ -191,7 +196,9 @@ function bootstrap(appVersion) {
     if (!node) throw Error("节点不存在");
     coreState.runningNode = clone(node);
     coreState.runningConnectionOptions = clone(settings.profile.connection);
-    coreState.runningBypass = settings.profile.routing.policies.some(p => p.enabled && p.bypassTun);
+    coreState.runningBypass = settings.profile.routing.policies.some(
+      (p) => p.enabled && p.bypassTun,
+    );
     coreState.canStop = true;
     coreState.canImport = false;
     coreState.phase = "running";
@@ -305,15 +312,21 @@ function bootstrap(appVersion) {
           connect(args.nodeId);
           return;
         case "session_select_node":
-          if (args.expectedRevision !== settings.nodesRevision) throw Error("节点列表已改变");
-          if (settings.profile.mode !== "generated" || !settings.profile.nodes.some(n => n.id === args.nodeId)) throw Error("节点不可选择");
+          if (args.expectedRevision !== settings.nodesRevision)
+            throw Error("节点列表已改变");
+          if (
+            settings.profile.mode !== "generated" ||
+            !settings.profile.nodes.some((n) => n.id === args.nodeId)
+          )
+            throw Error("节点不可选择");
           if (settings.profile.selectedNode !== args.nodeId) {
             settings.profile.selectedNode = args.nodeId;
             settings.nodesRevision++;
           }
           return;
         case "set_connection_options":
-          if (args.expectedRevision !== settings.connectionRevision) throw Error("连接设置修订冲突");
+          if (args.expectedRevision !== settings.connectionRevision)
+            throw Error("连接设置修订冲突");
           settings.profile.connection = clone(args.options);
           settings.connectionRevision++;
           if (runtime.pid) coreState.pendingChanges = true;
@@ -330,8 +343,12 @@ function bootstrap(appVersion) {
           }
           if (args.action === "apply") {
             coreState.pendingChanges = false;
-            coreState.runningConnectionOptions = clone(settings.profile.connection);
-            coreState.runningBypass = settings.profile.routing.policies.some(p => p.enabled && p.bypassTun);
+            coreState.runningConnectionOptions = clone(
+              settings.profile.connection,
+            );
+            coreState.runningBypass = settings.profile.routing.policies.some(
+              (p) => p.enabled && p.bypassTun,
+            );
           }
           return;
         case "profile_rename_node": {
@@ -354,6 +371,7 @@ function bootstrap(appVersion) {
         case "profile_import_preview":
           pending = {
             ticket: ++ticket,
+            nodesRevision: settings.nodesRevision,
             items: args.input
               .split("\n")
               .filter(Boolean)
@@ -387,22 +405,91 @@ function bootstrap(appVersion) {
           settings.nodesRevision++;
           pending = null;
           return;
-        case "routing_validate":
-          if (scenario === "slow-validation") await new Promise(resolve => setTimeout(resolve, 2500));
-          // Only this interaction fault is simulated here; native tests own the complete validator.
-          if (args.routing.policies.some(p => p.bypassTun && p.match.kind === "custom" && p.match.domains.some(d => d.includeSubdomains))) throw Error("绕过 TUN 仅支持精确域名");
-          return clone(args.routing);
-        case "profile_set_routing":
-          if (scenario === "slow-save") await new Promise(resolve => setTimeout(resolve, 2500));
-          if (scenario === "save-failure") throw Error("演示：设置写入失败，草稿已保留");
-          if (scenario === "conflict") { settings.routingRevision++; throw Error("分流已改变，草稿已保留，请载入最新规则核对"); }
+        case "routing_change": {
+          if (scenario === "slow-save")
+            await new Promise((resolve) => setTimeout(resolve, 2500));
+          if (scenario === "save-failure")
+            throw Error("演示：设置写入失败，草稿已保留");
+          if (scenario === "conflict") {
+            settings.routingRevision++;
+            throw Error("分流已改变，草稿已保留，请载入最新规则核对");
+          }
           if (args.expectedRevision !== settings.routingRevision)
             throw Error("分流修订冲突");
-          settings.profile.routing = clone(args.routing);
+          const routing = clone(settings.profile.routing),
+            c = args.change;
+          const index = routing.policies.findIndex((p) => p.id === c.id),
+            policy = routing.policies[index];
+          let removed = null;
+          if (c.kind === "add")
+            routing.policies.push({
+              ...clone(c.policy),
+              name:
+                c.policy.name ||
+                c.policy.match.domains[0]?.value ||
+                c.policy.match.ipCidrs[0],
+            });
+          if (c.kind === "edit") {
+            const i = routing.policies.findIndex((p) => p.id === c.policy.id);
+            routing.policies[i] = clone(c.policy);
+          }
+          if (c.kind === "exit") {
+            policy.exit = c.exit;
+            if (c.exit === "proxy") policy.bypassTun = false;
+          }
+          if (c.kind === "enabled") policy.enabled = c.enabled;
+          if (c.kind === "move")
+            [routing.policies[index], routing.policies[index + c.direction]] = [
+              routing.policies[index + c.direction],
+              routing.policies[index],
+            ];
+          if (c.kind === "default") routing.defaultExit = c.exit;
+          if (c.kind === "remove") {
+            removed = {
+              policy: clone(policy),
+              index,
+              preference:
+                settings.rulePreferences.find(
+                  (p) => p.sourceId === policy.match.sourceId,
+                ) ?? null,
+            };
+            routing.policies.splice(index, 1);
+          }
+          if (c.kind === "restore") {
+            routing.policies.splice(
+              c.removed.index,
+              0,
+              clone(c.removed.policy),
+            );
+            if (c.removed.preference)
+              settings.rulePreferences.push(clone(c.removed.preference));
+          }
+          if (c.kind === "addSources")
+            for (const id of c.ids) {
+              const d = definitions.find((d) => d.id === id);
+              routing.policies.push({
+                id: "source-" + id,
+                name: d.name,
+                enabled: true,
+                exit: ["cn-domain", "cn-ip"].includes(id) ? "direct" : "proxy",
+                bypassTun: false,
+                match: { kind: "source", sourceId: id },
+              });
+            }
+          if (
+            routing.policies.some(
+              (p) =>
+                p.bypassTun &&
+                p.match.kind === "custom" &&
+                p.match.domains.some((d) => d.includeSubdomains),
+            )
+          )
+            throw Error("绕过 TUN 仅支持精确域名");
+          settings.profile.routing = routing;
           settings.routingRevision++;
           settings.rulePreferences = definitions
             .filter((d) =>
-              args.routing.policies.some(
+              routing.policies.some(
                 (p) => p.match.kind === "source" && p.match.sourceId === d.id,
               ),
             )
@@ -416,10 +503,38 @@ function bootstrap(appVersion) {
             );
           if (runtime.pid) coreState.pendingChanges = true;
           return {
-            revision: settings.nodesRevision,
+            routing: clone(routing),
             routingRevision: settings.routingRevision,
-            ...clone(settings.profile),
+            removed,
           };
+        }
+        case "set_automatic_updates":
+          settings.updatePreferences[
+            args.component === "app" ? "automatic" : "automaticCore"
+          ] = args.enabled;
+          settings.preferencesRevision++;
+          return clone(settings);
+        case "set_download_network":
+          if (
+            args.expectedRevision !==
+            settings.updatePreferences.network.revision
+          )
+            throw Error("下载网络修订冲突");
+          settings.updatePreferences.network = {
+            ...clone(args.network),
+            revision: args.expectedRevision + 1,
+          };
+          settings.preferencesRevision++;
+          return clone(settings);
+        case "check_updates":
+        case "core_maintenance":
+          return;
+        case "session_switch_mode":
+          runtime.pid = null;
+          runtime.status = "stopped";
+          coreState.phase = "stopped";
+          coreState.canStop = false;
+          coreState.canImport = true;
         case "profile_mode":
           settings.profile.mode = args.mode;
           coreState.canSelectNode = args.mode === "generated";
@@ -492,7 +607,13 @@ const server = await createServer({
     {
       name: "isolated-ui-fixture",
       transformIndexHtml() {
-        return [{ tag: "script", attrs: { src: "/__fixture.js" }, injectTo: "head-prepend" }];
+        return [
+          {
+            tag: "script",
+            attrs: { src: "/__fixture.js" },
+            injectTo: "head-prepend",
+          },
+        ];
       },
       configureServer(server) {
         server.middlewares.use("/__fixture.js", (_req, res) => {

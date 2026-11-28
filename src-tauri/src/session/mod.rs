@@ -276,12 +276,49 @@ impl SessionService {
         let _op = self.gate.begin(Kind::Selection)?;
         self.ensure_stopped()?;
         self.invalidate_restore();
-        self.store.profile(expected, |p| {
-            p.mode = mode;
-            Ok(())
-        })?;
-        self.store.resume(false)?;
-        let s = self.store.snapshot();
+        let s = self.store.change_mode(expected, mode, false, None)?;
+        Ok(crate::profile::service::Snapshot {
+            revision: s.nodes_revision,
+            routing_revision: s.routing_revision,
+            profile: s.profile.public(),
+        })
+    }
+    pub fn switch_mode(
+        &self,
+        mode: crate::profile::Mode,
+        expected: u64,
+    ) -> Result<crate::profile::service::Snapshot, String> {
+        let op = self.gate.begin(Kind::Selection)?;
+        let saved = self.store.snapshot();
+        if saved.nodes_revision != expected {
+            return Err("节点或模式已改变，请重新确认".into());
+        }
+        let managed = mode == crate::profile::Mode::Generated && !saved.managed();
+        if managed {
+            let reference = saved
+                .managed
+                .active
+                .as_ref()
+                .ok_or("官方核心尚未准备；请先断开并在高级设置中准备应用管理核心")?;
+            self.engine.verify(reference, &op.cancel)?;
+        }
+        self.invalidate_restore();
+        // A failed intent write must still stop the real network, as with explicit Stop.
+        let intent = self.store.resume(false);
+        self.stop_internal()?;
+        intent?;
+        package::cancelled(&op.cancel)?;
+        self.ensure_stopped()?;
+        if managed && self.store.snapshot().core_revision != saved.core_revision {
+            return Err("核心来源已改变，请重新确认切换".into());
+        }
+        let s = self.store.change_mode(
+            expected,
+            mode,
+            managed,
+            managed.then_some(saved.core_revision),
+        )?;
+        self.wake.notify_one();
         Ok(crate::profile::service::Snapshot {
             revision: s.nodes_revision,
             routing_revision: s.routing_revision,
@@ -837,6 +874,11 @@ impl SessionService {
     fn arm_restore(&self) {
         let s = self.store.snapshot();
         let mut i = self.intent.lock().unwrap();
+        if s.profile.mode == crate::profile::Mode::Generated
+            && !crate::platform::authorization::can_resume()
+        {
+            return;
+        }
         if i.epoch == 0 && s.startup.restore_core_on_launch && s.startup.resume_core {
             if self.engine.restore_safe.load(Ordering::Acquire) && self.store.error().is_none() {
                 i.restore = Restore::Waiting;

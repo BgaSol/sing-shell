@@ -5,7 +5,7 @@ import {
   type ActivitySummary,
   type SessionEvent,
   type Log,
-} from "./core";
+} from "./api";
 import { element, el, button, empty, bytes } from "./dom";
 export function createActivity(error: (e: unknown) => void) {
   let visible = false,
@@ -23,6 +23,13 @@ export function createActivity(error: (e: unknown) => void) {
     events: SessionEvent[] = [];
   const list = element("connection-list");
   const raw = element<HTMLDetailsElement>("raw-logs");
+  let logsVisible = false;
+  const latestLogs = button("回到最新", () => {
+    element<HTMLInputElement>("follow").checked = true;
+    void refresh();
+  });
+  latestLogs.hidden = true;
+  element("activity-logs-view").querySelector(".toolbar")!.append(latestLogs);
   const latest = button("返回最新", () => {
     after = null;
     void refresh();
@@ -33,16 +40,29 @@ export function createActivity(error: (e: unknown) => void) {
     const stats = element("activity-stats");
     stats.replaceChildren();
     for (const [title, value] of [
-      ["当前连接", String(s.active)],
+      ["当前连接", s.state === "unavailable" ? "—" : String(s.active)],
       [
         "上传速率",
-        s.uploadRate === null ? "采样中" : bytes(s.uploadRate) + "/s",
+        s.state === "unavailable"
+          ? "—"
+          : s.uploadRate === null
+            ? "采样中"
+            : bytes(s.uploadRate) + "/s",
       ],
       [
         "下载速率",
-        s.downloadRate === null ? "采样中" : bytes(s.downloadRate) + "/s",
+        s.state === "unavailable"
+          ? "—"
+          : s.downloadRate === null
+            ? "采样中"
+            : bytes(s.downloadRate) + "/s",
       ],
-      ["本次流量", `${bytes(s.upload)} / ${bytes(s.download)}`],
+      [
+        "本次流量",
+        s.state === "unavailable"
+          ? "—"
+          : `${bytes(s.upload)} / ${bytes(s.download)}`,
+      ],
     ]) {
       const group = el("div");
       group.append(el("span", "", title), el("strong", "", value));
@@ -107,84 +127,93 @@ export function createActivity(error: (e: unknown) => void) {
     const token = generation,
       requested = sessionId;
     try {
-      const page = await core.activity({
-        sessionId,
-        after,
-        state,
-        search,
-        limit: 100,
-      });
-      if (token !== generation || !visible || requested !== sessionId) return;
-      summary(page.summary);
-      if (page.summary.sessionId && page.summary.sessionId !== sessionId) {
-        sessionId = page.summary.sessionId;
-        rows.clear();
-      }
-      next = page.next;
-      const keep = new Set(page.items.map((c) => c.id));
-      for (const [id, row] of rows)
-        if (!keep.has(id)) {
-          row.remove();
-          rows.delete(id);
+      if (!logsVisible) {
+        const page = await core.activity({
+          sessionId,
+          after,
+          state,
+          search,
+          limit: 100,
+        });
+        if (token !== generation || !visible || requested !== sessionId) return;
+        summary(page.summary);
+        if (page.summary.sessionId && page.summary.sessionId !== sessionId) {
+          sessionId = page.summary.sessionId;
+          rows.clear();
         }
-      if (!page.items.length) {
-        rows.clear();
-        list.replaceChildren(
-          empty(
-            "暂无连接记录",
-            page.summary.state === "unavailable"
-              ? "连接节点后，可在这里查看已观测连接。"
-              : "尝试访问网站，或更换筛选条件。",
-          ),
-        );
-      } else {
-        for (const child of list.querySelectorAll(".empty")) child.remove();
-        for (const c of page.items) list.append(connectionRow(c));
-      }
-      element("more-connections").hidden = next === null;
-      latest.hidden = after === null;
-      const incoming = await core.events(eventCursor);
-      if (token !== generation) return;
-      for (const event of incoming) {
-        eventCursor = Math.max(eventCursor, event.sequence);
-        events.push(event);
-      }
-      events.splice(0, Math.max(0, events.length - 1000));
-      const eventList = element("event-list");
-      eventList.replaceChildren();
-      for (const event of events.slice(-50).reverse()) {
-        const row = el("div", "event");
-        row.append(
-          el("span", "", new Date(event.at).toLocaleTimeString()),
-          document.createTextNode(
-            `${event.outcome === "failed" ? "失败 · " : ""}${event.message}`,
-          ),
-        );
-        eventList.append(row);
-      }
-      if (!events.length) eventList.append(el("p", "hint", "尚无会话事件。"));
-      if (raw.open) {
-        const incoming = await core.logs(logCursor);
-        if (token !== generation) return;
-        for (const log of incoming) {
-          if (log.sequence > logCursor) {
-            logs.push(log);
-            logCursor = log.sequence;
+        next = page.next;
+        const keep = new Set(page.items.map((c) => c.id));
+        for (const [id, row] of rows)
+          if (!keep.has(id)) {
+            row.remove();
+            rows.delete(id);
           }
+        if (!page.items.length) {
+          rows.clear();
+          list.replaceChildren(
+            empty(
+              "暂无连接记录",
+              page.summary.state === "unavailable"
+                ? "连接节点后，可在这里查看已观测连接。"
+                : "尝试访问网站，或更换筛选条件。",
+            ),
+          );
+        } else {
+          for (const child of list.querySelectorAll(".empty")) child.remove();
+          for (const c of page.items) list.append(connectionRow(c));
         }
-        logs.splice(0, Math.max(0, logs.length - 1000));
-        const output = element("logs"),
-          position = output.scrollTop;
-        output.textContent =
-          logs
-            .map(
-              (l) =>
-                `${new Date(l.receivedAt).toLocaleTimeString()} [${l.source}] ${l.message}`,
-            )
-            .join("\n") || "暂无日志";
-        output.scrollTop = element<HTMLInputElement>("follow").checked
-          ? output.scrollHeight
-          : position;
+        element("more-connections").hidden = next === null;
+        latest.hidden = after === null;
+      }
+      if (logsVisible) {
+        const incoming = await core.events(eventCursor);
+        if (token !== generation) return;
+        for (const event of incoming) {
+          eventCursor = Math.max(eventCursor, event.sequence);
+          events.push(event);
+        }
+        events.splice(0, Math.max(0, events.length - 1000));
+        const eventList = element("event-list");
+        eventList.replaceChildren();
+        for (const event of events.slice(-50).reverse()) {
+          const row = el("div", "event");
+          row.append(
+            el("span", "", new Date(event.at).toLocaleTimeString()),
+            document.createTextNode(
+              `${event.outcome === "failed" ? "失败 · " : ""}${event.message}`,
+            ),
+          );
+          eventList.append(row);
+        }
+        if (!events.length) eventList.append(el("p", "hint", "尚无会话事件。"));
+        if (logsVisible) {
+          const incoming = await core.logs(logCursor);
+          if (token !== generation) return;
+          for (const log of incoming) {
+            if (log.sequence > logCursor) {
+              logs.push(log);
+              logCursor = log.sequence;
+            }
+          }
+          logs.splice(0, Math.max(0, logs.length - 1000));
+          const output = element("logs"),
+            position = output.scrollTop;
+          if (
+            element<HTMLInputElement>("follow").checked ||
+            output.textContent === "暂无日志"
+          )
+            output.textContent =
+              logs
+                .map(
+                  (l) =>
+                    `${new Date(l.receivedAt).toLocaleTimeString()} [${l.source}] ${l.message}`,
+                )
+                .join("\n") || "暂无日志";
+          output.scrollTop = element<HTMLInputElement>("follow").checked
+            ? output.scrollHeight
+            : position;
+          latestLogs.hidden = element<HTMLInputElement>("follow").checked;
+        }
       }
     } catch (e) {
       if (token === generation)
@@ -212,11 +241,30 @@ export function createActivity(error: (e: unknown) => void) {
     timer = window.setTimeout(() => void refresh(), 200);
   };
   const openLogs = () => {
+    generation++;
+    logsVisible = true;
+    element("activity-connections-view").hidden = true;
+    element("activity-logs-view").hidden = false;
+    element("activity-connections").setAttribute("aria-pressed", "false");
+    element("show-logs").setAttribute("aria-pressed", "true");
     raw.open = true;
     raw.scrollIntoView({ block: "nearest" });
     void refresh();
   };
   element("show-logs").onclick = openLogs;
+  element("activity-connections").onclick = () => {
+    logsVisible = false;
+    element("activity-connections-view").hidden = false;
+    element("activity-logs-view").hidden = true;
+    element("activity-connections").setAttribute("aria-pressed", "true");
+    element("show-logs").setAttribute("aria-pressed", "false");
+    void refresh();
+  };
+  element("logs").addEventListener("scroll", () => {
+    const output = element("logs");
+    if (output.scrollHeight - output.scrollTop - output.clientHeight > 20)
+      element<HTMLInputElement>("follow").checked = false;
+  });
   raw.ontoggle = () => {
     if (raw.open) void refresh();
   };

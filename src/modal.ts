@@ -1,20 +1,21 @@
-import { element, el, button } from "./dom";
+import { element, el, button, errorText } from "./dom";
 export class Modal {
   readonly dialog = element<HTMLDialogElement>("workspace-modal");
   readonly content = element("modal-content");
   readonly actions = element("modal-actions");
   private dirty = () => false;
   private cleanup = () => {};
-  private busy = false;
+  private submit: (() => Promise<boolean>) | null = null;
+  private submitLabel = "保存并继续";
+  private work: Promise<boolean> | null = null;
   private generation = 0;
   private trigger: HTMLElement | null = null;
-  private originRow: { type: "node" | "policy"; id: string } | null = null;
   private deciding: Promise<boolean> | null = null;
   constructor() {
-    element("modal-close").onclick = () => void this.requestClose();
+    element("modal-close").onclick = () => void this.mayLeave();
     this.dialog.oncancel = (e) => {
       e.preventDefault();
-      void this.requestClose();
+      void this.mayLeave();
     };
   }
   get pending() {
@@ -33,128 +34,119 @@ export class Modal {
     title: string,
     options: { dirty?: () => boolean; cleanup?: () => void } = {},
   ) {
-    if (this.open) throw new Error("请先完成当前编辑");
+    if (this.open) throw Error("请先完成当前编辑");
     this.trigger = document.activeElement as HTMLElement;
-    const row = this.trigger?.closest<HTMLElement>(
-      "[data-node], [data-policy]",
-    );
-    this.originRow = row
-      ? {
-          type: row.dataset.node ? "node" : "policy",
-          id: row.dataset.node ?? row.dataset.policy!,
-        }
-      : null;
     this.generation++;
     this.dirty = options.dirty ?? (() => false);
     this.cleanup = options.cleanup ?? (() => {});
+    this.submit = null;
     this.content.replaceChildren();
-    this.content.onkeydown = null;
     this.actions.replaceChildren();
     this.actions.hidden = false;
+    this.content.onkeydown = null;
     this.error(null);
     element("modal-title").textContent = title;
     this.dialog.showModal();
   }
+  onSubmit(submit: () => Promise<boolean>, label = "保存并继续") {
+    this.submit = submit;
+    this.submitLabel = label;
+  }
   close() {
-    if (this.busy) return;
+    if (this.work) return;
     this.generation++;
     this.cleanup();
+    this.submit = null;
     this.content.replaceChildren();
     this.actions.replaceChildren();
     this.dialog.close();
-    if (this.trigger?.isConnected) this.trigger.focus();
-    else {
-      const origin = this.originRow;
-      const row = origin
-        ? Array.from(
-            document.querySelectorAll<HTMLElement>(`[data-${origin.type}]`),
-          ).find(
-            (row) =>
-              (origin.type === "node"
-                ? row.dataset.node
-                : row.dataset.policy) === origin.id,
-          )
-        : null;
-      (
-        row?.querySelector<HTMLButtonElement>("button") ??
-        element<HTMLButtonElement>("import-nodes")
-      ).focus();
-    }
+    (this.trigger?.isConnected
+      ? this.trigger
+      : element("import-nodes")
+    ).focus();
   }
   error(reason: unknown) {
-    const error = element("modal-error");
-    error.textContent = reason === null ? "" : String(reason);
-    error.hidden = reason === null;
+    const e = element("modal-error");
+    e.textContent = reason == null ? "" : errorText(reason);
+    e.hidden = reason == null;
   }
-  setBusy(value: boolean) {
-    this.busy = value;
-    this.content.inert = value;
-    this.dialog.setAttribute("aria-busy", String(value));
-    element<HTMLButtonElement>("modal-close").disabled = value;
-    for (const b of this.actions.querySelectorAll<HTMLButtonElement>("button"))
-      b.disabled = value;
+  run(task: () => Promise<void>): Promise<boolean> {
+    if (this.work) return this.work;
+    this.content.inert = true;
+    this.dialog.setAttribute("aria-busy", "true");
+    const controls = [
+      ...this.actions.querySelectorAll<HTMLButtonElement>("button"),
+      element<HTMLButtonElement>("modal-close"),
+    ];
+    const disabled = controls.map((b) => b.disabled);
+    controls.forEach((b) => (b.disabled = true));
+    this.work = (async () => {
+      try {
+        await Promise.resolve().then(task);
+        this.error(null);
+        return true;
+      } catch (e) {
+        this.error(e);
+        return false;
+      } finally {
+        this.content.inert = false;
+        this.dialog.setAttribute("aria-busy", "false");
+        controls.forEach((b, i) => (b.disabled = disabled[i]));
+        this.work = null;
+      }
+    })();
+    return this.work;
   }
-  async run(task: () => Promise<void>) {
-    if (this.busy) return false;
-    this.setBusy(true);
-    try {
-      await task();
-      this.error(null);
-      return true;
-    } catch (e) {
-      this.error(e);
-      return false;
-    } finally {
-      this.setBusy(false);
-    }
-  }
-  private async requestClose() {
-    if (this.busy) return;
-    if (!this.dirty()) {
-      this.close();
-      return;
-    }
-    await this.mayLeave();
-  }
-  async mayLeave(): Promise<boolean> {
-    while (this.busy)
-      await new Promise((resolve) => window.setTimeout(resolve, 25));
+  async mayLeave(exiting = false): Promise<boolean> {
+    if (this.work) await this.work;
     if (!this.open) return true;
     if (!this.dirty()) {
       this.close();
       return true;
     }
     if (this.deciding) return this.deciding;
-    const editingFocus = document.activeElement as HTMLElement;
-    const wrapper = el("div");
-    wrapper.style.display = "contents";
-    wrapper.append(...Array.from(this.content.childNodes));
+    const focus = document.activeElement as HTMLElement;
+    const wrapper = el("div", "editor-held");
+    wrapper.append(...this.content.childNodes);
     wrapper.inert = true;
     const confirm = el("div", "modal-confirm");
     confirm.append(
-      el("strong", "", "本次编辑尚未完成"),
-      el("p", "", "放弃后会清除当前弹窗中的输入。"),
+      el("strong", "", "本次编辑尚未保存"),
+      el("p", "hint", "保留输入继续编辑，或放弃本次修改。"),
     );
     this.content.append(wrapper, confirm);
     this.actions.hidden = true;
     this.deciding = new Promise((resolve) => {
-      const back = button("继续编辑", () => {
+      const restore = () => {
         wrapper.inert = false;
-        confirm.remove();
-        this.content.replaceChildren(...Array.from(wrapper.childNodes));
+        this.content.replaceChildren(...wrapper.childNodes);
         this.actions.hidden = false;
         this.deciding = null;
-        editingFocus?.focus();
+      };
+      const back = button("继续编辑", () => {
+        restore();
+        focus?.focus();
         resolve(false);
       });
       const discard = button("放弃并继续", () => {
-        this.actions.hidden = false;
-        this.deciding = null;
+        restore();
         this.close();
         resolve(true);
       });
       const actions = el("div", "actions");
-      actions.append(back, discard);
+      if (exiting && this.submit)
+        actions.append(
+          button(
+            this.submitLabel,
+            () => {
+              const submit = this.submit!;
+              restore();
+              void submit().then(resolve);
+            },
+            "primary",
+          ),
+        );
+      actions.append(discard, back);
       confirm.append(actions);
       back.focus();
     });
@@ -164,24 +156,25 @@ export class Modal {
     title: string,
     message: string,
   ): Promise<"save" | "discard" | "cancel"> {
-    if (this.open) throw new Error("请先完成当前弹窗");
     this.show(title);
     this.content.append(el("p", "", message));
     return new Promise((resolve) => {
-      let outcome: "save" | "discard" | "cancel" = "cancel";
-      for (const [label, value] of [
-        ["保存并继续", "save"],
-        ["放弃并继续", "discard"],
-        ["返回编辑", "cancel"],
-      ] as const) {
+      let value: "save" | "discard" | "cancel" = "cancel";
+      for (const [label, result] of [
+        ["确认并继续", "save"],
+        ["取消", "cancel"],
+      ] as const)
         this.actions.append(
-          button(label, () => {
-            outcome = value;
-            this.close();
-          }),
+          button(
+            label,
+            () => {
+              value = result;
+              this.close();
+            },
+            result === "save" ? "primary" : "",
+          ),
         );
-      }
-      this.cleanup = () => resolve(outcome);
+      this.cleanup = () => resolve(value);
     });
   }
 }

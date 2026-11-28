@@ -25,7 +25,15 @@ pub struct Snapshot {
 #[serde(rename_all = "camelCase")]
 pub struct Preview {
     pub ticket: u64,
+    pub nodes_revision: u64,
     pub items: Vec<ImportItem>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RoutingResult {
+    pub routing: Routing,
+    pub routing_revision: u64,
+    pub removed: Option<super::change::Removed>,
 }
 struct Pending {
     id: u64,
@@ -83,7 +91,7 @@ impl Service {
         }
     }
     pub fn preview(&self, input: &str) -> Result<Preview, String> {
-        let _op = self.gate.begin(Kind::Profile)?;
+        let _op = self.gate.begin(Kind::Import)?;
         let id = self.preview.lock().unwrap().invalidate();
         let settings = self.store.snapshot();
         if self.store.error().is_some() {
@@ -136,14 +144,16 @@ impl Service {
             .publish(id, nodes, _op.cancel.load(Ordering::Acquire))?;
         Ok(Preview {
             ticket: id,
+            nodes_revision: settings.nodes_revision,
             items: preview.items,
         })
     }
     pub fn cancel(&self) {
         self.preview.lock().unwrap().invalidate();
+        self.gate.cancel_kind(|k| k == Kind::Import);
     }
     pub fn commit(&self, id: u64, expected: u64) -> Result<Snapshot, String> {
-        let _op = self.gate.begin(Kind::Profile)?;
+        let _op = self.gate.begin(Kind::Import)?;
         let mut state = self.preview.lock().unwrap();
         if state
             .pending
@@ -217,6 +227,19 @@ impl Service {
         let _op = self.gate.begin(Kind::Profile)?;
         self.store.routing(expected, routing)?;
         Ok(self.snapshot())
+    }
+    pub fn change_routing(
+        &self,
+        change: super::change::Change,
+        expected: u64,
+    ) -> Result<RoutingResult, super::routing::Issue> {
+        let _op = self.gate.begin(Kind::Profile)?;
+        let (saved, removed) = self.store.change_routing(expected, change)?;
+        Ok(RoutingResult {
+            routing: saved.profile.routing,
+            routing_revision: saved.routing_revision,
+            removed,
+        })
     }
 }
 

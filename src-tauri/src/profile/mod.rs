@@ -1,4 +1,5 @@
 pub mod bypass;
+pub mod change;
 pub mod config;
 pub mod connection;
 pub use connection::{ConnectionInput, ConnectionOptions};

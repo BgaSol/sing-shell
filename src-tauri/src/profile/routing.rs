@@ -1,5 +1,28 @@
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Issue {
+    pub message: String,
+    pub policy_id: Option<String>,
+    pub field: Option<String>,
+    pub index: Option<usize>,
+}
+impl From<String> for Issue {
+    fn from(message: String) -> Self {
+        Self {
+            message,
+            policy_id: None,
+            field: None,
+            index: None,
+        }
+    }
+}
+impl From<&str> for Issue {
+    fn from(message: &str) -> Self {
+        message.to_owned().into()
+    }
+}
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Action {
@@ -117,6 +140,9 @@ pub use crate::ip_network::network;
 use crate::ip_network::overlap;
 impl Routing {
     pub fn normalized(&self) -> Result<Self, String> {
+        self.checked().map_err(|e| e.message)
+    }
+    pub fn checked(&self) -> Result<Self, Issue> {
         if self.policies.len() > 100 {
             return Err("最多保存 100 条策略".into());
         }
@@ -130,69 +156,76 @@ impl Routing {
                 || !p.id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
                 || !ids.insert(p.id.clone())
             {
-                return Err(format!("第 {} 条策略标识无效或重复", index + 1));
+                return Err(format!("第 {} 条策略标识无效或重复", index + 1).into());
             }
             p.name = p.name.trim().into();
             if p.name.is_empty()
                 || p.name.chars().count() > 64
                 || p.name.chars().any(char::is_control)
             {
-                return Err(format!("第 {} 条策略名称无效", index + 1));
+                return Err(Issue {
+                    message: "名称为空、超过 64 字符或包含控制字符".into(),
+                    policy_id: Some(p.id.clone()),
+                    field: Some("name".into()),
+                    index: None,
+                });
             }
             let name = p.name.clone();
-            let issue = |message: &str| format!("{name}：{message}");
+            let id = p.id.clone();
+            let issue = |field: &str, index: Option<usize>, message: &str| Issue {
+                message: format!("{name}：{message}"),
+                policy_id: Some(id.clone()),
+                field: Some(field.into()),
+                index,
+            };
             if p.bypass_tun
                 && (p.exit != Action::Direct || !matches!(p.r#match, Match::Custom { .. }))
             {
-                return Err(issue("绕过 TUN 仅支持自定义直连规则"));
+                return Err(issue("bypass", None, "绕过 TUN 仅支持自定义直连规则"));
             }
             match &mut p.r#match {
                 Match::Source { source_id } => {
                     crate::rulesets::definition(source_id)?;
                     if !sources.insert(source_id.clone()) {
-                        return Err(issue("同一开源来源只能添加一次"));
+                        return Err(issue("source", None, "同一开源来源只能添加一次"));
                     }
                 }
                 Match::Custom { domains, ip_cidrs } => {
                     count += domains.len() + ip_cidrs.len();
                     if domains.is_empty() && ip_cidrs.is_empty() {
-                        return Err(issue("至少填写一个域名或 IP"));
+                        return Err(issue("domain", None, "至少填写一个域名或 IP"));
                     }
                     let mut keys = std::collections::BTreeSet::new();
                     for (i, d) in domains.iter_mut().enumerate() {
                         if p.bypass_tun && d.include_subdomains {
-                            return Err(format!(
-                                "{name} / 域名 {}：绕过 TUN 仅支持精确域名",
-                                i + 1
-                            ));
+                            return Err(issue("domain", Some(i), "绕过 TUN 仅支持精确域名"));
                         }
-                        d.value = domain(&d.value)
-                            .map_err(|e| format!("{name} / 域名 {}：{e}", i + 1))?;
+                        d.value = domain(&d.value).map_err(|e| issue("domain", Some(i), &e))?;
                         if !keys.insert(format!("{}:{}", d.include_subdomains, d.value)) {
-                            return Err(format!("{name} / 域名 {}：条件重复", i + 1));
+                            return Err(issue("domain", Some(i), "条件重复"));
                         }
                     }
                     let mut keys = std::collections::BTreeSet::new();
                     for (i, value) in ip_cidrs.iter_mut().enumerate() {
-                        let net =
-                            network(value).map_err(|e| format!("{name} / IP {}：{e}", i + 1))?;
+                        let net = network(value).map_err(|e| issue("ip", Some(i), &e))?;
                         if p.bypass_tun {
                             super::bypass::validate_address(value)
-                                .map_err(|e| format!("{name} / IP {}：{e}", i + 1))?;
+                                .map_err(|e| issue("ip", Some(i), &e))?;
                         }
                         if p.exit == Action::Proxy
                             && PRIVATE_NETWORKS
                                 .iter()
                                 .any(|n| overlap(net, network(n).unwrap()))
                         {
-                            return Err(format!(
-                                "{name} / IP {}：本机和局域网固定直连；全局出口请修改默认规则",
-                                i + 1
+                            return Err(issue(
+                                "ip",
+                                Some(i),
+                                "本机和局域网固定直连；全局出口请修改默认规则",
                             ));
                         }
                         *value = format!("{}/{}", net.0, net.1);
                         if !keys.insert(value.clone()) {
-                            return Err(format!("{name} / IP {}：条件重复", i + 1));
+                            return Err(issue("ip", Some(i), "条件重复"));
                         }
                     }
                     domains.sort_by(|a, b| {

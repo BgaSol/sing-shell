@@ -3,6 +3,11 @@ export function element<T extends HTMLElement = HTMLElement>(id: string): T {
   if (!result) throw new Error(`Missing element ${id}`);
   return result as T;
 }
+export function errorText(reason: unknown): string {
+  return typeof reason === "object" && reason !== null && "message" in reason
+    ? String(reason.message)
+    : String(reason);
+}
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className = "",

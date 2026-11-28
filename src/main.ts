@@ -1,85 +1,82 @@
 import "./style.css";
 import { getVersion } from "@tauri-apps/api/app";
 import { listen } from "@tauri-apps/api/event";
-import { core, type Snapshot } from "./core";
+import { core, type Snapshot } from "./api";
+import { ConfigurationReader } from "./app-state";
 import { element } from "./dom";
 import { Modal } from "./modal";
+import { createShell } from "./shell";
 import { createNodes } from "./nodes";
 import { createRouting } from "./routing";
 import { createActivity } from "./activity";
-import { createShell } from "./shell";
 import { createUpdates } from "./updates";
 import { createStartupSettings } from "./startup-settings";
-import { createDesktop } from "./desktop";
 import { createConnectionSettings } from "./connection-settings";
+import { createDesktop } from "./desktop";
+import { initializeWindow } from "./window";
 const modal = new Modal();
-let snapshot: Snapshot | null = null,
-  configurationRequest: Promise<void> | null = null,
-  ready = false,
-  page = "nodes",
+let page = "nodes",
   setting = "general",
-  queuedNavigation: string | null = null,
+  ready = false,
+  tick = 0,
   lastDirty = false,
-  tick = 0;
-const shell = createShell(refreshConfiguration),
-  nodes = createNodes(modal, refreshConfiguration, shell.error),
-  routing = createRouting(modal, refreshConfiguration, shell.error, shell.applyConnection),
-  activity = createActivity(shell.error),
-  updates = createUpdates(),
-  startup = createStartupSettings();
-const connectionSettings = createConnectionSettings(modal, refreshConfiguration);
-function render() {
-  if (!snapshot) return;
-  shell.render(snapshot);
-  nodes.render(snapshot);
-  routing.render(snapshot);
-  activity.render(snapshot);
-  updates.runtime(snapshot);
-  startup.render(snapshot);
-  connectionSettings.render(snapshot);
+  modeTask: Promise<void> | null = null;
+const reader = new ConfigurationReader(core.snapshot, render);
+const changed = () => reader.refresh();
+const beforeNetwork = async () => {
+  await Promise.all([routing.wait(), connection.wait()]);
+};
+const shell = createShell(
+  changed,
+  beforeNetwork,
+  (target) => void navigate(target),
+);
+const nodes = createNodes(modal, changed, shell.error, beforeNetwork);
+const routing = createRouting(modal, changed, shell.error);
+const activity = createActivity(shell.error);
+const updates = createUpdates(modal, changed);
+const startup = createStartupSettings();
+const connection = createConnectionSettings(changed);
+const desktop = createDesktop(navigate, async () => {
+  await Promise.all([
+    routing.wait(),
+    connection.wait(),
+    startup.wait(),
+    updates.wait(),
+    modeTask,
+  ]);
+  return modal.mayLeave(true);
+});
+function render(s: Snapshot) {
+  shell.render(s);
+  nodes.render(s);
+  routing.render(s);
+  activity.render(s);
+  updates.runtime(s);
+  startup.render(s);
+  connection.render(s);
   const mode = element<HTMLSelectElement>("profile-mode");
-  if (document.activeElement !== mode)
-    mode.value = snapshot.settings.profile.mode;
-  mode.disabled = !snapshot.core.canImport;
-}
-async function refreshConfiguration() {
-  if (configurationRequest) return configurationRequest;
-  configurationRequest = core
-    .snapshot()
-    .then((value) => {
-      snapshot = value;
-      render();
-    })
-    .finally(() => {
-      configurationRequest = null;
-    });
-  return configurationRequest;
+  if (!modeTask) mode.value = s.settings.profile.mode;
+  mode.disabled = !!modeTask || s.runtimeBusy || s.closing || !!s.storageError;
 }
 function showSetting(id: string) {
-  if (!["general", "network", "core", "advanced"].includes(id)) return;
+  if (!["general", "updates", "advanced"].includes(id)) return;
   setting = id;
-  for (const name of ["general", "network", "core", "advanced"])
+  for (const name of ["general", "updates", "advanced"])
     element(`settings-${name}`).hidden = name !== id;
   for (const b of element("settings-nav").querySelectorAll<HTMLButtonElement>(
     "button",
   ))
-    b.setAttribute("aria-current", b.dataset.setting === id ? "page" : "false");
-  element("settings-title").textContent = (
-    {
-      general: "通用设置",
-      network: "网络设置",
-      core: "核心与更新",
-      advanced: "高级设置",
-    } as Record<string, string>
-  )[id];
+    b.setAttribute("aria-pressed", String(b.dataset.setting === id));
   if (id === "general") void startup.refresh();
 }
-function navigate(target: string) {
-  if (!["nodes", "routing", "activity", "settings"].includes(target)) return;
-  if (modal.open) {
-    queuedNavigation = target;
+async function navigate(target: string) {
+  if (
+    !["nodes", "routing", "activity", "settings"].includes(target) ||
+    target === page
+  )
     return;
-  }
+  if (!(await modal.mayLeave())) return;
   page = target;
   for (const name of ["nodes", "routing", "activity", "settings"]) {
     element(`${name}-panel`).hidden = name !== target;
@@ -88,105 +85,93 @@ function navigate(target: string) {
       name === target ? "page" : "false",
     );
   }
-  element("settings-nav").hidden = target !== "settings";
-  element("nav-settings").setAttribute(
-    "aria-expanded",
-    String(target === "settings"),
-  );
   activity.setVisible(target === "activity");
   if (target === "settings") showSetting(setting);
-  if (target === "routing") void routing.refreshSources();
+  if (target === "routing") await routing.refreshSources();
 }
 for (const id of ["nodes", "routing", "activity", "settings"])
-  element(`nav-${id}`).onclick = () => {
-    if (id === "settings" && page === "settings") {
-      const menu = element("settings-nav");
-      menu.hidden = !menu.hidden;
-      element("nav-settings").setAttribute(
-        "aria-expanded",
-        String(!menu.hidden),
-      );
-    } else navigate(id);
-  };
+  element(`nav-${id}`).onclick = () => void navigate(id).catch(shell.error);
 for (const b of element("settings-nav").querySelectorAll<HTMLButtonElement>(
   "button",
 ))
   b.onclick = () => showSetting(b.dataset.setting!);
-const desktop = createDesktop(
-  navigate,
-  async () =>
-    (await modal.mayLeave()) &&
-    (await routing.mayLeave()) &&
-    (await connectionSettings.mayLeave()) &&
-    (await updates.mayLeave()),
-);
 element<HTMLSelectElement>("profile-mode").onchange = (e) => {
-  if (!snapshot) return;
+  const snapshot = reader.value;
+  if (!snapshot || modeTask) return;
   const mode = (e.target as HTMLSelectElement).value as
     | "generated"
     | "externalConfig";
-  void core
-    .profileMode(mode, snapshot.settings.nodesRevision)
-    .then(refreshConfiguration)
-    .catch(shell.error);
+  (e.target as HTMLSelectElement).value = snapshot.settings.profile.mode;
+  modeTask = (async () => {
+    if (
+      snapshot.runtime.pid ||
+      (mode === "generated" && snapshot.settings.coreSource.mode === "external")
+    ) {
+      const answer = await modal.decision(
+        "切换运行方式",
+        mode === "generated" && snapshot.settings.coreSource.mode === "external"
+          ? "当前连接将断开，并改用官方受管核心。外部核心文件保持原样。"
+          : "当前连接将断开，切换后由你重新启动。",
+      );
+      if (answer !== "save") return;
+    }
+    element("mode-result").textContent = "正在切换…";
+    try {
+      await core.switchMode(mode, snapshot.settings.nodesRevision);
+      element("mode-result").textContent = "已切换，选择节点或配置后启动。";
+    } catch (e) {
+      element("mode-result").textContent = String(e);
+    }
+  })().finally(() => {
+    modeTask = null;
+    void changed().catch(shell.error);
+  });
 };
-element("open-diagnostics").onclick = () => {
-  navigate("activity");
-  activity.openLogs();
-};
-void listen<string>("shutdown-error", (event) => shell.error(event.payload));
-void listen("desktop-changed", () => void desktop.refresh());
+element("quit-app").onclick = () => void core.exit().catch(shell.error);
 void getVersion()
   .then((v) => (element("version").textContent = `Sing Shell ${v}`))
   .catch(shell.error);
+void initializeWindow(shell.error).catch(shell.error);
+void listen<string>("shutdown-error", (e) => shell.error(e.payload));
+void listen(
+  "desktop-changed",
+  () => void desktop.refresh(reader.value?.closing),
+);
 async function refresh() {
-  try {
-    if (!snapshot) await refreshConfiguration();
-    else {
-      const next = await core.session();
-      const known = [
-        snapshot.settings.nodesRevision,
-        snapshot.settings.routingRevision,
-        snapshot.settings.coreRevision,
-        snapshot.settings.preferencesRevision,
-        snapshot.settings.connectionRevision,
-      ];
-      if (JSON.stringify(next.revisions) !== JSON.stringify(known))
-        await refreshConfiguration();
-      else {
-        snapshot = {
-          ...snapshot,
-          ...next,
-          settings: { ...snapshot.settings, startup: next.startup },
-        };
-        render();
-      }
-    }
+  const session = async () => {
+    if (!reader.value) await changed();
+    else if (!reader.updateSession(await core.session())) await changed();
     if (!ready) {
       await desktop.ready();
       ready = true;
     }
-    await desktop.refresh(snapshot?.closing);
-    if (queuedNavigation && !modal.open) {
-      const target = queuedNavigation;
-      queuedNavigation = null;
-      navigate(target);
-    }
-    const dirty = modal.pending || routing.dirty() || connectionSettings.dirty() || updates.dirty();
-    if (dirty !== lastDirty) {
-      lastDirty = dirty;
-      await core.dirty(dirty);
-    }
-    if (++tick % 5 === 0) {
-      updates.render(await core.updates());
-      if (page === "routing") await routing.refreshSources();
-    }
-    if (page === "activity") await activity.refresh();
-  } catch (e) {
-    shell.error(e);
-  } finally {
-    window.setTimeout(() => void refresh(), document.hidden ? 2000 : 1000);
+  };
+  const results = await Promise.allSettled([
+    session(),
+    desktop.refresh(reader.value?.closing),
+  ]);
+  for (const result of results)
+    if (result.status === "rejected") shell.error(result.reason);
+  const dirty = modal.pending;
+  if (dirty !== lastDirty) {
+    lastDirty = dirty;
+    await core.dirty(dirty).catch(shell.error);
   }
+  if (++tick % 3 === 0) {
+    await core
+      .updates()
+      .then(updates.render)
+      .catch((e) => {
+        element("update-error").textContent = String(e);
+        element("update-error").hidden = false;
+      });
+    if (page === "routing") await routing.refreshSources();
+  }
+  if (page === "activity") await activity.refresh();
+  window.setTimeout(
+    () => void refresh().catch(shell.error),
+    document.hidden ? 2000 : 1000,
+  );
 }
 void routing.refreshSources();
-void refresh();
+void refresh().catch(shell.error);

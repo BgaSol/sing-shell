@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { core, type Snapshot } from "./core";
+import { core, type Snapshot } from "./api";
 import { element } from "./dom";
 interface Login {
   enabled: boolean;
@@ -13,6 +13,8 @@ export function createStartupSettings() {
     status = element("login-status");
   let loginBusy = false,
     restoreBusy = false;
+  let loginTask: Promise<unknown> | null = null,
+    restoreTask: Promise<unknown> | null = null;
   const showError = (e: unknown) => {
     error.textContent = String(e);
     error.hidden = false;
@@ -33,6 +35,12 @@ export function createStartupSettings() {
     status.textContent = [labels[value.state] ?? value.state, value.reason]
       .filter(Boolean)
       .join("。");
+    element("refresh-login").hidden = ![
+      "blocked",
+      "stale",
+      "unavailable",
+      "unknown",
+    ].includes(value.state);
   }
   async function refresh() {
     if (loginBusy) return;
@@ -46,7 +54,7 @@ export function createStartupSettings() {
     loginBusy = true;
     login.disabled = true;
     error.hidden = true;
-    void invoke<Login>("login_startup_set", { enabled: login.checked })
+    loginTask = invoke<Login>("login_startup_set", { enabled: login.checked })
       .then(renderLogin)
       .catch(showError)
       .finally(() => {
@@ -58,7 +66,7 @@ export function createStartupSettings() {
     restoreBusy = true;
     restore.disabled = true;
     error.hidden = true;
-    void invoke("set_restore_core", { enabled: restore.checked })
+    restoreTask = invoke("set_restore_core", { enabled: restore.checked })
       .catch(showError)
       .finally(() => {
         restoreBusy = false;
@@ -72,8 +80,13 @@ export function createStartupSettings() {
     }
   }
   element("refresh-login").onclick = () => void refresh();
-  element("quit-app").onclick = () => void core.exit().catch(showError);
   window.addEventListener("focus", () => void refresh());
   void refresh();
-  return { render, refresh };
+  return {
+    render,
+    refresh,
+    wait: async () => {
+      await Promise.all([loginTask, restoreTask]);
+    },
+  };
 }

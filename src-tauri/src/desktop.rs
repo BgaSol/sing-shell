@@ -158,7 +158,7 @@ impl Desktop {
         }
         let native = handle.clone();
         let app = app.clone();
-        handle.dialog().message(if cfg!(target_os="linux") {"关闭窗口会最小化，核心和设置草稿继续保留。可从系统窗口入口返回；请使用设置中的“退出应用”真正退出。"}else{"关闭窗口后 Sing Shell 仍在托盘运行，核心和设置草稿继续保留。点击托盘可返回，选择“退出”会停止核心并退出。"})
+        handle.dialog().message(if cfg!(target_os="linux") {"关闭窗口会最小化，核心和设置草稿继续保留。可从系统窗口入口返回；请使用应用菜单中的“退出应用”真正退出。"}else{"关闭窗口后 Sing Shell 仍在托盘运行，核心和设置草稿继续保留。点击托盘可返回，选择“退出”会停止核心并退出。"})
             .title("Sing Shell 将继续运行").buttons(MessageDialogButtons::OkCancel).show(move |yes| {
                 let queued=native.clone();
                 let _=queued.run_on_main_thread(move || {

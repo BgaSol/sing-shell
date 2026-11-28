@@ -1,12 +1,13 @@
 import { connectionReady } from "./session-model";
-import { core, type Snapshot, type NodeSummary } from "./core";
-import { el, element, button, iconButton, empty } from "./dom";
+import { core, type Snapshot, type NodeSummary } from "./api";
+import { el, element, button, empty } from "./dom";
+import { importNodes } from "./node-import";
 import type { Modal } from "./modal";
-import { readNodeFile } from "./import-file";
 export function createNodes(
   modal: Modal,
   changed: () => Promise<void>,
   error: (e: unknown) => void,
+  beforeNetwork: () => Promise<void>,
 ) {
   let snapshot: Snapshot | null = null,
     tag = "全部",
@@ -14,38 +15,38 @@ export function createNodes(
     limit = 100,
     signature = "",
     busy = false;
-  const list = element("node-list");
-  async function action(task: () => Promise<unknown>) {
+  async function connect(id: string) {
     if (busy) return;
     busy = true;
-    draw(true);
+    draw();
     try {
-      await task();
+      await beforeNetwork();
+      await core.connect(id);
       await changed();
     } catch (e) {
       error(e);
     } finally {
       busy = false;
-      draw(true);
+      draw();
     }
   }
   function edit(node: NodeSummary) {
     if (!snapshot) return;
-    const revision = snapshot.settings.nodesRevision;
-    const original = JSON.stringify([node.name, node.tags]);
-    const name = el("input");
+    const revision = snapshot.settings.nodesRevision,
+      name = el("input"),
+      tags = el("input");
     name.value = node.name;
     name.maxLength = 128;
-    const tags = el("input");
     tags.value = node.tags.join("，");
-    tags.placeholder = "例如：工作，备用";
+    tags.placeholder = "工作，备用";
     const value = () =>
-      tags.value
-        .split(/[,，\n]/)
-        .map((s) => s.trim())
-        .filter(Boolean);
+        tags.value
+          .split(/[,，\n]/)
+          .map((s) => s.trim())
+          .filter(Boolean),
+      original = JSON.stringify([name.value, value()]);
     modal.show("编辑节点", {
-      dirty: () => JSON.stringify([name.value, value()]) !== original,
+      dirty: () => original !== JSON.stringify([name.value, value()]),
     });
     for (const [title, input] of [
       ["名称", name],
@@ -59,162 +60,55 @@ export function createNodes(
       el(
         "p",
         "hint",
-        "多个标签用逗号分隔。留空时显示“默认”，修改名称和标签不会重连。",
+        `${node.protocol.toUpperCase()} · ${node.server}:${node.port}`,
       ),
     );
-    modal.actions.append(
-      button("取消", () => void modal.mayLeave()),
-      button(
-        "保存",
-        () => {
-          void modal
-            .run(async () => {
-              await core.profileRename(node.id, name.value, value(), revision);
-              await changed();
-            })
-            .then((ok) => {
-              if (ok) modal.close();
-            });
-        },
-        "primary",
-      ),
-    );
-    name.focus();
-    name.select();
-  }
-  function importNodes() {
-    if (!snapshot) return;
-    const revision = snapshot.settings.nodesRevision;
-    let ticket: number | null = null,
-      epoch = 0,
-      reading = false;
-    const input = el("textarea");
-    input.rows = 6;
-    input.spellcheck = false;
-    input.placeholder = "粘贴节点链接或 sing-box 节点 JSON，一行一个";
-    input.setAttribute("aria-label", "节点链接或 JSON");
-    const file = el("input");
-    file.type = "file";
-    file.accept = ".txt,.json,.jsonc";
-    file.setAttribute("aria-label", "选择节点文件");
-    const result = el("div");
-    const hint = el(
-      "p",
-      "hint",
-      "支持 SS、Trojan、VLESS、VMess、Hysteria2、TUIC。单次最多 2 MiB / 500 个节点，导入后不会自动连接。",
-    );
-    modal.show("导入节点", {
-      dirty: () => !!input.value.trim() || reading,
-      cleanup: () => {
-        epoch++;
-        ticket = null;
-        input.value = "";
-        file.value = "";
-        void core.profileCancel().catch(error);
-      },
-    });
-    const token = modal.token;
-    const commit = button(
-      "导入节点",
+    const save = async () => {
+      const ok = await modal.run(async () => {
+        await core.profileRename(node.id, name.value, value(), revision);
+        await changed();
+      });
+      if (ok) modal.close();
+      return ok;
+    };
+    modal.onSubmit(save);
+    let confirming = false;
+    const remove = button(
+      "删除节点",
       () => {
-        if (ticket === null) return;
+        if (!confirming) {
+          confirming = true;
+          remove.textContent = "确认删除";
+          modal.content.append(
+            el("p", "hint", "确认后会从本机节点库移除此节点和凭据。"),
+          );
+          return;
+        }
         void modal
           .run(async () => {
-            await core.profileCommit(ticket!, revision);
+            await core.profileDelete(node.id, revision);
             await changed();
           })
           .then((ok) => {
             if (ok) modal.close();
           });
       },
-      "primary",
+      "quiet danger",
     );
-    commit.disabled = true;
-    const invalidate = () => {
-      epoch++;
-      reading = false;
-      preview.disabled = false;
-      ticket = null;
-      commit.disabled = true;
-      result.replaceChildren();
-      void core.profileCancel().catch(error);
-    };
-    input.oninput = invalidate;
-    const preview = button("预览", () => {
-      if (reading) return;
-      const request = ++epoch;
-      ticket = null;
-      commit.disabled = true;
-      preview.disabled = true;
-      result.textContent = "正在检查导入内容…";
-      void core
-        .profilePreview(input.value)
-        .then((value) => {
-          if (!modal.valid(token) || request !== epoch) return;
-          ticket = value.ticket;
-          result.replaceChildren();
-          let count = 0;
-          for (const item of value.items) {
-            const line = el("div", "preview-line");
-            line.dataset.error = String(!!item.error);
-            line.textContent = `第 ${item.line} 行 · ${item.error ?? (item.duplicate ? "重复，跳过" : (item.node?.name ?? "无法识别"))}`;
-            result.append(line);
-            if (item.node && !item.duplicate && !item.error) count++;
-          }
-          commit.textContent = `导入 ${count} 个节点`;
-          commit.disabled = count === 0;
-        })
-        .catch((e) => {
-          if (modal.valid(token) && request === epoch) {
-            ticket = null;
-            commit.disabled = true;
-            result.replaceChildren();
-            modal.error(e);
-          }
-        })
-        .finally(() => {
-          if (modal.valid(token)) preview.disabled = false;
-        });
-    });
-    file.onchange = () => {
-      invalidate();
-      const selected = file.files?.[0];
-      if (!selected) return;
-      if (selected.size > 2 * 1024 * 1024) {
-        modal.error("文件超过 2 MiB，请拆分后导入");
-        file.value = "";
-        return;
-      }
-      const request = epoch;
-      reading = true;
-      preview.disabled = true;
-      void readNodeFile(selected)
-        .then((text) => {
-          if (modal.valid(token) && request === epoch) {
-            input.value = text;
-            modal.error(null);
-          }
-        })
-        .catch(() => {
-          if (modal.valid(token) && request === epoch)
-            modal.error("文件读取失败或不是有效 UTF-8，请重新选择");
-        })
-        .finally(() => {
-          if (modal.valid(token) && request === epoch) {
-            reading = false;
-            preview.disabled = false;
-          }
-        });
-    };
-    modal.content.append(input, file, hint, result);
+    remove.disabled =
+      !!snapshot.runtime.pid ||
+      snapshot.runtimeBusy ||
+      snapshot.runtime.cleanupPending;
+    if (remove.disabled) remove.title = "断开并完成清理后可删除";
     modal.actions.append(
+      remove,
       button("取消", () => void modal.mayLeave()),
-      preview,
-      commit,
+      button("保存", () => void save(), "primary"),
     );
-    input.focus();
+    name.focus();
+    name.select();
   }
-  function draw(force = false) {
+  function draw() {
     if (!snapshot) return;
     const s = snapshot;
     const key = JSON.stringify([
@@ -228,91 +122,66 @@ export function createNodes(
       search,
       limit,
       busy,
-      s.core.usable,
       s.core.canConnect,
-      s.core.canStop,
       s.storageError,
       s.closing,
     ]);
-    if (!force && signature === key) return;
+    if (signature === key) return;
     signature = key;
-    const nodes = s.settings.profile.nodes;
-    const available = [
-      "全部",
-      ...new Set(nodes.flatMap((n) => (n.tags.length ? n.tags : ["默认"]))),
-    ];
-    if (!available.includes(tag)) tag = "全部";
+    const nodes = s.settings.profile.nodes,
+      labels = [...new Set(nodes.flatMap((n) => n.tags))];
+    if (tag !== "全部" && !labels.includes(tag)) tag = "全部";
     const chips = element("node-tags");
     chips.replaceChildren();
-    for (const label of available) {
-      const chip = button(label, () => {
-        tag = label;
-        limit = 100;
-        draw(true);
-      });
-      chip.setAttribute("aria-pressed", String(label === tag));
-      chips.append(chip);
-    }
-    element("nodes-count").textContent =
-      `${nodes.length} 个节点 · 一次连接一个`;
-    const raw = s.settings.profile.mode !== "generated";
-    element("nodes-mode-hint").hidden = !raw;
+    if (labels.length)
+      for (const label of ["全部", ...labels]) {
+        const chip = button(label, () => {
+          tag = label;
+          limit = 100;
+          draw();
+        });
+        chip.setAttribute("aria-pressed", String(tag === label));
+        chips.append(chip);
+      }
+    element("nodes-count").textContent = `${nodes.length} 个`;
+    element("nodes-mode-hint").hidden = s.settings.profile.mode === "generated";
+    const list = element("node-list");
     list.replaceChildren();
     const visible = nodes.filter(
       (n) =>
-        (tag === "全部" || (n.tags.length ? n.tags : ["默认"]).includes(tag)) &&
+        (tag === "全部" || n.tags.includes(tag)) &&
         `${n.name} ${n.server} ${n.protocol} ${n.tags.join(" ")}`
           .toLowerCase()
           .includes(search),
     );
     for (const node of visible.slice(0, limit)) {
-      const current = connectionReady(s) && s.core.runningNode?.id === node.id;
-      const target = s.core.target?.id === node.id;
+      const current = connectionReady(s) && s.core.runningNode?.id === node.id,
+        target = s.core.target?.id === node.id;
       const row = el("div", `list-row${current ? " current" : ""}`);
       row.dataset.node = node.id;
       const info = el("div", "row-info"),
         title = el("div", "row-title");
-      title.append(button(node.name, () => edit(node), "link-button"));
+      title.append(el("strong", "", node.name));
       if (current) title.append(el("span", "tag running", "使用中"));
-      if (!current && s.settings.profile.selectedNode === node.id) title.append(el("span", "tag", "已选择"));
-      if (target) title.append(el("span", "tag", "正在连接"));
+      else if (target) title.append(el("span", "tag", "正在连接"));
+      else if (s.settings.profile.selectedNode === node.id)
+        title.append(el("span", "tag", "下次连接"));
       const meta = el("div", "row-meta");
       meta.append(el("span", "", `${node.server}:${node.port}`));
-      for (const label of node.tags.length ? node.tags : ["默认"])
-        meta.append(el("span", "tag", label));
+      node.tags.forEach((t) => meta.append(el("span", "tag", t)));
       info.append(title, meta);
-      const play = iconButton(
-        current ? "stop" : "play",
-        current ? `断开 ${node.name}` : `连接 ${node.name}`,
-        () =>
-          void action(() =>
-            current ? core.action("stop") : core.connect(node.id),
-          ),
-        `play-button${current ? " active" : ""}`,
+      const editButton = button("编辑", () => edit(node), "quiet");
+      editButton.setAttribute("aria-label", `编辑 ${node.name}`);
+      const play = button(
+        s.runtime.pid ? "切换" : "连接",
+        () => void connect(node.id),
+        "play-button",
       );
-      play.disabled = current
-        ? !s.core.canStop
-        : busy || !s.core.canConnect;
-      const remove = iconButton("remove", `删除 ${node.name}`, () => {
-        modal.show("删除节点");
-        modal.content.append(
-          el("p", "", `删除“${node.name}”？连接凭据也会从节点库中移除。`),
-        );
-        modal.actions.append(
-          button("取消", () => modal.close()),
-          button("删除", () => {
-            void modal
-              .run(async () => {
-                await core.profileDelete(node.id, s.settings.nodesRevision);
-                await changed();
-              })
-              .then((ok) => {
-                if (ok) modal.close();
-              });
-          }),
-        );
-      });
-      remove.disabled = !!s.runtime.pid || s.runtimeBusy || busy;
+      play.setAttribute(
+        "aria-label",
+        `${s.runtime.pid ? "切换到" : "连接"} ${node.name}`,
+      );
+      play.disabled = busy || !s.core.canConnect;
       row.append(
         el(
           "span",
@@ -329,9 +198,9 @@ export function createNodes(
           )[node.protocol] ?? node.protocol.slice(0, 3).toUpperCase(),
         ),
         info,
-        play,
-        remove,
+        editButton,
       );
+      if (!current) row.append(play);
       list.append(row);
     }
     if (!visible.length)
@@ -340,14 +209,19 @@ export function createNodes(
           nodes.length ? "没有匹配节点" : "还没有节点",
           nodes.length
             ? "换个标签或搜索词。"
-            : "导入分享链接或本地文件，预览后添加。",
+            : "导入分享链接或本地文件，即可开始连接。",
         ),
       );
     element("more-nodes").hidden = visible.length <= limit;
     element<HTMLButtonElement>("import-nodes").disabled =
       !!s.storageError || s.closing;
   }
-  element("import-nodes").onclick = importNodes;
+  element("import-nodes").onclick = () => {
+    if (snapshot)
+      void importNodes(modal, snapshot.settings.nodesRevision, changed).catch(
+        error,
+      );
+  };
   element<HTMLInputElement>("node-search").oninput = (e) => {
     search = (e.target as HTMLInputElement).value.trim().toLowerCase();
     limit = 100;

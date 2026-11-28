@@ -1,4 +1,4 @@
-import type { CoreState, Snapshot } from "./core";
+import type { CoreState, Snapshot } from "./api";
 export function authorizationLabel(stage: CoreState["authorizationStage"]) {
   return stage
     ? {

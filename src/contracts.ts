@@ -1,4 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
 export type Component = "app" | "engine";
 export interface Network {
   revision: number;
@@ -35,6 +34,25 @@ export interface Policy {
 export interface Routing {
   defaultExit: RouteAction;
   policies: Policy[];
+}
+export interface RemovedRule {
+  policy: Policy;
+  index: number;
+  preference: RulePreference | null;
+}
+export type RoutingChange =
+  | { kind: "add" | "edit"; policy: Policy }
+  | { kind: "addSources"; ids: string[] }
+  | { kind: "exit"; id: string; exit: RouteAction }
+  | { kind: "enabled"; id: string; enabled: boolean }
+  | { kind: "move"; id: string; direction: -1 | 1 }
+  | { kind: "default"; exit: RouteAction }
+  | { kind: "remove"; id: string }
+  | { kind: "restore"; removed: RemovedRule };
+export interface RoutingResult {
+  routing: Routing;
+  routingRevision: number;
+  removed: RemovedRule | null;
 }
 export interface NodeSummary {
   id: string;
@@ -192,7 +210,14 @@ export interface CoreState {
     network: { endpoint: string; attempt: number; error: string | null } | null;
     lastCheckedAt: number;
     nextCheckAt: number;
-    failureKind: "network" | "package" | "cache" | "local" | "compatibility" | "conflict" | null;
+    failureKind:
+      | "network"
+      | "package"
+      | "cache"
+      | "local"
+      | "compatibility"
+      | "conflict"
+      | null;
     warning: string | null;
     preparedVersion: string | null;
   };
@@ -271,96 +296,3 @@ export interface Mirror {
   prefix: string;
   supportsApi: boolean;
 }
-export const core = {
-  saveConnection: (expectedRevision: number, options: ConnectionOptions) => invoke<Settings>("set_connection_options", { expectedRevision, options }),
-  snapshot: () => invoke<Snapshot>("app_snapshot"),
-  session: () =>
-    invoke<
-      Omit<Snapshot, "settings"> & {
-        revisions: number[];
-        startup: Settings["startup"];
-      }
-    >("session_snapshot"),
-  connect: (nodeId: string) => invoke("session_connect", { nodeId }),
-  selectNode: (nodeId: string, expectedRevision: number) => invoke("session_select_node", { nodeId, expectedRevision }),
-  sources: () => invoke<RuleSource[]>("rule_sources"),
-  updateSource: (sourceId: string) => invoke("rule_update", { sourceId }),
-  cancelRules: () => invoke("rule_cancel"),
-  sourcePreference: (preference: RulePreference) =>
-    invoke("rule_preference", { preference }),
-  reset: () => invoke<string>("settings_reset"),
-  activity: (query: ActivityQuery) =>
-    invoke<ActivityPage>("activity_snapshot", { query }),
-  logs: (after: number, limit = 100) =>
-    invoke<Log[]>("read_logs", { after, limit }),
-  events: (after: number, limit = 100) =>
-    invoke<SessionEvent[]>("read_events", { after, limit }),
-  action: (action: "start" | "stop" | "check" | "apply") =>
-    invoke("core_action", { action }),
-  choose: (kind: "core" | "config") => invoke("choose_file", { kind }),
-  ready: (document: string) => invoke("frontend_ready", { document }),
-  updates: () => invoke<UpdateSnapshot>("update_snapshot"),
-  check: (component: Component | null = null) =>
-    invoke("check_updates", { component }),
-  download: (components: Component[]) =>
-    invoke("download_updates", { components }),
-  cancel: (component: Component) => invoke("cancel_update", { component }),
-  save: (expectedRevision: number, preferences: Preferences) =>
-    invoke<Settings>("set_update_preferences", {
-      expectedRevision,
-      preferences,
-    }),
-  diagnose: (prefix: string | null) =>
-    invoke<
-      { name: string; ok: boolean; elapsedMs: number; error: string | null }[]
-    >("test_update_mirror", { prefix }),
-  mirrors: () => invoke<Mirror[]>("builtin_mirrors"),
-  restart: () => invoke("request_restart"),
-  maintain: (action: "check" | "update" | "retry") =>
-    invoke("core_maintenance", { action }),
-  cancelCore: () => invoke("cancel_core_maintenance"),
-  managed: () => invoke("use_managed_core"),
-  release: (component: Component) =>
-    invoke("open_update_release", { component }),
-  dirty: (dirty: boolean) => invoke("set_update_draft_dirty", { dirty }),
-  exit: () => invoke("request_exit"),
-  profilePreview: (input: string) =>
-    invoke<{
-      ticket: number;
-      items: {
-        line: number;
-        node: NodeSummary | null;
-        error: string | null;
-        duplicate: boolean;
-      }[];
-    }>("profile_import_preview", { input }),
-  profileCancel: () => invoke("profile_import_cancel"),
-  profileCommit: (ticket: number, expectedRevision: number) =>
-    invoke<ProfileSnapshot>("profile_import_commit", {
-      ticket,
-      expectedRevision,
-    }),
-  profileRename: (
-    id: string,
-    name: string,
-    tags: string[],
-    expectedRevision: number,
-  ) =>
-    invoke<ProfileSnapshot>("profile_rename_node", {
-      id,
-      name,
-      tags,
-      expectedRevision,
-    }),
-  profileDelete: (id: string, expectedRevision: number) =>
-    invoke<ProfileSnapshot>("profile_delete_node", { id, expectedRevision }),
-  validateRouting: (routing: Routing) =>
-    invoke<Routing>("routing_validate", { routing }),
-  profileRouting: (routing: Routing, expectedRevision: number) =>
-    invoke<ProfileSnapshot>("profile_set_routing", {
-      routing,
-      expectedRevision,
-    }),
-  profileMode: (mode: Profile["mode"], expectedRevision: number) =>
-    invoke<ProfileSnapshot>("profile_mode", { mode, expectedRevision }),
-};

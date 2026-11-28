@@ -1,9 +1,13 @@
 import { authorizationLabel, connectionReady } from "./session-model";
-import { core, type Snapshot } from "./core";
+import { core, type Snapshot } from "./api";
 import { element } from "./dom";
-export { element } from "./dom";
-export function createShell(changed: () => Promise<void>) {
-  let localError: string | null = null;
+export function createShell(
+  changed: () => Promise<void>,
+  beforeNetwork: () => Promise<void>,
+  navigate: (page: string) => void,
+) {
+  let snapshot: Snapshot | null = null,
+    localError: string | null = null;
   const error = (reason: unknown) => {
     localError = String(reason);
     element("error").textContent = localError;
@@ -18,25 +22,42 @@ export function createShell(changed: () => Promise<void>) {
       error(e);
     }
   };
-  element("stop").onclick = () => void action(() => core.action("stop"));
-  element("start").onclick = () => void action(() => core.action("start"));
-  element("check").onclick = () => void action(() => core.action("check"));
-  const applyConnection = () => action(() => core.action("apply"));
+  const applyConnection = () =>
+    action(async () => {
+      await beforeNetwork();
+      await core.action("apply");
+    });
   element("apply-connection").onclick = () => void applyConnection();
-  element("apply-connection").setAttribute("title", "应用已保存配置并重新连接，不保存页面草稿");
+  element("stop").onclick = () => void action(() => core.action("stop"));
+  element("start").onclick = () => {
+    if (!snapshot) return;
+    if (
+      snapshot.settings.profile.mode === "generated" &&
+      !snapshot.settings.profile.selectedNode
+    ) {
+      navigate("nodes");
+      return;
+    }
+    void action(async () => {
+      await beforeNetwork();
+      await core.action("start");
+    });
+  };
   element("choose-core").onclick = () => void action(() => core.choose("core"));
   element("choose-config").onclick = () =>
     void action(() => core.choose("config"));
-  element("reset-settings").onclick = () => {
+  for (const id of ["advanced-managed", "update-core-managed"])
+    element(id).onclick = () => void action(core.managed);
+  element("reset-settings").onclick = () =>
     void action(async () => {
       const backup = await core.reset();
       element("reset-result").textContent = `已备份到 ${backup}`;
     });
-  };
   return {
     error,
     applyConnection,
     render(s: Snapshot) {
+      snapshot = s;
       const c = s.core,
         raw = s.settings.profile.mode === "externalConfig",
         running = connectionReady(s),
@@ -46,52 +67,76 @@ export function createShell(changed: () => Promise<void>) {
           ? authorizationLabel(c.authorizationStage)
           : ((
               {
-                running: "TUN 运行中",
-                preparing: c.operation === "installingCore" ? "正在安装核心" : c.operation === "resolvingBypass" ? "正在解析绕过地址" : c.operation === "checkingConfig" ? "正在校验配置" : "正在准备",
-                starting: "正在启动",
+                running: raw ? "运行中" : "已连接",
+                preparing: "正在准备",
+                starting: "正在连接",
                 stopping: "正在断开",
-                stopped: "尚未连接",
+                stopped: "未连接",
                 failed: "连接失败",
-                cleanupRequired: "需要清理网络",
+                cleanupRequired: "待清理",
+                checking: "正在校验",
               } as Record<string, string>
-            )[c.phase] ?? c.phase);
-      element("status").textContent = raw && running ? "核心运行中" : label;
+            )[c.phase] ?? "正在读取");
+      element("status").textContent = label;
       element("status").dataset.state = c.phase;
-      document.querySelector<HTMLElement>(".connection-bar")!.dataset.state =
-        running ? "running" : c.phase;
       element("connection-node").textContent = raw
-        ? "原始配置模式"
-        : c.target
-          ? `正在连接 ${c.target.name}`
+        ? "原始配置"
+        : (c.runningNode?.name ??
+          c.target?.name ??
+          s.settings.profile.nodes.find(
+            (n) => n.id === s.settings.profile.selectedNode,
+          )?.name ??
+          "选择一个节点开始");
+      element("connection-summary").textContent = c.pendingChanges
+        ? "更改待生效"
+        : c.target && running
+          ? `正在准备 ${c.target.name}，当前连接继续运行`
           : running
-            ? (c.runningNode?.name ?? "连接运行中")
-            : "尚未连接";
-      element("connection-summary").textContent =
-        c.operation && running
-          ? `当前连接继续使用 ${c.runningNode?.name ?? "原设置"}，候选准备中`
-          : c.pendingChanges
-            ? "已保存内容待应用，当前连接保持原设置"
+            ? c.runningConnectionOptions?.ipv4Compatibility
+              ? "TUN · IPv4 兼容"
+              : "TUN 已就绪"
             : c.phase === "cleanupRequired"
-              ? "网络资源未释放，请重试断开"
-              : raw
-                ? "配置由 sing-box 校验，停止后才能更换。"
-                : running
-                  ? `TUN 双栈、路由与临时 DNS 已确认${c.runningConnectionOptions?.ipv4Compatibility ? " · IPv4 兼容" : ""}`
-                  : "点击节点播放按钮连接；本机与局域网固定直连。";
-      element<HTMLButtonElement>("stop").disabled = !c.canStop;
-      element("start").hidden = !raw;
-      element<HTMLButtonElement>("start").disabled = !c.canStart;
-      element("check").hidden = !raw;
-      element<HTMLButtonElement>("check").disabled =
-        busy || running || !c.usable;
-      element("apply-connection").hidden = raw || !running || (!c.pendingChanges && !c.runningBypass);
+              ? "网络尚未释放，请重试清理"
+              : "";
+      const stop = element<HTMLButtonElement>("stop");
+      stop.hidden = !c.canStop;
+      stop.disabled = !c.canStop;
+      stop.textContent =
+        c.phase === "cleanupRequired"
+          ? "重试清理"
+          : !running && busy && !c.runningNode && !s.runtime.pid
+            ? "取消"
+            : raw
+              ? "停止"
+              : "断开";
+      const start = element<HTMLButtonElement>("start");
+      start.hidden = c.canStop;
+      start.disabled =
+        busy ||
+        !!s.storageError ||
+        (raw
+          ? !c.canStart
+          : s.settings.profile.selectedNode
+            ? !c.canConnect
+            : false);
+      start.textContent = raw
+        ? "启动配置"
+        : s.settings.profile.selectedNode
+          ? "连接"
+          : "选择节点";
+      element("apply-connection").hidden =
+        raw || !running || (!c.pendingChanges && !c.runningBypass);
       element<HTMLButtonElement>("apply-connection").disabled = busy;
-      element<HTMLButtonElement>("choose-core").disabled = !c.canImport;
-      element<HTMLButtonElement>("choose-config").disabled = !c.canImport;
+      for (const id of ["choose-core", "choose-config", "advanced-managed"])
+        element<HTMLButtonElement>(id).disabled = !c.canImport;
       element("external-config-row").hidden = !raw;
       element("config-path").textContent = s.settings.pendingConfigPath
         ? `${s.settings.pendingConfigPath} · 等待校验`
-        : (s.settings.configPath ?? "尚未导入配置");
+        : (s.settings.configPath ?? "尚未选择配置");
+      element("external-core-path").textContent =
+        s.settings.coreSource.mode === "external"
+          ? s.settings.coreSource.path
+          : "应用管理的官方 sing-box";
       const issue =
         s.storageError ?? c.configError ?? s.runtime.error ?? localError;
       element("error").textContent = issue ?? "";

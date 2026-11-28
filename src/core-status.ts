@@ -1,4 +1,4 @@
-import { core, type Snapshot } from "./core";
+import { core, type Snapshot } from "./api";
 import { element } from "./dom";
 import { corePresentation } from "./core-model";
 export function createCoreStatus(prefix: string) {
@@ -21,9 +21,6 @@ export function createCoreStatus(prefix: string) {
   retry.onclick = () => void action(() => core.maintain(maintenance));
   cancel.onclick = () => void action(core.cancelCore);
   managed.onclick = () => void action(core.managed);
-  if (prefix === "update-core")
-    element("core-check").onclick = () =>
-      void action(() => core.maintain("check"));
   return {
     render(s: Snapshot) {
       const p = corePresentation(s),
@@ -39,15 +36,13 @@ export function createCoreStatus(prefix: string) {
         progress.value = m.downloadedBytes;
       } else progress.removeAttribute("value");
       retry.hidden =
-        prefix === "home-core" ? !p.retry || s.core.usable : !p.managed;
+        !p.managed || (!p.error && !m.candidate && m.phase !== "paused");
       retry.disabled = !p.retry;
       retry.textContent = p.retryLabel;
       maintenance = p.action;
       cancel.hidden = !p.cancel;
       managed.hidden = p.managed;
       managed.disabled = !s.core.canImport;
-      if (prefix === "update-core")
-        element<HTMLButtonElement>("core-check").disabled = !p.retry;
     },
   };
 }

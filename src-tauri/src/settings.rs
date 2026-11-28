@@ -290,6 +290,89 @@ impl SettingsStore {
             Ok(())
         })
     }
+    pub fn automatic_updates(
+        &self,
+        component: crate::updates::Component,
+        expected: bool,
+        enabled: bool,
+    ) -> Result<Settings, String> {
+        self.write(|s| {
+            let value = match component {
+                crate::updates::Component::App => &mut s.update_preferences.automatic,
+                crate::updates::Component::Engine => &mut s.update_preferences.automatic_core,
+            };
+            if *value != expected && *value != enabled {
+                return Err("此开关已改变，请重新确认".into());
+            }
+            *value = enabled;
+            s.preferences_revision += 1;
+            Ok(())
+        })
+    }
+    pub fn network_preferences(
+        &self,
+        expected: u64,
+        mut network: network::Preferences,
+    ) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.update_preferences.network.revision != expected {
+                return Err("下载网络已改变，请载入最新设置后重试".into());
+            }
+            network = network.validated()?;
+            network.revision = expected + 1;
+            s.update_preferences.network = network;
+            s.preferences_revision += 1;
+            Ok(())
+        })
+    }
+    pub fn change_routing(
+        &self,
+        expected: u64,
+        change: crate::profile::change::Change,
+    ) -> Result<(Settings, Option<crate::profile::change::Removed>), crate::profile::routing::Issue>
+    {
+        let mut removed = None;
+        let mut issue = None;
+        let saved = self
+            .write(|s| {
+                if s.routing_revision != expected {
+                    return Err("分流已改变，请核对最新列表后重试；编辑内容已保留".into());
+                }
+                removed = change.apply(s).map_err(|e| {
+                    let message = e.message.clone();
+                    issue = Some(e);
+                    message
+                })?;
+                s.routing_revision += 1;
+                Ok(())
+            })
+            .map_err(|e| issue.unwrap_or_else(|| e.into()))?;
+        Ok((saved, removed))
+    }
+    pub fn change_mode(
+        &self,
+        expected: u64,
+        mode: crate::profile::Mode,
+        managed: bool,
+        expected_core: Option<u64>,
+    ) -> Result<Settings, String> {
+        self.write(|s| {
+            if s.nodes_revision != expected {
+                return Err("节点或模式已改变，请重试".into());
+            }
+            if expected_core.is_some_and(|revision| s.core_revision != revision) {
+                return Err("核心来源已改变，请重新确认".into());
+            }
+            s.profile.mode = mode;
+            if managed {
+                s.core_source = CoreSource::Managed;
+                s.core_revision += 1;
+            }
+            s.startup.resume_core = false;
+            s.nodes_revision += 1;
+            Ok(())
+        })
+    }
     pub fn profile(
         &self,
         expected: u64,

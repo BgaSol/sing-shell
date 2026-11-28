@@ -24,7 +24,7 @@ Windows x86_64/ARM64、Linux x86_64/ARM64、macOS Apple Silicon。macOS 通过�
 
 ## Brand Commitments
 
-保留现有贝壳标识、中文操作语言和 DESIGN.md 中的暖色平面视觉；系统字体、原生 DOM，不引入前端框架。
+保留贝壳标识与中文操作语言，严格沿用 SoDeck 多巴胺主题的色彩角色和深色描边；紧凑布局、自绘顶部栏、统一原生控件，不引入前端框架。
 
 ## Evidence on Hand
 

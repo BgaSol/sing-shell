@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { core } from "./core";
+import { core } from "./api";
 import { element } from "./dom";
 interface DesktopSnapshot {
   error: string | null;
@@ -7,7 +7,7 @@ interface DesktopSnapshot {
   exitRequest: { id: number; document: string | null } | null;
 }
 export function createDesktop(
-  navigate: (target: string) => void,
+  navigate: (target: string) => Promise<void>,
   mayLeave: () => Promise<boolean>,
 ) {
   const documentId = crypto.randomUUID();
@@ -15,13 +15,7 @@ export function createDesktop(
     lastRequest = 0;
   const error = element("desktop-error");
   function freeze(value: boolean) {
-    for (const id of [
-      "nodes-panel",
-      "routing-panel",
-      "activity-panel",
-      "settings-panel",
-    ])
-      element(id).inert = value;
+    element("app-shell").inert = value;
   }
   async function refresh(closing = false) {
     try {
@@ -29,7 +23,7 @@ export function createDesktop(
       error.textContent = s.error ?? "";
       error.hidden = !s.error;
       if (s.navigation) {
-        navigate(s.navigation.target);
+        await navigate(s.navigation.target);
         await invoke("desktop_navigation_done", { id: s.navigation.id });
       }
       if (!processing && !closing && !s.exitRequest) freeze(false);

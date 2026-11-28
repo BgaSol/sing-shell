@@ -130,6 +130,7 @@ pub enum Kind {
     CoreFetch,
     Preferences,
     Profile,
+    Import,
     Rules,
     Check,
     Download(crate::updates::Component),
@@ -220,6 +221,7 @@ impl Admission {
             (Kind::CoreFetch, Kind::CoreFetch)
             | (Kind::Preferences, Kind::Preferences)
             | (Kind::Profile, Kind::Profile)
+            | (Kind::Import, Kind::Import)
             | (Kind::Rules, Kind::Rules)
             | (Kind::Diagnostic, Kind::Diagnostic) => true,
             _ => false,
