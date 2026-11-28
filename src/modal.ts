@@ -60,10 +60,14 @@ export class Modal {
     this.content.replaceChildren();
     this.actions.replaceChildren();
     this.dialog.close();
-    (this.trigger?.isConnected
-      ? this.trigger
-      : element("import-nodes")
-    ).focus();
+    const target =
+      this.trigger?.isConnected && this.trigger.getClientRects().length
+        ? this.trigger
+        : (document.querySelector<HTMLElement>(
+            "main > section:not([hidden]) .page-head button:not(:disabled)",
+          ) ??
+          document.querySelector<HTMLElement>('nav [aria-current="page"]'));
+    target?.focus();
   }
   error(reason: unknown) {
     const e = element("modal-error");
@@ -106,6 +110,8 @@ export class Modal {
     }
     if (this.deciding) return this.deciding;
     const focus = document.activeElement as HTMLElement;
+    const keydown = this.content.onkeydown;
+    this.content.onkeydown = null;
     const wrapper = el("div", "editor-held");
     wrapper.append(...this.content.childNodes);
     wrapper.inert = true;
@@ -121,6 +127,7 @@ export class Modal {
         wrapper.inert = false;
         this.content.replaceChildren(...wrapper.childNodes);
         this.actions.hidden = false;
+        this.content.onkeydown = keydown;
         this.deciding = null;
       };
       const back = button("继续编辑", () => {
